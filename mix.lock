@@ -1,0 +1,2 @@
+%{"joken": {:hex, :joken, "0.13.1"},
+  "poison": {:hex, :poison, "1.4.0"}}
