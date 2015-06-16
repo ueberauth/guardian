@@ -6,74 +6,233 @@ An authentication framework for use with Elixir applications.
 Guardian is based on similar ideas to Warden and Omniauth but is re-imagined
 for modern systems where Elixir manages the authentication requrements.
 
-Guardian can interoperate with many systems and aims to provide:
-
-* Flexible serialization
-* Flexible strategy based authentication
-* Two-factor authentication
-* Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
-* Integrated permission sets
-* Integration with Plug
-* Integration with Phoenix channels
-* Basic integrations like raw TCP
-
-Would be great to provide:
-
-* Single sign-in
-* Device specific signing
-
 Guardian remains a functional system. It integrates with Plug, but can be used
 outside of it. If you're implementing a TCP/UDP protocol directly, or want to
-utilize your authentication via channels, Guardian is your operative.
+utilize your authentication via channels, Guardian is your friend.
 
-## Low level API
+The core currency of authentication in Guardian is JWT. You can use the JWT to
+authenticate web endpoints, channels, and TCP sockets.
 
-    # Generate a JWT for use as a credential either stored in the session
-    # Or passed as an authentication header
-    # @param <Map> - claims, The claims the token asserts are true.
-    jwt = Guardian.mint(claims, :csrf, %{ csrf: "LKSJDFLKJD" })
+## Installation
 
-    # Verify a JWT for consumption
-    case Guardian.verify(jwt) do
-      { :ok, claims } -> do_stuff_with(claims, params)
-      { :error, reason } -> do_stuff_with_errors(reason)
+Guardian relies on [Joken](https://github.com/bryanjos/joken). You'll need to
+install and configure Joken for your application.
+
+Add Guardian to your application
+
+mix.deps
+
+    defp deps do
+      [
+        # ...
+        {:guardian, "~> 0.0.1"}
+        # ...
+      }
     end
 
-    # Verify a JWT and raise
-    claims = Guardian.verify!(jwt, params)
+config.exs
 
-This implies that somehow we've verified those claims when they were minted.
-There are too many ways to verify these to go through, but we can provide some assistance when Plug is concerned.
+    config :joken,
+           secret_key: <secret key>,
+           json_module: Guardian.Jwt
+
+    config :guardian, Guardian,
+          issuer: "MyApp",
+          ttl: { 30, :days },
+          verify_issuer: true,
+          serializer: MyApp.GuardianSerializer,
+          on_failure: &MyApp.SessionController.new/2
+
+## Serializer
+
+The serializer knows how to encode and decode your resource into and out of the
+token. A simple serializer:
+
+    defmodule MyApp do
+      @behaviour Guardian.Serializer
+
+      alias MyApp.Repo
+      alias MyApp.User
+
+      def for_token(user = %User{}), do: { :ok, "User:#{user.id}" }
+      def for_token(_), do: { :error, "Unknown resource type" }
+
+      def from_token("User:" <> id), do: { :ok, Repo.get(User, id) }
+      def from_token(_), do: { :error, "Unknown resource type" }
+    end
+
+
 
 ## Plug API
 
-When you're using plug, we have a short plug stack that injects the conn object
-with set of claims, and a JWT. There is also a plug that will ensure that you
-have a valid token, and that you have the relevant permissions.There are too
-many ways to verify these to go through, but we can provide some assistance when
-Plug is concerned.
+Guardian ships with some plugs to help integrate into your application.
 
-    pipeline :browser do
-      plug Guardian.Plug.FromSession
-      plug Guardian.Plug.FromApiToken, realm: "Bearer"
+### Guardian.Plug.VerifySession
+
+Looks for a token in the session. Useful for browser sessions.
+If one is not found, this does nothing.
+
+### Guardian.Plug.VerifyAuthorization
+
+Looks for a token in the Authorization header. Useful for apis.
+If one is not found, this does nothing.
+
+### Guardian.Plug.EnsureSession
+
+Looks for a previously verified token. If one is found, continues, otherwise it
+will call the :on\_failure function.
+
+You can configure Guardian with a global on\_failure function in the
+configuration or pass one to the EnsureSesssion plug when using it.
+
+Globally configured:
+
+    config :guardian, Guardian,
+          on_failure: &MyApp.MyController.unauthenticated/2,
+          # ...
+
+Or on a per plug basis:
+
+    defmodule MyApp.MyController do
+      use MyApp.Web, :controller
+
+      plug Guardian.Plug.EnsureSession, on_failure: &MyApp.MyController.unauthenticated/2
     end
 
-In your controller:
+### Pipelines
 
-    plug Guardian.Plug.Enforcer, type: :web
+These plugs can be used to construct pipelines in Phoenix.
 
-We split the guarding into two portions.
+    pipeline :browser_session do
+      plug Guardian.Plug.VerifySession
+      plug Guardian.Plug.LoadResource
+    end
 
-1. The token fetcher
-2. The enforcer
-
-The token fetcher finds tokens from various places within the request, verifies
-that it is valid, and stores the result on the connection.
-It can limit based on token type, or permissions.
-
-The enforcer requires that there is a valid token and will prevent further
-processing if there is not.:w
-
+    pipeline :api do
+      plug :accepts, ["json"]
+      plug Guardian.Plug.VerifyAuthorization
+      plug Guardian.Plug.LoadResource
+    end
 
 
+    scope "/", MyApp do
+      pipe_through [:browser, :browser_session] # Use the default browser stack
+      # ...
+    end
 
+    scope "/api", MyApp.Api do
+      pipe_through [:api] # Use the default browser stack
+    end
+
+From here, you can either EnsureSession in your pipeline, or on a per-controller basis.
+
+    defmodule MyApp.MyController do
+      use MyApp.Web, :controller
+
+      plug Guardian.Plug.EnsureSession
+    end
+
+## Sign in and Sign out
+
+It's up to you how you verify the claims to encode into the token Guardian uses.
+As an example, here's the important parts of a SessionController
+
+    defmodule MyApp.SessionController do
+      use MyApp.Web, :controller
+
+      alias MyApp.User
+      alias MyApp.UserQuery
+
+      plug :scrub_params, "user" when action in [:create]
+      plug :action
+
+      def create(conn, params = %{}) do
+        conn
+        |> put_flash(:info, "Logged in.")
+        |> Guardian.Plug.sign_in(verified_user) # verify your logged in resource
+        |> redirect(to: user_path(conn, :index))
+      end
+
+      def delete(conn, _params) do
+        Guardian.Plug.logout(conn)
+        |> put_flash(:info, "Logged out successfully.")
+        |> redirect(to: "/")
+      end
+    end
+
+### Guardian.Plug.sign\_in
+
+You can sign in with a resource (that the serializer knows about)
+
+    Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
+
+    Guardian.Plug.sign_in(conn, user, :secret) # Sign in a different token. Allows you to handle multiple sessions
+
+    Guardian.Plug.sign_in(conn, user, :secret, claims)  # hand it some claims to encode into the token
+
+### Guardian.Plug.logout
+
+    Guardian.Plug.logout(conn) # Logout everything (clear session)
+
+    Guardian.Plug.logout(conn, :secret) # Clear the token and associated user from the 'secret' location
+
+### Current resource, token and claims
+
+Access to the current resource, token and claims is useful. Note, you'll need to
+have run the VerifySession/Authorization for token and claim access, and LoadResource to access the resource.
+
+    Guardian.Plug.claims(conn) # Access the claims in the default location
+    Guardian.Plug.claims(conn, :secret) # Access the claims in the secret location
+
+    Guardian.Plug.current_token(conn) # access the token in the default location
+    Guardian.Plug.current_token(conn, :secret) # access the token in the secret location
+
+For the resource
+
+    Guardian.Plug.current_resource(conn) # Access the loaded resource in the default location
+    Guardian.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
+
+### Without Plug
+
+There are many instances where Plug might not be in use. Channels, and raw
+sockets for e.g. If you need to do things your own way.
+
+    jwt = Guardian.mint(resource, <token_type>, claims_map)
+
+This will give you a minted jwt to use with the claims ready to go.
+
+You can also customize the claims you're asserting.
+
+    claims = Guardian.Claims.app_claims
+             |> Dict.put(:some_claim, some_value)
+             |> Guardian.Claims.ttl({3, :days})
+
+    jwt = Guardian.mint(resource, :token, claims)
+
+To verify the token:
+
+    case Guardian.verify(jwt) do
+      { :ok, claims } -> do_things_with_claims(claims)
+      { :error, reason } -> do_things_with_an_error(reason)
+    end
+
+Accessing the resource from a set of claims:
+
+    case Guardian.serializer.from_token(claims) do
+      { :ok, resource } -> do_things_with_resource(resource)
+      { :error, reason } -> do_things_without_a_resource(reason)
+
+    end
+
+### TODO
+
+- [x] Flexible serialization
+- [x] Integration with Plug
+- [x] Basic integrations like raw TCP
+- [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
+- [ ] Integration with Phoenix channels
+- [ ] Flexible strategy based authentication
+- [ ] Two-factor authentication
+- [ ] Integrated permission sets
+- [ ] Single sign-in
+- [ ] Device specific signing
