@@ -1,6 +1,8 @@
 defmodule Guardian.Plug do
   import Guardian.Utils
+  import Guardian.Keys
 
+  def sign_in(conn, object), do: sign_in(conn, object, nil, %{})
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
 
   def sign_in(conn, object, type, claims) do
@@ -50,13 +52,6 @@ defmodule Guardian.Plug do
   def set_current_token(conn, jwt, the_key \\ :default) do
     Plug.Conn.assign(conn, jwt_key(the_key), jwt)
   end
-
-  def claims_key(key), do: String.to_atom("#{base_key(key)}_claims")
-  def resource_key(key), do: String.to_atom("#{base_key(key)}_resource")
-  def jwt_key(key), do: String.to_atom("#{base_key(key)}_jwt")
-
-  def base_key(the_key = "guardian_" <> _), do: String.to_atom(the_key)
-  def base_key(the_key), do: String.to_atom("guardian_#{the_key}")
 
   defp logout_via_key(conn, :all), do: Plug.Conn.clear_session(conn)
   defp logout_via_key(conn, the_key), do: Plug.Conn.delete_session(conn, claims_key(the_key))

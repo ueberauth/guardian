@@ -6,19 +6,21 @@ defmodule Guardian do
       serializer: PhoenixGuardian.GuardianSerializer,
       on_failure: &PhoenixGuardian.SessionController.unauthenticated/2
   """
+  import Guardian.Utils
 
   if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
-  def app_claims, do: %{ :iss => issuer } |> issued_at |> default_ttl
+  # make our atoms that we know we need
+  [:iat, :aud, :sub, :exp, :iss]
 
+  def mint(object), do: mint(object, nil, %{})
   def mint(object, audience), do: mint(object, audience, %{})
-
   def mint(object, audience, claims) do
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
-        full_claims = Dict.merge(app_claims, Enum.into(claims, %{}))
-        |> Dict.put(:sub, sub)
-        |> Dict.put(:aud, audience)
+        full_claims = Guardian.Claims.app_claims(claims)
+        |> Guardian.Claims.aud(audience)
+        |> Guardian.Claims.sub(sub)
 
         case Joken.encode(full_claims) do
           { :ok, jwt } -> { :ok, jwt }
@@ -28,8 +30,6 @@ defmodule Guardian do
       { :error, reason } -> { :error, reason }
     end
   end
-
-  def refresh!(claims), do: Dict.put(claims, :iat, timestamp) |> default_ttl
 
   def serializer, do: config(:serializer)
 
@@ -68,22 +68,7 @@ defmodule Guardian do
     end
   end
 
-  defp issued_at(claims), do: Dict.put_new(claims, :iat, timestamp)
-
-  defp default_ttl(claims) do
-    case { Dict.get(claims, :iat), config(:ttl) } do
-      { nil, _ } -> Dict.put_new(claims, timestamp + 1_000_000_000)
-      { iat, { seconds, :seconds } } -> Dict.put_new(claims, :exp, iat + seconds)
-      { iat, { millis, :millis } } -> Dict.put_new(claims, :exp, iat + millis / 1000)
-      { iat, { minutes, :minutes } } -> Dict.put_new(claims, :exp, iat + minutes * 60)
-      { iat, { hours, :hours } } -> Dict.put_new(claims, :exp, iat + hours * 60 * 60)
-      { iat, { days, :days } } -> Dict.put_new(claims, :exp, iat + days * 24 * 60 * 60)
-      _ -> claims
-    end
-  end
-
-  defp timestamp, do: Calendar.DateTime.now("Etc/UTC") |> Calendar.DateTime.Format.unix
-  defp issuer, do: config(:issuer, to_string(node))
+  def issuer, do: config(:issuer, to_string(node))
 
   defp verify_issuer?, do: config(:verify_issuer, false)
 

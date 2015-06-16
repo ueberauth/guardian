@@ -1,9 +1,11 @@
 defmodule Guardian.Plug.VerifySession do
+  import Guardian.Keys
+
   def init(opts), do: opts
 
   def call(conn, opts) do
     key = Dict.get(opts, :key, :default)
-    jwt = Plug.Conn.get_session(conn, Guardian.Plug.base_key(key))
+    jwt = Plug.Conn.get_session(conn, base_key(key))
 
     if jwt do
       case Guardian.verify(jwt) do
@@ -13,7 +15,7 @@ defmodule Guardian.Plug.VerifySession do
           |> Guardian.Plug.set_current_token(jwt, key)
         { :error, reason } ->
           conn
-          |> Plug.Conn.delete_session(Guardian.Plug.base_key(key))
+          |> Plug.Conn.delete_session(base_key(key))
           |> Guardian.Plug.set_claims({ :error, reason }, key)
       end
     else
