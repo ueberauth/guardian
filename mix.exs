@@ -53,7 +53,8 @@ defmodule Guardian.Mixfile do
     [
       contributors: ["Daniel Neighman"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/hassox/guardian"}
+      links: %{github: "https://github.com/hassox/guardian"},
+      files: ~w(lib) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
     ]
   end
 end
