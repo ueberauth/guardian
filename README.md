@@ -40,8 +40,7 @@ config.exs
           issuer: "MyApp",
           ttl: { 30, :days },
           verify_issuer: true,
-          serializer: MyApp.GuardianSerializer,
-          on_failure: &MyApp.SessionController.new/2
+          serializer: MyApp.GuardianSerializer
 
 ## Serializer
 
@@ -82,22 +81,16 @@ If one is not found, this does nothing.
 Looks for a previously verified token. If one is found, continues, otherwise it
 will call the :on\_failure function.
 
-You can configure Guardian with a global on\_failure function in the
-configuration or pass one to the EnsureSesssion plug when using it.
-
-Globally configured:
-
-    config :guardian, Guardian,
-          on_failure: &MyApp.MyController.unauthenticated/2,
-          # ...
-
-Or on a per plug basis:
+When you ensure a session, you must declare an error handler. This can be done
+as part of a pipeline or inside a pheonix controller.
 
     defmodule MyApp.MyController do
       use MyApp.Web, :controller
 
-      plug Guardian.Plug.EnsureSession, on_failure: &MyApp.MyController.unauthenticated/2
+      plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyController, :unauthenticated }
     end
+
+The failure function must receive the connection, and the connection params.
 
 ### Pipelines
 
@@ -129,7 +122,7 @@ From here, you can either EnsureSession in your pipeline, or on a per-controller
     defmodule MyApp.MyController do
       use MyApp.Web, :controller
 
-      plug Guardian.Plug.EnsureSession
+      plug Guardian.Plug.EnsureSession, on_failiure: { MyApp.MyHandler, :unauthenticated }
     end
 
 ## Sign in and Sign out
@@ -200,6 +193,15 @@ sockets for e.g. If you need to do things your own way.
     jwt = Guardian.mint(resource, <token_type>, claims_map)
 
 This will give you a minted jwt to use with the claims ready to go.
+The token type is encoded into the JWT as the 'aud' field and is intended to be
+used as the _type_ of token. The intention is that moving forward we will be
+able to take specific action on token types, e.g. csrf types.
+
+Currently the suggested token type is "token", which would signify a basic token
+that should be accepted pretty much everywhere.
+
+There is a todo on Guardian to integrate signed csrf for a "csrf" token type and
+perform csrf checking.
 
 You can also customize the claims you're asserting.
 
@@ -230,6 +232,7 @@ Accessing the resource from a set of claims:
 - [x] Integration with Plug
 - [x] Basic integrations like raw TCP
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
+- [ ] Create a "csrf" token type that ensures that CSRF protection is included
 - [ ] Integration with Phoenix channels
 - [ ] Flexible strategy based authentication
 - [ ] Two-factor authentication
