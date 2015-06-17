@@ -28,10 +28,15 @@ defmodule Guardian.Claims do
     case { iat, requested_ttl } do
       { nil, _ } -> Dict.put_new(claims, timestamp + 1_000_000_000)
       { iat, { seconds, :seconds } } -> Dict.put(claims, :exp, iat + seconds)
+      { iat, { seconds, :second } } -> Dict.put(claims, :exp, iat + seconds)
       { iat, { millis, :millis } } -> Dict.put(claims, :exp, iat + millis / 1000)
+      { iat, { millis, :milli } } -> Dict.put(claims, :exp, iat + millis / 1000)
       { iat, { minutes, :minutes } } -> Dict.put(claims, :exp, iat + minutes * 60)
+      { iat, { minutes, :minute } } -> Dict.put(claims, :exp, iat + minutes * 60)
       { iat, { hours, :hours } } -> Dict.put(claims, :exp, iat + hours * 60 * 60)
+      { iat, { hours, :hour } } -> Dict.put(claims, :exp, iat + hours * 60 * 60)
       { iat, { days, :days } } -> Dict.put(claims, :exp, iat + days * 24 * 60 * 60)
+      { iat, { days, :day } } -> Dict.put(claims, :exp, iat + days * 24 * 60 * 60)
       _ -> claims
     end
   end

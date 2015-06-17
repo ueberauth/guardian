@@ -1,2 +1,5 @@
-%{"joken": {:hex, :joken, "0.13.1"},
-  "poison": {:hex, :poison, "1.4.0"}}
+%{"calendar": {:hex, :calendar, "0.6.8"},
+  "joken": {:hex, :joken, "0.13.1"},
+  "plug": {:hex, :plug, "0.13.0"},
+  "poison": {:hex, :poison, "1.4.0"},
+  "tzdata": {:hex, :tzdata, "0.1.6"}}

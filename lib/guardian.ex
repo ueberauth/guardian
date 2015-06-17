@@ -8,6 +8,7 @@ defmodule Guardian do
   """
   import Guardian.Utils
 
+  if !Application.get_env(:guardian, Guardian), do: raise "Guardian is not configured"
   if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
   # make our atoms that we know we need
@@ -64,7 +65,7 @@ defmodule Guardian do
   def verify!(jwt, params) do
     case verify(jwt, params) do
       { :ok, claims } -> claims
-      { :error, reason } -> raise reason
+      { :error, reason } -> raise to_string(reason)
     end
   end
 

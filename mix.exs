@@ -27,10 +27,16 @@ defmodule Guardian.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [
+    ds = [
       {:calendar, "~> 0.6.7"},
       {:joken, "~>0.13"},
       {:poison, "~>1.4"},
     ]
+
+    if Mix.env == :test do
+      [ { :plug, ">=0.0.1" } | ds ]
+    else
+      ds
+    end
   end
 end

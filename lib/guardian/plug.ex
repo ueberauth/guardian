@@ -53,8 +53,16 @@ defmodule Guardian.Plug do
     Plug.Conn.assign(conn, jwt_key(the_key), jwt)
   end
 
-  defp logout_via_key(conn, :all), do: Plug.Conn.clear_session(conn)
-  defp logout_via_key(conn, the_key), do: Plug.Conn.delete_session(conn, claims_key(the_key))
+  defp logout_via_key(conn, :all) do
+    conn
+    |> Plug.Conn.clear_session
+    |> clear_resource_assign(:all)
+  end
+
+  defp logout_via_key(conn, the_key) do
+    Plug.Conn.delete_session(conn, claims_key(the_key))
+    |> clear_resource_assign(the_key)
+  end
 
   defp clear_resource_assign(conn, :all) do
     Dict.keys(conn.assigns)
