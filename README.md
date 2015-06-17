@@ -22,45 +22,49 @@ Add Guardian to your application
 
 mix.deps
 
-    defp deps do
-      [
-        # ...
-        {:guardian, "~> 0.0.1"}
-        # ...
-      }
-    end
+```elixir
+defp deps do
+  [
+    # ...
+    {:guardian, "~> 0.0.1"}
+    # ...
+  ]
+end
+```
 
 config.exs
 
-    config :joken,
-           secret_key: <secret key>,
-           json_module: Guardian.Jwt
+```elixir
+config :joken,
+  secret_key: <secret key>,
+  json_module: Guardian.Jwt
 
-    config :guardian, Guardian,
-          issuer: "MyApp",
-          ttl: { 30, :days },
-          verify_issuer: true,
-          serializer: MyApp.GuardianSerializer
+config :guardian, Guardian,
+  issuer: "MyApp",
+  ttl: { 30, :days },
+  verify_issuer: true,
+  serializer: MyApp.GuardianSerializer
+```
 
 ## Serializer
 
 The serializer knows how to encode and decode your resource into and out of the
 token. A simple serializer:
 
-    defmodule MyApp do
-      @behaviour Guardian.Serializer
+```elixir
+defmodule MyApp do
+  @behaviour Guardian.Serializer
 
-      alias MyApp.Repo
-      alias MyApp.User
+  alias MyApp.Repo
+  alias MyApp.User
 
-      def for_token(user = %User{}), do: { :ok, "User:#{user.id}" }
-      def for_token(_), do: { :error, "Unknown resource type" }
+  def for_token(user = %User{}), do: { :ok, "User:#{user.id}" }
+  def for_token(_), do: { :error, "Unknown resource type" }
 
-      def from_token("User:" <> id), do: { :ok, Repo.get(User, id) }
-      def from_token(_), do: { :error, "Unknown resource type" }
-    end
-
-
+  def from_token("User:" <> id), do: { :ok, Repo.get(User, id) }
+  def from_token(_), do: { :error, "Unknown resource type" }
+end
+```
 
 ## Plug API
 
@@ -79,16 +83,18 @@ If one is not found, this does nothing.
 ### Guardian.Plug.EnsureSession
 
 Looks for a previously verified token. If one is found, continues, otherwise it
-will call the :on\_failure function.
+will call the `:on_failure` function.
 
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a pheonix controller.
 
-    defmodule MyApp.MyController do
-      use MyApp.Web, :controller
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
 
-      plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyController, :unauthenticated }
-    end
+  plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyController, :unauthenticated }
+end
+```
 
 The failure function must receive the connection, and the connection params.
 
@@ -96,101 +102,124 @@ The failure function must receive the connection, and the connection params.
 
 These plugs can be used to construct pipelines in Phoenix.
 
-    pipeline :browser_session do
-      plug Guardian.Plug.VerifySession
-      plug Guardian.Plug.LoadResource
-    end
+```elixir
+pipeline :browser_session do
+  plug Guardian.Plug.VerifySession
+  plug Guardian.Plug.LoadResource
+end
 
-    pipeline :api do
-      plug :accepts, ["json"]
-      plug Guardian.Plug.VerifyAuthorization
-      plug Guardian.Plug.LoadResource
-    end
+pipeline :api do
+  plug :accepts, ["json"]
+  plug Guardian.Plug.VerifyAuthorization
+  plug Guardian.Plug.LoadResource
+end
 
+scope "/", MyApp do
+  pipe_through [:browser, :browser_session] # Use the default browser stack
+  # ...
+end
 
-    scope "/", MyApp do
-      pipe_through [:browser, :browser_session] # Use the default browser stack
-      # ...
-    end
-
-    scope "/api", MyApp.Api do
-      pipe_through [:api] # Use the default browser stack
-    end
+scope "/api", MyApp.Api do
+  pipe_through [:api] # Use the default browser stack
+end
+```
 
 From here, you can either EnsureSession in your pipeline, or on a per-controller basis.
 
-    defmodule MyApp.MyController do
-      use MyApp.Web, :controller
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
 
-      plug Guardian.Plug.EnsureSession, on_failiure: { MyApp.MyHandler, :unauthenticated }
-    end
+  plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyHandler, :unauthenticated }
+end
+```
 
 ## Sign in and Sign out
 
 It's up to you how you verify the claims to encode into the token Guardian uses.
 As an example, here's the important parts of a SessionController
 
-    defmodule MyApp.SessionController do
-      use MyApp.Web, :controller
+```elixir
+defmodule MyApp.SessionController do
+  use MyApp.Web, :controller
 
-      alias MyApp.User
-      alias MyApp.UserQuery
+  alias MyApp.User
+  alias MyApp.UserQuery
 
-      plug :scrub_params, "user" when action in [:create]
-      plug :action
+  plug :scrub_params, "user" when action in [:create]
+  plug :action
 
-      def create(conn, params = %{}) do
-        conn
-        |> put_flash(:info, "Logged in.")
-        |> Guardian.Plug.sign_in(verified_user) # verify your logged in resource
-        |> redirect(to: user_path(conn, :index))
-      end
+  def create(conn, params = %{}) do
+    conn
+    |> put_flash(:info, "Logged in.")
+    |> Guardian.Plug.sign_in(verified_user) # verify your logged in resource
+    |> redirect(to: user_path(conn, :index))
+  end
 
-      def delete(conn, _params) do
-        Guardian.Plug.logout(conn)
-        |> put_flash(:info, "Logged out successfully.")
-        |> redirect(to: "/")
-      end
-    end
+  def delete(conn, _params) do
+    Guardian.Plug.logout(conn)
+    |> put_flash(:info, "Logged out successfully.")
+    |> redirect(to: "/")
+  end
+end
+```
 
 ### Guardian.Plug.sign\_in
 
 You can sign in with a resource (that the serializer knows about)
 
-    Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
+```elixir
+Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
+```
 
-    Guardian.Plug.sign_in(conn, user, :secret) # Sign in a different token. Allows you to handle multiple sessions
+```elixir
+Guardian.Plug.sign_in(conn, user, :secret) # Sign in a different token. Allows you to handle multiple sessions
+```
 
-    Guardian.Plug.sign_in(conn, user, :secret, claims)  # hand it some claims to encode into the token
+```elixir
+Guardian.Plug.sign_in(conn, user, :secret, claims)  # hand it some claims to encode into the token
+```
 
 ### Guardian.Plug.logout
 
-    Guardian.Plug.logout(conn) # Logout everything (clear session)
+```elixir
+Guardian.Plug.logout(conn) # Logout everything (clear session)
+```
 
-    Guardian.Plug.logout(conn, :secret) # Clear the token and associated user from the 'secret' location
+```elixir
+Guardian.Plug.logout(conn, :secret) # Clear the token and associated user from the 'secret' location
+```
 
 ### Current resource, token and claims
 
 Access to the current resource, token and claims is useful. Note, you'll need to
 have run the VerifySession/Authorization for token and claim access, and LoadResource to access the resource.
 
-    Guardian.Plug.claims(conn) # Access the claims in the default location
-    Guardian.Plug.claims(conn, :secret) # Access the claims in the secret location
+```elixir
+Guardian.Plug.claims(conn) # Access the claims in the default location
+Guardian.Plug.claims(conn, :secret) # Access the claims in the secret location
+```
 
-    Guardian.Plug.current_token(conn) # access the token in the default location
-    Guardian.Plug.current_token(conn, :secret) # access the token in the secret location
+```elixir
+Guardian.Plug.current_token(conn) # access the token in the default location
+Guardian.Plug.current_token(conn, :secret) # access the token in the secret location
+```
 
 For the resource
 
-    Guardian.Plug.current_resource(conn) # Access the loaded resource in the default location
-    Guardian.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
+```elixir
+Guardian.Plug.current_resource(conn) # Access the loaded resource in the default location
+Guardian.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
+```
 
 ### Without Plug
 
 There are many instances where Plug might not be in use. Channels, and raw
 sockets for e.g. If you need to do things your own way.
 
-    jwt = Guardian.mint(resource, <token_type>, claims_map)
+```elixir
+jwt = Guardian.mint(resource, <token_type>, claims_map)
+```
 
 This will give you a minted jwt to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
@@ -205,26 +234,31 @@ perform csrf checking.
 
 You can also customize the claims you're asserting.
 
-    claims = Guardian.Claims.app_claims
-             |> Dict.put(:some_claim, some_value)
-             |> Guardian.Claims.ttl({3, :days})
+```elixir
+claims = Guardian.Claims.app_claims
+         |> Dict.put(:some_claim, some_value)
+         |> Guardian.Claims.ttl({3, :days})
 
-    jwt = Guardian.mint(resource, :token, claims)
+jwt = Guardian.mint(resource, :token, claims)
+```
 
 To verify the token:
 
-    case Guardian.verify(jwt) do
-      { :ok, claims } -> do_things_with_claims(claims)
-      { :error, reason } -> do_things_with_an_error(reason)
-    end
+```elixir
+case Guardian.verify(jwt) do
+  { :ok, claims } -> do_things_with_claims(claims)
+  { :error, reason } -> do_things_with_an_error(reason)
+end
+```
 
 Accessing the resource from a set of claims:
 
-    case Guardian.serializer.from_token(claims) do
-      { :ok, resource } -> do_things_with_resource(resource)
-      { :error, reason } -> do_things_without_a_resource(reason)
-
-    end
+```elixir
+case Guardian.serializer.from_token(claims) do
+  { :ok, resource } -> do_things_with_resource(resource)
+  { :error, reason } -> do_things_without_a_resource(reason)
+end
+```
 
 ### TODO
 
