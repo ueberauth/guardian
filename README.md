@@ -122,7 +122,7 @@ From here, you can either EnsureSession in your pipeline, or on a per-controller
     defmodule MyApp.MyController do
       use MyApp.Web, :controller
 
-      plug Guardian.Plug.EnsureSession, on_failiure: { MyApp.MyHandler, :unauthenticated }
+      plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyHandler, :unauthenticated }
     end
 
 ## Sign in and Sign out
