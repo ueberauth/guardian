@@ -157,7 +157,7 @@ defmodule MyApp.SessionController do
   end
 
   def delete(conn, _params) do
-    Guardian.Plug.logout(conn)
+    Guardian.Plug.sign_out(conn)
     |> put_flash(:info, "Logged out successfully.")
     |> redirect(to: "/")
   end
@@ -180,14 +180,14 @@ Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to use for
 Guardian.Plug.sign_in(conn, user, :token, %{ key: :secret })  # create a token in the :secret location
 ```
 
-### Guardian.Plug.logout
+### Guardian.Plug.sign\_out
 
 ```elixir
-Guardian.Plug.logout(conn) # Logout everything (clear session)
+Guardian.Plug.sign_out(conn) # Sign out everything (clear session)
 ```
 
 ```elixir
-Guardian.Plug.logout(conn, :secret) # Clear the token and associated user from the 'secret' location
+Guardian.Plug.sign_out(conn, :secret) # Clear the token and associated user from the 'secret' location
 ```
 
 ### Current resource, token and claims

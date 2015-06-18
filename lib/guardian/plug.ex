@@ -13,8 +13,8 @@ defmodule Guardian.Plug do
 
   ## Example
 
-      Guardian.Plug.logout() # logout all sessions
-      Guardian.Plug.logout(:secret) # logout only the :secret session
+      Guardian.Plug.sign_out(conn) # sign out all sessions
+      Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session
   """
 
   import Guardian.Utils
@@ -64,13 +64,16 @@ defmodule Guardian.Plug do
   end
 
   @doc """
-  Logout of a session. If no key is specified, the entire session is cleared. Otherwise, only the location specified is cleared
+  Sign out of a session.
+
+  If no key is specified, the entire session is cleared.  Otherwise, only the
+  location specified is cleared
   """
-  @spec logout(Plug.Conn.t) :: Plug.Conn.t
-  def logout(conn, the_key \\ :all) do
+  @spec sign_out(Plug.Conn.t) :: Plug.Conn.t
+  def sign_out(conn, the_key \\ :all) do
     conn
     |> clear_resource_assign(the_key)
-    |> logout_via_key(the_key)
+    |> sign_out_via_key(the_key)
   end
 
   @doc """
@@ -117,13 +120,13 @@ defmodule Guardian.Plug do
     Plug.Conn.assign(conn, jwt_key(the_key), jwt)
   end
 
-  defp logout_via_key(conn, :all) do
+  defp sign_out_via_key(conn, :all) do
     conn
     |> Plug.Conn.clear_session
     |> clear_resource_assign(:all)
   end
 
-  defp logout_via_key(conn, the_key) do
+  defp sign_out_via_key(conn, the_key) do
     Plug.Conn.delete_session(conn, claims_key(the_key))
     |> clear_resource_assign(the_key)
   end
