@@ -69,7 +69,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object)" do
-    { :ok, jwt } = Guardian.mint("thinger")
+    { :ok, jwt, full_claims } = Guardian.mint("thinger")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "token"
@@ -80,7 +80,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object, audience)" do
-    { :ok, jwt } = Guardian.mint("thinger", "my_aud")
+    { :ok, jwt, full_claims } = Guardian.mint("thinger", "my_aud")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "my_aud"
@@ -91,7 +91,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object, audience, claims)" do
-    { :ok, jwt } = Guardian.mint("thinger", "my_aud", some: "thing")
+    { :ok, jwt, full_claims } = Guardian.mint("thinger", "my_aud", some: "thing")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "my_aud"

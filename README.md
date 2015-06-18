@@ -173,11 +173,11 @@ Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
 ```
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :secret) # Sign in a different token. Allows you to handle multiple sessions
-```
+Guardian.Plug.sign_in(conn, user, :csrf) # sign in using a csrf signed token
 
-```elixir
-Guardian.Plug.sign_in(conn, user, :secret, claims)  # hand it some claims to encode into the token
+Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to use for the token jwt
+
+Guardian.Plug.sign_in(conn, user, :token, %{ key: :secret })  # create a token in the :secret location
 ```
 
 ### Guardian.Plug.logout
@@ -218,16 +218,30 @@ There are many instances where Plug might not be in use. Channels, and raw
 sockets for e.g. If you need to do things your own way.
 
 ```elixir
-jwt = Guardian.mint(resource, <token_type>, claims_map)
+{ :ok, jwt, encoded_claims } = Guardian.mint(resource, <token_type>, claims_map)
 ```
 
 This will give you a minted jwt to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
-used as the _type_ of token. The intention is that moving forward we will be
-able to take specific action on token types, e.g. csrf types.
+used as the _type_ of token.
 
-Currently the suggested token type is "token", which would signify a basic token
-that should be accepted pretty much everywhere.
+CSRF token protection can be put into the JWT that is produced when you mint.
+When you're inside a plug, you can simply call mint with the type
+
+```elixir
+{ :ok, jwt, full_claims } = Guardian.Plug.sign_in(resource, :csrf)
+```
+
+If you are not inside plug, you'll need to supply the csrf token to use.
+
+```elixir
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf, %{ csrf: "some token" })
+```
+
+Currently suggested token types are:
+
+* `"token"` - Use for API or CORS access. These are basic tokens with no csrf checking.
+* `"csrf"` - Use for browser based access. These require a the CSRF token signed into the token to match the CSRF token for the request
 
 There is a todo on Guardian to integrate signed csrf for a "csrf" token type and
 perform csrf checking.
@@ -239,7 +253,7 @@ claims = Guardian.Claims.app_claims
          |> Dict.put(:some_claim, some_value)
          |> Guardian.Claims.ttl({3, :days})
 
-jwt = Guardian.mint(resource, :token, claims)
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :token, claims)
 ```
 
 To verify the token:
@@ -266,7 +280,7 @@ end
 - [x] Integration with Plug
 - [x] Basic integrations like raw TCP
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
-- [ ] Create a "csrf" token type that ensures that CSRF protection is included
+- [x] Create a "csrf" token type that ensures that CSRF protection is included
 - [ ] Integration with Phoenix channels
 - [ ] Flexible strategy based authentication
 - [ ] Two-factor authentication

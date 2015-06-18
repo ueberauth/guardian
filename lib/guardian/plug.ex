@@ -9,11 +9,18 @@ defmodule Guardian.Plug do
     the_key = Dict.get(claims, :key, :default)
     claims = Dict.delete(claims, :key)
 
+    if type == :csrf || type == "csrf" do
+      csrf_token = Dict.get(claims, :csrf, Dict.get(claims, "csrf", Plug.CSRFProtection.get_csrf_token))
+      claims = Dict.put(claims, :csrf, csrf_token)
+    end
+
     case Guardian.mint(object, type, claims) do
-      { :ok, jwt } ->
+      { :ok, jwt, full_claims } ->
         conn
         |> Plug.Conn.put_session(base_key(the_key), jwt)
         |> set_current_resource(object, the_key)
+        |> set_claims(full_claims, the_key)
+        |> set_current_token(jwt, the_key)
 
       { :error, reason } -> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
     end
@@ -71,4 +78,6 @@ defmodule Guardian.Plug do
   end
 
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
+
 end
+
