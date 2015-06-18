@@ -1,4 +1,4 @@
-defmodule Guardian.Jwt do
+defmodule Guardian.JWT do
   @moduledoc false
   alias Poison, as: JSON
   @behaviour Joken.Codec

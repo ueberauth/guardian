@@ -37,7 +37,7 @@ config.exs
 ```elixir
 config :joken,
   secret_key: <secret key>,
-  json_module: Guardian.Jwt
+  json_module: Guardian.JWT
 
 config :guardian, Guardian,
   issuer: "MyApp",
@@ -221,7 +221,7 @@ sockets for e.g. If you need to do things your own way.
 { :ok, jwt, encoded_claims } = Guardian.mint(resource, <token_type>, claims_map)
 ```
 
-This will give you a minted jwt to use with the claims ready to go.
+This will give you a minted JWT to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
 used as the _type_ of token.
 
