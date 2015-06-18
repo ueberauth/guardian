@@ -1,13 +1,13 @@
 defmodule Guardian.Plug.LoadResource do
   @moduledoc """
-    Fetches the resource specified in a set of claims.
+  Fetches the resource specified in a set of claims.
 
-    The Guardian.serializer/0 is used once the subject is extracted from the token.
+  The Guardian.serializer/0 is used once the subject is extracted from the token.
 
-    The resource becomes available at Guardian.Plug.current_resource(conn) if successful.
+  The resource becomes available at Guardian.Plug.current_resource(conn) if successful.
 
-    If there is no valid JWT in the request so far (Guardian.Plug.VerifySession / Guardian.Plug.VerifyAuthorization) did not find a valid token
-    then nothing will occur, and the Guardian.Plug.current_resource/1 will be nil
+  If there is no valid JWT in the request so far (Guardian.Plug.VerifySession / Guardian.Plug.VerifyAuthorization) did not find a valid token
+  then nothing will occur, and the Guardian.Plug.current_resource/1 will be nil
   """
 
   @doc false
