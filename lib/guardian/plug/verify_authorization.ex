@@ -1,4 +1,30 @@
 defmodule Guardian.Plug.VerifyAuthorization do
+  @moduledoc """
+    Use this plug to verify a token contained in the header.
+
+    You should set the value of the Authorization header to:
+
+        Authorization: <jwt>
+
+    ## Example
+
+        plug Guardian.Plug.VerifyAuthorization
+
+
+    If using CSRF you should also encode the CSRF token either
+
+    * Into the X-CSRF-TOKEN header
+    * Into the \_csrf\_token param
+    * Use the session plug to load it from there
+
+    ## Example
+
+        plug Guardian.Plug.VerifyAuthorization, key: :secret
+
+    Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
+
+    In the case of an error, the claims will be set to { :error, reason }
+  """
   import Guardian.Keys
   import Guardian.CSRFProtection
 

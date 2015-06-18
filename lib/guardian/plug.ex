@@ -1,10 +1,47 @@
 defmodule Guardian.Plug do
+  @moduledoc """
+    Guardian.Plug contains functions that assist with interacting with Guardian via Plugs.
+
+    Guardian.Plug is not itself a plug.
+
+    ## Example
+
+        Guarian.Plug.sign_in(conn, user)
+        Guardian.Plug.sign_in(conn, user, :csrf)
+        Guardian.Plug.sign_in(conn, user, :csrf, %{ claims: "i", make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)
+
+
+    ## Example
+
+        Guardian.Plug.logout() # logout all sessions
+        Guardian.Plug.logout(:secret) # logout only the :secret session
+  """
+
   import Guardian.Utils
   import Guardian.Keys
 
+  @doc """
+    Sign in a resource (that your configured serializer knows about) into the current web session.
+  """
+  @spec sign_in(Plug.Conn.t, any) :: Plug.Conn.t
   def sign_in(conn, object), do: sign_in(conn, object, nil, %{})
+
+  @doc """
+    Sign in a resource (that your configured serializer knows about) into the current web session.
+
+    By specifying the 'type' of the token, you're setting the aud field in the JWT.
+
+    Using the csrf type is special. It will encode the csrf token into the token, and that token is only useful when paired with that csrf
+  """
+  @spec sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
 
+  @doc """
+    Same as sign_in/3 but also encodes all claims into the JWT.
+
+    The `:key` key in the claims map is special in that it sets the location of the storage.
+  """
+  @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
   def sign_in(conn, object, type, claims) do
     the_key = Dict.get(claims, :key, :default)
     claims = Dict.delete(claims, :key)
@@ -26,12 +63,20 @@ defmodule Guardian.Plug do
     end
   end
 
+  @doc """
+    Logout of a session. If no key is specified, the entire session is cleared. Otherwise, only the location specified is cleared
+  """
+  @spec logout(Plug.Conn.t) :: Plug.Conn.t
   def logout(conn, the_key \\ :all) do
     conn
     |> clear_resource_assign(the_key)
     |> logout_via_key(the_key)
   end
 
+  @doc """
+    Fetch the currently verified claims from the current request
+  """
+  @spec claims(Plug.Conn.t) :: { :ok, Map } | { :error, atom | String.t }
   def claims(conn, the_key \\ :default) do
     case conn.assigns[claims_key(the_key)] do
       { :ok, claims } -> { :ok, claims }
@@ -40,22 +85,34 @@ defmodule Guardian.Plug do
     end
   end
 
+  @doc false
+  @spec claims(Plug.Conn.t) :: { :ok, Map } | { :error, atom | String.t }
   def set_claims(conn, claims, the_key \\ :default) do
     Plug.Conn.assign(conn, claims_key(the_key), claims)
   end
 
+  @doc """
+    Fetch the currently authenticated resource if loaded, optionally located at a location (key)
+  """
+  @spec claims(Plug.Conn.t) :: any | nil
   def current_resource(conn, the_key \\ :default) do
     conn.assigns[resource_key(the_key)]
   end
 
+  @doc false
   def set_current_resource(conn, resource, the_key \\ :default) do
     Plug.Conn.assign(conn, resource_key(the_key), resource)
   end
 
+  @doc """
+    Fetch the currently verified token from the request. optionally located at a location (key)
+  """
+  @spec claims(Plug.Conn.t) :: String.t | nil
   def current_token(conn, the_key \\ :default) do
     conn.assigns[jwt_key(the_key)]
   end
 
+  @doc false
   def set_current_token(conn, jwt, the_key \\ :default) do
     Plug.Conn.assign(conn, jwt_key(the_key), jwt)
   end
@@ -78,6 +135,5 @@ defmodule Guardian.Plug do
   end
 
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
-
 end
 

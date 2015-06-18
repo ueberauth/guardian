@@ -1,31 +1,46 @@
 defmodule Guardian.Claims do
+  @moduledoc false
   import Guardian.Utils
 
+  @doc false
   def app_claims, do: %{ :iss => Guardian.issuer } |> iat |> ttl
+
+  @doc false
   def app_claims(existing_claims) do
     Dict.merge(app_claims, Enum.into(existing_claims, %{}))
   end
 
+  @doc false
   def aud(claims, nil), do: aud(claims, "token")
+  @doc false
   def aud(claims, audience) when is_atom(audience), do: aud(claims, to_string(audience))
+  @doc false
   def aud(claims, audience), do: Dict.put(claims, :aud, audience)
 
+  @doc false
   def sub(claims, subject) when is_atom(subject), do: sub(claims, to_string(subject))
+  @doc false
   def sub(claims, subject), do: Dict.put(claims, :sub, subject)
 
+  @doc false
   def iat(claims), do: Dict.put(claims, :iat, timestamp)
+  @doc false
   def iat(claims, ts), do: Dict.put(claims, :iat, ts)
 
+  @doc false
   def csrf(claims, token), do: Dict.put(claims, :s_csrf, Guardian.CSRFProtection.signature(token))
 
+  @doc false
   def ttl(claims = %{ ttl: requested_ttl }) do
     claims
     |> Dict.delete(:ttl)
     |> ttl(requested_ttl)
   end
 
+  @doc false
   def ttl(claims), do: ttl(claims, Guardian.config(:ttl, { 1_000_000_000, :seconds }))
 
+  @doc false
   def ttl(claims = %{iat: iat}, requested_ttl) do
     case { iat, requested_ttl } do
       { nil, _ } -> Dict.put_new(claims, timestamp + 1_000_000_000)
@@ -43,5 +58,6 @@ defmodule Guardian.Claims do
     end
   end
 
+  @doc false
   def ttl(claims, requested_ttl), do: claims |> iat |> ttl(requested_ttl)
 end
