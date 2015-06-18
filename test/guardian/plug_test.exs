@@ -105,7 +105,7 @@ defmodule Guardian.PlugTest do
   end
 
   # TODO work out how to test with plugs
-  # test "logout", context do
+  # test "sign_out/1", context do
   #   cleared_conn = context.conn
   #   |> Plug.Conn.assign(Guardian.Keys.claims_key(:default), %{ claims: "yeah" })
   #   |> Plug.Conn.assign(Guardian.Keys.claims_key(:secret), %{ claims: "yeah" })
@@ -113,7 +113,7 @@ defmodule Guardian.PlugTest do
   #   |> Plug.Conn.assign(Guardian.Keys.resource_key(:secret), "resource")
   #   |> Plug.Conn.assign(Guardian.Keys.jwt_key(:default), "token")
   #   |> Plug.Conn.assign(Guardian.Keys.jwt_key(:secret), "token")
-  #   |> Guardian.Plug.logout
+  #   |> Guardian.Plug.sign_out
 
   #   assert cleared_conn.assigns[Guardian.Keys.claims_key(:default)] == nil
   #   assert cleared_conn.assigns[Guardian.Keys.claims_key(:secret)] == nil
@@ -123,7 +123,7 @@ defmodule Guardian.PlugTest do
   #   assert cleared_conn.assigns[Guardian.Keys.jwt_key(:secret)] == nil
   # end
 
-  # test "logout(key)", context do
+  # test "sign_out/2", context do
   # end
 
   # test "sign_in(object)", context do
