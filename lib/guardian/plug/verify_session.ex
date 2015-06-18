@@ -1,20 +1,20 @@
 defmodule Guardian.Plug.VerifySession do
   @moduledoc """
-    Use this plug to verify a token contained in a session.
+  Use this plug to verify a token contained in a session.
 
-    ## Example
+  ## Example
 
-        plug Guardian.Plug.VerifySession
+      plug Guardian.Plug.VerifySession
 
-    You can also specify a location to look for the token
+  You can also specify a location to look for the token
 
-    ## Example
+  ## Example
 
-        plug Guardian.Plug.VerifySession, key: :secret
+      plug Guardian.Plug.VerifySession, key: :secret
 
-    Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
+  Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
 
-    In the case of an error, the claims will be set to { :error, reason }
+  In the case of an error, the claims will be set to { :error, reason }
   """
   import Guardian.Keys
   import Guardian.CSRFProtection
@@ -48,3 +48,4 @@ defmodule Guardian.Plug.VerifySession do
     csrf_from_header(conn) || csrf_from_params(conn) || csrf_from_session(conn)
   end
 end
+

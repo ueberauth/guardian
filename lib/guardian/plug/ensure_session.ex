@@ -1,17 +1,16 @@
 defmodule Guardian.Plug.EnsureSession do
   @moduledoc """
-    This plug ensures that a valid JWT was provided and has been verified on the request.
+  This plug ensures that a valid JWT was provided and has been verified on the request.
 
-    If one is not found, the on\_failure function is invoked with the Plug.Conn.t object and it's params.
+  If one is not found, the on\_failure function is invoked with the Plug.Conn.t object and it's params.
 
-    ## Example
+  ## Example
 
-        plug Guardian.Plug.EnsureSession, on_failure: { SomeModule, :some_method } # look in the default location
-        plug Guardian.Plug.EnsureSession, on_failure: { SomeModule, :some_method }, key: :secret # look in the :secret location
+      plug Guardian.Plug.EnsureSession, on_failure: { SomeModule, :some_method } # look in the default location
+      plug Guardian.Plug.EnsureSession, on_failure: { SomeModule, :some_method }, key: :secret # look in the :secret location
 
-    The on\_failure option must be passed. The corresponding function will be called with the Plug.Conn.t and it's params.
+  The on\_failure option must be passed. The corresponding function will be called with the Plug.Conn.t and it's params.
   """
-
 
   @doc false
   def init(opts) do

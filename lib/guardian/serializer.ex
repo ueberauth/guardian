@@ -1,13 +1,20 @@
 defmodule Guardian.Serializer do
   @moduledoc """
-    Guardian requires a serializer. This serializer is responsible for fetching the resource from the encoded value in the JWT
-    and also encoding a resource into a String so that it may be stored in the JWT
+  Guardian Serializer Behaviour.
+
+  Guardian requires a serializer. This serializer is responsible for fetching
+  the resource from the encoded value in the JWT and also encoding a resource
+  into a String so that it may be stored in the JWT
   """
   use Behaviour
 
-  @doc "Serializes the object into the token. Suggestion: \"User:2\""
+  @doc """
+  Serializes the object into the token. Suggestion: \"User:2\"
+  """
   defcallback for_token(object :: term) :: String.t
 
-  @doc "de-serializes the object from a token"
+  @doc """
+  De-serializes the object from a token
+  """
   defcallback from_token(subject :: String.t) :: { :ok, object :: term } | { :error, String.t }
 end
