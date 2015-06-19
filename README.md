@@ -320,7 +320,7 @@ let socket = new Socket("/ws");
 socket.connect();
 let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
 let csrfToken = jQuery('meta[name="csrf_token"]').attr('content');
-let chan = socket.chan("pings", { guardian_token: guardianToken });
+let chan = socket.chan("pings", { guardian_token: guardianToken, csrf_token: csrfToken });
 ```
 
 How to get the tokens onto the page?
