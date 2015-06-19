@@ -346,6 +346,7 @@ feedback to get up and running.
 - [x] Create a "csrf" token type that ensures that CSRF protection is included
 - [x] Integration with Phoenix channels
 - [ ] Integrated permission sets
+- [ ] Hooks into the authentication cycle
 - [ ] Flexible strategy based authentication
 - [ ] Two-factor authentication
 - [ ] Single sign-in
