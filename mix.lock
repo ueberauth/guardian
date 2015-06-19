@@ -1,4 +1,6 @@
 %{"calendar": {:hex, :calendar, "0.6.8"},
+  "earmark": {:hex, :earmark, "0.1.17"},
+  "ex_doc": {:hex, :ex_doc, "0.7.3"},
   "joken": {:hex, :joken, "0.13.1"},
   "plug": {:hex, :plug, "0.13.0"},
   "poison": {:hex, :poison, "1.4.0"},

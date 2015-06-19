@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Guardian.Plug</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
+    <script type="text/javascript" charset="utf-8">
+      relpath = '';
+      if (relpath != '') relpath += '/';
+    </script>
+
+    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      hljs.initHighlightingOnLoad();
+      hljs.configure({languages: []}); //disable autodetect
+    </script>
+  </head>
+
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+
+    <section id="content">
+      <div class="breadcrumbs">guardian v0.1.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a></div>
+      <h1>
+        Guardian.Plug
+        
+      </h1>
+
+      <ul class="summary_links">
+        
+          <li><a href="#summary">Summary</a></li>
+        
+        
+        
+          <li><a href="#functions_details">Functions</a></li>
+        
+        
+        
+      </ul>
+
+      
+        <section id="moduledoc" class="docstring">
+          <p>Guardian.Plug contains functions that assist with interacting with Guardian via Plugs.</p>
+<p>Guardian.Plug is not itself a plug.</p>
+<h2>Example</h2>
+<pre><code class="elixir">Guarian.Plug.sign_in(conn, user)
+Guardian.Plug.sign_in(conn, user, :csrf)
+Guardian.Plug.sign_in(conn, user, :csrf, %{ claims: &quot;i&quot;, make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)</code></pre>
+<h2>Example</h2>
+<pre><code class="elixir">Guardian.Plug.sign_out(conn) # sign out all sessions
+Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session</code></pre>
+
+        </section>
+      
+
+      
+
+      
+        <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
+        <table class="summary">
+          <tr>
+  <td class="summary_signature"><a href="#claims/2">claims(conn, the_key \\ :default)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetch the currently verified claims from the current request</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#current_resource/2">current_resource(conn, the_key \\ :default)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetch the currently authenticated resource if loaded, optionally located at a location (key)</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#current_token/2">current_token(conn, the_key \\ :default)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetch the currently verified token from the request. optionally located at a location (key)</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#sign_in/2">sign_in(conn, object)</a></td>
+  
+    <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#sign_in/3">sign_in(conn, object, type)</a></td>
+  
+    <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#sign_in/4">sign_in(conn, object, type, claims)</a></td>
+  
+    <td class="summary_synopsis"><p>Same as sign_in/3 but also encodes all claims into the JWT</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#sign_out/2">sign_out(conn, the_key \\ :all)</a></td>
+  
+    <td class="summary_synopsis"><p>Sign out of a session</p>
+</td>
+  
+</tr>
+
+        </table>
+      
+
+      
+
+      
+        <section id="functions_details" class="details_list">
+          <h2>Functions</h2>
+          <section class="detail">
+  <div class="detail_header" id="claims/2">
+    <span class="signature"><strong>claims(conn, the_key \\ :default)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#claims/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Fetch the currently verified claims from the current request</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="current_resource/2">
+    <span class="signature"><strong>current_resource(conn, the_key \\ :default)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#current_resource/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Fetch the currently authenticated resource if loaded, optionally located at a location (key)</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="current_token/2">
+    <span class="signature"><strong>current_token(conn, the_key \\ :default)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#current_token/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Fetch the currently verified token from the request. optionally located at a location (key)</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="sign_in/2">
+    <span class="signature"><strong>sign_in(conn, object)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#sign_in/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>sign_in(Plug.Conn.t, any) :: Plug.Conn.t</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Sign in a resource (that your configured serializer knows about) into the current web session.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="sign_in/3">
+    <span class="signature"><strong>sign_in(conn, object, type)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#sign_in/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>sign_in(Plug.Conn.t, any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: Plug.Conn.t</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Sign in a resource (that your configured serializer knows about) into the current web session.</p>
+<p>By specifying the ‘type’ of the token, you’re setting the aud field in the JWT.</p>
+<p>Using the csrf type is special. It will encode the csrf token into the token, and that token is only useful when paired with that csrf</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="sign_in/4">
+    <span class="signature"><strong>sign_in(conn, object, type, claims)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#sign_in/4" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>sign_in(Plug.Conn.t, any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: Plug.Conn.t</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Same as sign_in/3 but also encodes all claims into the JWT.</p>
+<p>The <code class="inline">:key</code> key in the claims map is special in that it sets the location of the storage.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="sign_out/2">
+    <span class="signature"><strong>sign_out(conn, the_key \\ :all)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#sign_out/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Sign out of a session.</p>
+<p>If no key is specified, the entire session is cleared.  Otherwise, only the
+location specified is cleared</p>
+
+  </section>
+  
+</section>
+
+        </section>
+      
+
+      
+
+      
+    </section>
+  </body>
+</html>

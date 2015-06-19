@@ -1,0 +1,233 @@
+/*** DOCUMENT STRUCTURE: module_template.eex ***
+body
+  section#content
+    div.breadcrumbs
+    
+    h1
+      small
+    
+    ul.summary_links
+      li > a
+      ...
+    
+    section.docstring#moduledoc
+    a.view_source
+
+    h2#summary > span.detail_header_links > a.to_top_link
+    table.summary
+      tr
+        td.summary_signature > a
+        td.summary_synopsis > p
+      ...
+    
+    section.details_list#types_details
+      h2 > a.to_top_link
+      div.type_detail
+        p.typespec > a
+      ...
+
+    section.details_list#functions_details
+      h2
+      section.detail
+        div.detail_header
+          span.signature > strong
+        div.detail_header_links
+          span.detail_type
+          a.detail_link
+          a.to_top_link
+          ul.spec
+            li > a
+            ...
+        section.docstring
+        a.view_source
+      ...
+
+*/
+
+/* DOCUMENT STYLES */
+body {
+  font: 13px "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
+  padding: 0 20px;
+}
+
+a:link,
+a:visited {
+  color: #05a;
+  text-decoration: none;
+}
+a:hover {
+  color: #27c;
+}
+
+h1 {
+  font-size: 25px;
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 4px;
+}
+h1 small {
+  color: #888;
+  font-size: 18px;
+}
+h2 {
+  padding: 0;
+  padding-bottom: 3px;
+  border-bottom: 1px #aaa solid;
+  font-size: 1.4em;
+  margin: 1.8em 0 0.5em;
+}
+
+.clear {
+  clear: both;
+}
+
+table {
+  border: 1px solid #aaa;
+  border-collapse: collapse;
+  margin-top: 1em;
+}
+table th {
+  background: #fafafa;
+}
+table th,
+table td {
+  border: 1px solid #ddd;
+  padding: 0.4em 1em 0.4em 0.4em;
+}
+table tr:nth-child(odd) {
+  background: #f0f0f0;
+}
+table tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* OTHERS */
+body.frames {
+  padding: 0 5px;
+}
+li.r1 {
+  background: #f0f0f0;
+}
+li.r2 {
+  background: #fafafa;
+}
+div.breadcrumbs {
+  padding-bottom: 0.5em;
+}
+
+/* SUMMARY LINKS */
+ul.summary_links {
+  margin: 0 0 1em 0;
+  padding: 0em;
+}
+ul.summary_links li {
+  display: inline-block;
+  list-style-type: none;
+  width: 7em;
+  text-align: center;
+  background: #f0f0f0;
+}
+
+/* DOCSTRING */
+section.docstring,
+p.docstring {
+  margin-right: 6em;
+}
+.docstring h1,
+.docstring h2,
+.docstring h3,
+.docstring h4 {
+  padding: 0;
+  border: 0;
+}
+.docstring h1 {
+  font-size: 1.3em;
+}
+.docstring h2 {
+  font-size: 1.2em;
+}
+.docstring h3,
+.docstring h4 {
+  font-size: 1em;
+  padding-top: 10px;
+}
+.docstring ul {
+  padding-left: 20px;
+}
+.docstring li > p {
+  margin: 0;
+}
+
+/* SUMMARY */
+div.detail_header_links {
+  float: right;
+}
+a.to_top_link {
+  padding-left: 0.3em;
+  font-size: 1em;
+  font-weight: normal;
+}
+table.summary {
+  border: 0;
+  border-collapse: separate;
+}
+table.summary tr:nth-child(odd) {
+  background: #f0f0f0;
+}
+table.summary tr:nth-child(even) {
+  background: #fafafa;
+}
+table.summary tr td {
+  border: 0;
+  padding-top: 0.5em; padding-bottom: 0.5em;
+}
+td.summary_signature {
+  padding-right: 0.5em;
+}
+td.summary_synopsis {
+  padding-left: 0.5em;
+}
+td.summary_synopsis p {
+  margin: 0;
+}
+
+/* DETAILS LIST */
+.spec, .typespec {
+  font: bold 1em Courier, monospace;
+}
+ul.spec {
+  padding: 6px 10px 6px 25px;
+  list-style-type: none;
+}
+.type_detail {
+  margin-top: 15px;
+  padding-top: 0;
+}
+.type_detail > div.typespec_doc {
+  margin-left: 3em;
+}
+.detail {
+  border-top: 1px dotted #aaa;
+  margin-top: 15px;
+  padding-top: 0;
+}
+.detail:nth-child(2) {
+  border: 0;
+}
+div.detail_header {
+  background: #e5e8ff;
+  border: 1px solid #d8d8e5;
+  border-radius: 3px;
+  margin-top: 18px;
+  padding: 6px 10px;
+}
+span.signature {
+  font: normal 1.1em Monaco, Consolas, Courier, monospace;
+}
+span.detail_type {
+  font-style: italic;
+  font-size: 0.9em;
+}
+a.detail_link {
+  padding-left: 0.3em;
+}
