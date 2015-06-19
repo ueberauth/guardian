@@ -274,6 +274,64 @@ case Guardian.serializer.from_token(claims) do
 end
 ```
 
+### Phoenix Channels
+
+Guardian uses JWTs to make the integration of authentication management as
+seamless as possible. Channel integration is part of that.
+
+```elixir
+defmodule MyApp.UsersChannel do
+  use Phoenix.Channel
+  use Guardian.Channel
+
+  def join(_room, %{ claims: claims, resource: resource }, socket) do
+    { :ok, %{ message: "Joined" }, socket }
+  end
+
+  def join(room, _, socket) do
+    { :error,  :authentication_required }
+  end
+
+  def handle_in("ping", _payload, socket) do
+    user = Guardian.Channel.current_resource(socket)
+    broadcast socket, "pong", %{ message: "pong", from: user.email }
+    { :noreply, socket }
+  end
+end
+```
+
+Guardian picks up on joins that have been made and automatically verifies the
+token and makes available the claims and resource making the request.
+
+For non csrf protected tokens, the javascript to join a channel is simple.
+
+```javascript
+let socket = new Socket("/ws");
+socket.connect();
+let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
+let chan = socket.chan("pings", { guardian_token: guardianToken });
+```
+
+To add csrf protection, use the csrf token type when signing in, then pass up
+the token when joining.
+
+```javascript
+let socket = new Socket("/ws");
+socket.connect();
+let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
+let csrfToken = jQuery('meta[name="csrf_token"]').attr('content');
+let chan = socket.chan("pings", { guardian_token: guardianToken });
+```
+
+How to get the tokens onto the page?
+
+```eex
+<meta name='csrf_token' content='<%= Plug.CSRFProtection.get_csrf_token %>'>
+<%= if Guardian.Plug.current_token(@conn) do %>
+  <meta name='guardian_token' content="<%= Guardian.Plug.current_token(@conn) %>">
+<% end %>
+```
+
 ### TODO
 
 - [x] Flexible serialization
@@ -281,9 +339,9 @@ end
 - [x] Basic integrations like raw TCP
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
 - [x] Create a "csrf" token type that ensures that CSRF protection is included
-- [ ] Integration with Phoenix channels
+- [x] Integration with Phoenix channels
+- [ ] Integrated permission sets
 - [ ] Flexible strategy based authentication
 - [ ] Two-factor authentication
-- [ ] Integrated permission sets
 - [ ] Single sign-in
 - [ ] Device specific signing
