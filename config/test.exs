@@ -2,7 +2,7 @@ use Mix.Config
 
 config :joken,
        secret_key: "lksjdflksjfowieruwoieruowier",
-       json_module: Guardian.Jwt
+       json_module: Guardian.JWT
 
 config :guardian, Guardian,
       issuer: "MyApp",
