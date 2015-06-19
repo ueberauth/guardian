@@ -332,6 +332,11 @@ How to get the tokens onto the page?
 <% end %>
 ```
 
+# Acknowledgements
+
+Many thanks to Sonny Scroggin (@scrogson) for the name Guardian and great
+feedback to get up and running.
+
 ### TODO
 
 - [x] Flexible serialization
