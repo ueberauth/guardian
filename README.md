@@ -26,7 +26,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.0.1"}
+    {:guardian, "~> 0.1.0"}
     # ...
   ]
 end
@@ -43,6 +43,7 @@ config :guardian, Guardian,
   issuer: "MyApp",
   ttl: { 30, :days },
   verify_issuer: true,
+  secret_key: <guardian secret key>,
   serializer: MyApp.GuardianSerializer
 ```
 
