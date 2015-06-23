@@ -26,7 +26,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.1.0"}
+    {:guardian, "~> 0.1.1"}
     # ...
   ]
 end

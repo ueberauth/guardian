@@ -1,7 +1,7 @@
 defmodule Guardian.Mixfile do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
 
   def project do
     [
@@ -38,7 +38,7 @@ defmodule Guardian.Mixfile do
   defp deps do
     ds = [
       {:calendar, "~> 0.6.7"},
-      {:joken, "~>0.13"},
+      {:joken, "~>0.13.1"},
       {:poison, "~>1.4"},
       {:ex_doc, "~>0.7"},
     ]
