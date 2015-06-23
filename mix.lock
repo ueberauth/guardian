@@ -1,7 +1,7 @@
 %{"calendar": {:hex, :calendar, "0.6.8"},
   "earmark": {:hex, :earmark, "0.1.17"},
   "ex_doc": {:hex, :ex_doc, "0.7.3"},
-  "joken": {:hex, :joken, "0.13.1"},
+  "joken": {:git, "git://github.com/hassox/joken.git", "947d2772f26a86d0cd4e6ce6adc70f72f165ce36", [branch: "use-dict"]},
   "plug": {:hex, :plug, "0.13.0"},
   "poison": {:hex, :poison, "1.4.0"},
   "tzdata": {:hex, :tzdata, "0.1.6"}}

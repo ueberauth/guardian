@@ -151,7 +151,10 @@ defmodule Guardian do
     end
   end
 
-  defp verify_claims!(claims, _), do: { :ok, claims }
+  defp verify_claims!(claims, params) do
+    has_aud_key? = Dict.has_key?(params, :aud)
+    if has_aud_key? && Dict.get(params, :aud) != Dict.get(claims, :aud), do: { :error, :invalid_audience }, else: { :ok, claims }
+  end
 
   defp verify_issuer?, do: config(:verify_issuer, false)
 

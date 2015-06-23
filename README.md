@@ -26,7 +26,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.1.1"}
+    {:guardian, "~> 0.2.0"}
     # ...
   ]
 end
@@ -35,9 +35,7 @@ end
 config.exs
 
 ```elixir
-config :joken,
-  secret_key: <secret key>,
-  json_module: Guardian.JWT
+config :joken, config_module: Guardian.JWT
 
 config :guardian, Guardian,
   issuer: "MyApp",

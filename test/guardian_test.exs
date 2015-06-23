@@ -2,7 +2,7 @@ defmodule GuardianTest do
   use ExUnit.Case, async: true
 
   setup do
-    claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "MyApp", sub: "User:1"}
+    claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "MyApp", sub: "User:1", something_else: "foo"}
     { :ok, jwt} = Joken.encode(claims)
 
     { :ok, %{
@@ -37,16 +37,18 @@ defmodule GuardianTest do
   end
 
   test "verifies the issuer", context do
-    assert Guardian.verify(context.jwt, %{iss: Guardian.config(:issuer)}) == { :ok, context.claims }
+    assert Guardian.verify(context.jwt) == { :ok, context.claims }
   end
 
   test "fails if the issuer is not correct", context do
-    assert Guardian.verify(context.jwt, %{iss: "not the issuer"}) == { :error, :invalid_issuer }
+    claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "not the issuer", sub: "User:1"}
+    { :ok, jwt} = Joken.encode(claims)
+
+    assert Guardian.verify(jwt) == { :error, :invalid_issuer }
   end
 
   test "fails if the expiry has passed", context do
     { :ok, jwt } = Joken.encode(Dict.put(context.claims, :exp, Guardian.Utils.timestamp - 10))
-
     assert Guardian.verify(jwt) == { :error, :token_expired }
   end
 
