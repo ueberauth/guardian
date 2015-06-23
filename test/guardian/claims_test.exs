@@ -60,5 +60,13 @@ defmodule Guardian.ClaimsTest do
     claims = %{ iat: 10 }
     assert Guardian.Claims.ttl(claims) == %{ iat: 10, exp: 10 + 24 * 60 * 60 }
   end
+
+  test "encodes permissions into the claims" do
+    claims = Guardian.Claims.permissions(%{}, default: [:read, :write])
+    assert claims == %{ pem: %{ "default" => 3 } }
+
+    claims = Guardian.Claims.permissions(%{}, other: [:other_read, :other_write])
+    assert claims == %{ pem: %{ "other" => 3 } }
+  end
 end
 
