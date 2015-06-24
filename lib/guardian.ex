@@ -41,8 +41,17 @@ defmodule Guardian do
   @spec mint(any, atom | String.t) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def mint(object, audience), do: mint(object, audience, %{})
 
+  @doc false
+  def mint(object, audience, claims) when is_list(claims), do: mint(object, audience, Enum.into(claims, %{}))
+
   @doc """
   Like mint/2 but also encode anything found inside the claims map into the JWT.
+
+  To encode permissions into the token, use the `:perms` key and pass it a map with the relevant permissions (must be configured)
+
+  ### Example
+
+      Guardian.mint(user, :token, perms: %{ default: [:read, :write] })
   """
   @spec mint(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def mint(object, audience, claims) do
@@ -51,6 +60,9 @@ defmodule Guardian do
       if !csrf_token, do: raise "No CSRF token found"
       claims = Guardian.Claims.csrf(claims, csrf_token)
     end
+
+    perms = Dict.get(claims, :perms, %{})
+    claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete(:perms)
 
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
@@ -143,6 +155,9 @@ defmodule Guardian do
   defp verify_claims!(claims = %{ aud: "csrf"}, params), do: verify_claims!(claims, claims.s_csrf, params)
 
   defp verify_claims!(claims = %{ aud: "csrf" }, nil, _), do: { :error, :invalid_csrf }
+
+  @doc false
+  defp verify_claims!(claims = %{ aud: "csrf" }, signed, params) when is_list(params), do: verify_claims!(claims, signed, Enum.into(params, %{}))
   defp verify_claims!(claims = %{ aud: "csrf" }, signed, params) do
     if Guardian.CSRFProtection.verify(signed, Dict.get(params, :csrf, Dict.get(params, "csrf"))) do
       { :ok, claims }

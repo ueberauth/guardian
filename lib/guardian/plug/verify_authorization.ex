@@ -28,7 +28,7 @@ defmodule Guardian.Plug.VerifyAuthorization do
   import Guardian.Keys
   import Guardian.CSRFProtection
 
-  def init(opts), do: opts
+  def init(opts \\ %{}), do: Enum.into(opts, %{})
 
   def call(conn, opts) do
     key = Dict.get(opts, :key, :default)

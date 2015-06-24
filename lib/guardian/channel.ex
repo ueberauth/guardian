@@ -38,6 +38,7 @@ defmodule Guardian.Channel do
       let chan = socket.chan("pings", { guardian_token: guardianToken, csrf_token: csrfToken });
   """
   defmacro __using__(opts) do
+    opts = Enum.into(opts, %{})
     key = Dict.get(opts, :key, :default)
 
     quote do

@@ -20,7 +20,7 @@ defmodule Guardian.Plug.VerifySession do
   import Guardian.CSRFProtection
 
   @doc false
-  def init(opts), do: opts
+  def init(opts \\ %{}), do: Enum.into(opts, %{})
 
   @doc false
   def call(conn, opts) do

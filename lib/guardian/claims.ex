@@ -14,7 +14,7 @@ defmodule Guardian.Claims do
   Encodes permissions into the claims set. Permissions are stored at the :pem key
   as a map of <type> => <value as int>
   """
-  def permissions(claims, permissions, type \\ :default) do
+  def permissions(claims, permissions) do
     perms = Enum.into(%{}, permissions)
     |> Enum.reduce(%{}, fn({key, list}, acc) -> Dict.put(acc, to_string(key), Guardian.Permissions.to_value(list, key)) end)
     Dict.put(claims, :pem, perms)

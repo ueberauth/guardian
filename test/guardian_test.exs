@@ -40,7 +40,7 @@ defmodule GuardianTest do
     assert Guardian.verify(context.jwt) == { :ok, context.claims }
   end
 
-  test "fails if the issuer is not correct", context do
+  test "fails if the issuer is not correct" do
     claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "not the issuer", sub: "User:1"}
     { :ok, jwt} = Joken.encode(claims)
 
@@ -71,7 +71,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object)" do
-    { :ok, jwt, full_claims } = Guardian.mint("thinger")
+    { :ok, jwt, _ } = Guardian.mint("thinger")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "token"
@@ -82,7 +82,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object, audience)" do
-    { :ok, jwt, full_claims } = Guardian.mint("thinger", "my_aud")
+    { :ok, jwt, _ } = Guardian.mint("thinger", "my_aud")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "my_aud"
@@ -93,7 +93,7 @@ defmodule GuardianTest do
   end
 
   test "mint(object, audience, claims)" do
-    { :ok, jwt, full_claims } = Guardian.mint("thinger", "my_aud", some: "thing")
+    { :ok, jwt, _ } = Guardian.mint("thinger", "my_aud", some: "thing")
 
     { :ok, claims } = Guardian.verify(jwt)
     assert claims.aud == "my_aud"

@@ -87,6 +87,11 @@ will call the `:on_failure` function.
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a pheonix controller.
 
+### Guardian.Plug.EnsurePermissions
+
+Looks for a previously verified token. If one is found, confirms that all listed
+permissions are present in the token. If not, the failure function is called.
+
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
@@ -96,6 +101,15 @@ end
 ```
 
 The failure function must receive the connection, and the connection params.
+
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug Guardian.Plug.EnsurePermissions, on_failure: { MyApp.MyController, :forbidden }, default: [:read, :write]
+end
+```
 
 ### Pipelines
 
@@ -176,7 +190,16 @@ Guardian.Plug.sign_in(conn, user, :csrf) # sign in using a csrf signed token
 
 Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to use for the token jwt
 
-Guardian.Plug.sign_in(conn, user, :token, %{ key: :secret })  # create a token in the :secret location
+Guardian.Plug.sign_in(conn, user, :token, key: :secret)  # create a token in the :secret location
+```
+
+To attach permissions to the token, use the `:perms` key and pass it a map.
+Note. To add permissions, you should configure them in your guardian config.
+
+```elixir
+Guardian.Plug.sign_in(conn, user, :csrf, perms: %{ default: [:read, :write], admin: [:all] })
+
+Guardian.Plug.sign_in(conn, user, :token, key: :secret, perms: %{ default: [:read, :write], admin: [:all]})  # create a token in the :secret location
 ```
 
 ### Guardian.Plug.sign\_out
@@ -228,13 +251,19 @@ CSRF token protection can be put into the JWT that is produced when you mint.
 When you're inside a plug, you can simply call mint with the type
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.Plug.sign_in(resource, :csrf)
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf)
 ```
 
 If you are not inside plug, you'll need to supply the csrf token to use.
 
 ```elixir
 { :ok, jwt, full_claims } = Guardian.mint(resource, :csrf, %{ csrf: "some token" })
+```
+
+Add some permissions
+
+```elixir
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf, csrf: "some token", perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
 ```
 
 Currently suggested token types are:
@@ -272,6 +301,58 @@ case Guardian.serializer.from_token(claims) do
   { :error, reason } -> do_things_without_a_resource(reason)
 end
 ```
+
+### Permissions
+
+Guardian includes support for including permissions. Declare your permissions in
+your configuration. All known permissions must be included.
+
+```elixir
+config :guardian, Guardian,
+       permissions: %{
+         default: [:read, :write],
+         admin: [:dashboard, :reconcile]
+       }
+```
+
+JWTs need to be kept reasonably small so that they can fit into an authorization
+header. For this reason, permissions are encded as bits (an integer) in the
+token. You can have up to 64 permissions per set, and as many sets as you like.
+In the example above, we have the `:default` set, and the `:admin` set.
+
+The bit value of the permissions within a set is determined by it's position in
+the config.
+
+```elixir
+# Fetch permissions from the claims map
+
+Guardian.Permissions.from_claims(claims, :default)
+Guardian.Permissions.from_claims(claims, :admin)
+
+# Check the permissions for all present
+
+Guardian.Permissions.from_claims(claims, :default) |> Guardian.Permissions.all?([:read, :write], :default)
+Guardian.Permissions.from_claims(claims, :admin) |> Guardian.Permissions.all?([:reconcile], :admin)
+
+# Check for any permissions
+Guardian.Permissions.from_claims(claims, :default) |> Guardian.Permissions.any?([:read, :write], :default)
+Guardian.Permissions.from_claims(claims, :admin) |> Guardian.Permissions.any?([:reconcile, :dashboard], :admin)
+```
+
+You can use a plug to ensure permissions are present. See Guardian.Plug.EnsurePermissions
+
+#### Setting permissions
+
+When you mint (or sign in) a token, you can inject permissions into it.
+
+```elixir
+Guardian.mint(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
+```
+
+By setting a permission using Guardian.Permission.max you're setting all the bits, so event if new permissions are added, they will be set.
+
+You can similarly pass a `:perms` key to the sign\_in method to have the
+permissions encoded into the token.
 
 ### Phoenix Channels
 
@@ -344,7 +425,7 @@ feedback to get up and running.
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
 - [x] Create a "csrf" token type that ensures that CSRF protection is included
 - [x] Integration with Phoenix channels
-- [ ] Integrated permission sets
+- [x] Integrated permission sets
 - [ ] Hooks into the authentication cycle
 - [ ] Flexible strategy based authentication
 - [ ] Two-factor authentication

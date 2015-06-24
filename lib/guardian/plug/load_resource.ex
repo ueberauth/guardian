@@ -11,7 +11,7 @@ defmodule Guardian.Plug.LoadResource do
   """
 
   @doc false
-  def init(opts), do: opts
+  def init(opts \\ %{}), do: Enum.into(opts, %{})
 
   @doc false
   def call(conn, opts) do

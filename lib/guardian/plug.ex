@@ -36,10 +36,20 @@ defmodule Guardian.Plug do
   @spec sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
 
+  @doc false
+  def sign_in(conn, object, type, claims) when is_list(claims), do: sign_in(conn, object, type, Enum.into(claims, %{}))
+
   @doc """
   Same as sign_in/3 but also encodes all claims into the JWT.
 
   The `:key` key in the claims map is special in that it sets the location of the storage.
+
+  The :perms key will provide the ability to encode permissions into the token. The value at :perms should be a map
+
+  ### Example
+
+      Guaridan.sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
+
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
   def sign_in(conn, object, type, claims) do

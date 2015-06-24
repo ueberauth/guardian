@@ -14,7 +14,7 @@ defmodule Guardian.Plug.EnsureSession do
 
   @doc false
   def init(opts) do
-    IO.inspect(opts)
+    opts = Enum.into(opts, %{})
     case Dict.get(opts, :on_failure) do
       { _mod, _meth } -> opts
       _ -> raise "Requires an on_failure function { Mod, :function_name }"

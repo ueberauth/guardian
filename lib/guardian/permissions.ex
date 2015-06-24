@@ -34,8 +34,8 @@ defmodule Guardian.Permissions do
       Guardian.Permissions.to_list(3) # [:read_profile, :write_profile]
 
       # Accessing 'admin' permissions (see config above)
-      Guardian.Permissions.to_value([:financials_read, :financials_write]) # 12
-      Guardian.Permissions.to_list(12) # [:financials_read, :financials_write]
+      Guardian.Permissions.to_value([:financials_read, :financials_write], :admin) # 12
+      Guardian.Permissions.to_list(12, :admin) # [:financials_read, :financials_write]
 
       # Checking permissions
       Guardian.Permissions.all?(3, [:users_read, :users_write], :admin) # true
@@ -58,14 +58,18 @@ defmodule Guardian.Permissions do
       Guardian.Permissions.from_claims(claims, :admin) # 1
 
       # returns [:users_read]
-      Guardian.Permissions.from_claims(claims)
-      |> Guardian.Permissions.to_list
+      Guardian.Permissions.from_claims(claims) |> Guardian.Permissions.to_list
 
   ### Adding permissions to claims
 
   This will encode the permissions as a map with integer values
 
       Guardian.Claims.permissions(existing_claims, admin: [:users_read], default: [:read_item, :write_item])
+
+  Assign all permissions (and all future ones)
+
+      max = Guardian.Permissions.max
+      Guardian.Claims.permissions(existing_claims, admin: max, default: max)
 
   ### Signing in with permissions
 
@@ -82,8 +86,9 @@ defmodule Guardian.Permissions do
   """
   use Bitwise
 
-  perms = Guardian.config(:permissions, %{})
+  perms = Enum.into(Guardian.config(:permissions, %{}), %{})
   @perms perms
+  @max -1
 
   expanded_perms = Enum.reduce(perms, %{}, fn({key, values}, acc) ->
     perms_as_values = Enum.with_index(values) |> Enum.reduce(%{}, fn({ name, idx}, acc) ->
@@ -97,6 +102,7 @@ defmodule Guardian.Permissions do
     Enum.map(values, fn({name, val}) ->
       def to_value([unquote(name) | tail], unquote(type), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
       def to_value([unquote(to_string(name)) | tail], unquote(type), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
+      #def to_value(num, acc) when is_integer(num) and Bitwise.band(num, unquote(val)) == unquote(val), do: to_value(Bitwise.bxor(num, unquote(val), unquote(type), Bitwise.bor(acc, unquote(val)))
 
       def to_list(num, unquote(type), existing_list) when Bitwise.band(unquote(val), num) == unquote(val) do
         to_list(num ^^^ unquote(val), unquote(type), [ unquote(name) | existing_list])
@@ -114,6 +120,8 @@ defmodule Guardian.Permissions do
     end
   end)
 
+  def max, do: @max
+
   @doc """
   Fetches the list of known permissions for the given type
   """
@@ -125,6 +133,17 @@ defmodule Guardian.Permissions do
   """
   @spec available :: List
   def available, do: Dict.get(@perms, :default, [])
+
+
+  def all?(value, expected, key \\ :default) do
+    expected_value = to_value(expected, key)
+    (to_value(value, key) &&& expected_value) == expected_value
+  end
+
+  def any?(value, expected, key \\ :default) do
+    expected_value = to_value(expected, key)
+    (to_value(value, key) &&& expected_value) > 0
+  end
 
   @doc """
   Fetches the permissions from the claims. Permissions live in the :pem key and are a map
@@ -140,13 +159,19 @@ defmodule Guardian.Permissions do
   @doc """
   Fetches the value as a bitstring (integer) of the list of permissions in the default list
   """
-  def to_value(list), do: to_value(list, :default)
+  def to_value(list) when is_list(list), do: to_value(list, :default)
+
+  @doc """
+  Fetches the value as a bitstring (integer) of the list of permissions in the `type` list
+  """
+  @spec to_value(Integer) :: Integer
+  def to_value(num) when is_integer(num), do: num
 
   @doc """
   Fetches the value as a bitstring (integer) of the list of permissions in the `type` list
   """
   @spec to_value(Integer, atom) :: Integer
-  def to_value(num, type) when is_integer(num), do: to_list(num, type) |> to_value
+  def to_value(num, type) when is_integer(num), do: num
 
   @doc false
   def to_value(list, type) when is_list(list), do: to_value(list, type, 0)

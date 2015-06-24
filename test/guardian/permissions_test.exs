@@ -34,7 +34,16 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "fetches the values from an integer" do
-    assert Permissions.to_value(271) == 15
+    assert Permissions.to_value(271) == 271
+  end
+
+  test "when using max permissions all permissions are available" do
+    assert Enum.sort(Permissions.to_list(Permissions.max)) == [:delete, :read, :update, :write]
+    assert Enum.sort(Permissions.to_list(Permissions.max, :other)) == [:other_delete, :other_read, :other_update, :other_write]
+  end
+
+  test "fetches the values from an integer with a type" do
+    assert Permissions.to_value(271, :other) == 271
   end
 
   test "handles an empty list when fetching values" do
@@ -74,6 +83,56 @@ defmodule Guardian.PermissionsTest do
 
   test "from_claims with an unknown type", context do
     assert Permissions.from_claims(context, "not_there") == 0
+  end
+
+  test "all? is true if all values are present" do
+    val = Permissions.to_value([:read, :write, :update])
+
+    assert Permissions.all?(val, val) == true
+    assert Permissions.all?(val, [:read, :write, :update]) == true
+
+    expected_val = Permissions.to_value([:read, :write, :update, :delete])
+
+    assert Permissions.all?(val, expected_val) == false
+    assert Permissions.all?(val, [:read, :write, :update, :delete]) == false
+  end
+
+  test "any? is true if any values are present" do
+    val = Permissions.to_value([:read, :write, :update])
+
+    assert Permissions.any?(val, val) == true
+    assert Permissions.any?(val, [:read, :write, :update]) == true
+
+    assert Permissions.any?(val, 1) == true
+    assert Permissions.any?(val, [:read]) == true
+
+    assert Permissions.any?(val, 0) == false
+    assert Permissions.any?(val, [:delete]) == false
+  end
+
+  test "all? is true if all values are present with a non-default set" do
+    val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
+
+    assert Permissions.all?(val, val, :other) == true
+    assert Permissions.all?(val, [:other_read, :other_write, :other_update], :other) == true
+
+    expected_val = Permissions.to_value([:other_read, :other_write, :other_update, :other_delete], :other)
+
+    assert Permissions.all?(val, expected_val, :other) == false
+    assert Permissions.all?(val, [:other_read, :other_write, :other_update, :other_delete], :other) == false
+  end
+
+  test "any? is true if any values are present with a non-default set" do
+    val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
+
+    assert Permissions.any?(val, val, :other) == true
+    assert Permissions.any?(val, [:other_read, :other_write, :other_update], :other) == true
+
+    assert Permissions.any?(val, 1, :other) == true
+    assert Permissions.any?(val, [:other_read], :other) == true
+
+    assert Permissions.any?(val, 0, :other) == false
+    assert Permissions.any?(val, [:delete], :other) == false
   end
 end
 

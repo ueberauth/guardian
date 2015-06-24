@@ -6,6 +6,8 @@ defmodule Guardian.CSRFProtection do
   if !Guardian.config(:secret_key), do: raise "Guardian requires a secret_key"
 
   @doc false
+  def signature(nil), do: nil
+  @doc false
   def signature(csrf_token), do: sign(csrf_token)
 
   @doc false
