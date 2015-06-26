@@ -3,7 +3,7 @@ defmodule Guardian.CSRFProtection do
   alias Plug.Crypto.KeyGenerator
   alias Plug.Crypto.MessageEncryptor
 
-  if !Guardian.config(:secret_key), do: raise "Guardian requires a secret_key"
+  if !Guardian.config(:secret_key), do: IO.puts "Warning: Guardian requires a secret_key"
 
   @doc false
   def signature(nil), do: nil
