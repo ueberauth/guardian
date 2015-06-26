@@ -70,14 +70,23 @@ defmodule Guardian do
         |> Guardian.Claims.aud(audience)
         |> Guardian.Claims.sub(sub)
 
-        case Joken.encode(full_claims) do
-          { :ok, jwt } -> { :ok, jwt, full_claims }
-          { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
-          { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
+        case Guardian.hooks_module.before_mint(object, audience, full_claims) do
+          { :ok, { resource, t, hooked_claims } } ->
+            case Joken.encode(hooked_claims) do
+              { :ok, jwt } ->
+                Guardian.hooks_module.after_mint(resource, t, hooked_claims, jwt)
+                { :ok, jwt, hooked_claims }
+              { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
+              { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
+            end
+          { :error, reason } -> { :error, reason }
         end
       { :error, reason } -> { :error, reason }
     end
   end
+
+  @doc false
+  def hooks_module, do: config(:hooks, Guardian.Hooks.Default)
 
   @doc """
   Fetch the configured serializer module

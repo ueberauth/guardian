@@ -354,6 +354,37 @@ By setting a permission using Guardian.Permission.max you're setting all the bit
 You can similarly pass a `:perms` key to the sign\_in method to have the
 permissions encoded into the token.
 
+### Hooks
+
+Often you'll need to take action on some event within the lifecycle of
+authentication. Recording logins etc. Guardian provides hooks to allow you to do
+this. Use the Guardian.Hooks module to setup. Default implementations are
+available for all callbacks.
+
+```elixir
+defmodule MyApp.GuardianHooks do
+  use Guardian.Hooks
+
+  def after_sign_in(conn, location) do
+    user = Guardian.Plug.current_resource(conn, location)
+    IO.puts("SIGNED INTO LOCATION WITH: #{user.email}")
+    conn
+  end
+end
+```
+
+Configure Guardian to know which module to use.
+
+```elixir
+config :guardian, Guardian,
+       hooks: MyApp.GuardianHooks,
+       #…
+```
+
+
+
+
+
 ### Phoenix Channels
 
 Guardian uses JWTs to make the integration of authentication management as
