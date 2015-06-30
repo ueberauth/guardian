@@ -4,7 +4,7 @@ Guardian
 An authentication framework for use with Elixir applications.
 
 Guardian is based on similar ideas to Warden and Omniauth but is re-imagined
-for modern systems where Elixir manages the authentication requrements.
+for modern systems where Elixir manages the authentication requirements.
 
 Guardian remains a functional system. It integrates with Plug, but can be used
 outside of it. If you're implementing a TCP/UDP protocol directly, or want to
