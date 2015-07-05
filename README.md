@@ -349,7 +349,7 @@ When you mint (or sign in) a token, you can inject permissions into it.
 Guardian.mint(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
 ```
 
-By setting a permission using Guardian.Permission.max you're setting all the bits, so event if new permissions are added, they will be set.
+By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.
 
 You can similarly pass a `:perms` key to the sign\_in method to have the
 permissions encoded into the token.
