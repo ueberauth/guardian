@@ -87,11 +87,6 @@ will call the `:on_failure` function.
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a pheonix controller.
 
-### Guardian.Plug.EnsurePermissions
-
-Looks for a previously verified token. If one is found, confirms that all listed
-permissions are present in the token. If not, the failure function is called.
-
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
@@ -102,6 +97,10 @@ end
 
 The failure function must receive the connection, and the connection params.
 
+### Guardian.Plug.EnsurePermissions
+
+Looks for a previously verified token. If one is found, confirms that all listed
+permissions are present in the token. If not, the failure function is called.
 
 ```elixir
 defmodule MyApp.MyController do
