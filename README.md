@@ -87,11 +87,6 @@ will call the `:on_failure` function.
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a pheonix controller.
 
-### Guardian.Plug.EnsurePermissions
-
-Looks for a previously verified token. If one is found, confirms that all listed
-permissions are present in the token. If not, the failure function is called.
-
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
@@ -102,6 +97,10 @@ end
 
 The failure function must receive the connection, and the connection params.
 
+### Guardian.Plug.EnsurePermissions
+
+Looks for a previously verified token. If one is found, confirms that all listed
+permissions are present in the token. If not, the failure function is called.
 
 ```elixir
 defmodule MyApp.MyController do
@@ -349,7 +348,7 @@ When you mint (or sign in) a token, you can inject permissions into it.
 Guardian.mint(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
 ```
 
-By setting a permission using Guardian.Permission.max you're setting all the bits, so event if new permissions are added, they will be set.
+By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.
 
 You can similarly pass a `:perms` key to the sign\_in method to have the
 permissions encoded into the token.
