@@ -40,7 +40,7 @@ defmodule Guardian.Plug.EnsurePermissions do
           Guardian.Permissions.all?(found_perms, Dict.get(perms, perm_key), perm_key)
         end)
         if result, do: conn, else: handle_error(conn, opts)
-      { :error, reason } -> handle_error(conn, opts)
+      { :error, _ } -> handle_error(conn, opts)
     end
   end
 

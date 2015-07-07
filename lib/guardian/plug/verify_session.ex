@@ -44,7 +44,6 @@ defmodule Guardian.Plug.VerifySession do
         else
           conn
         end
-      _ -> conn
     end
   end
 end

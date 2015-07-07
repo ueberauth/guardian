@@ -49,4 +49,49 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
     assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
   end
+
+  test "with a realm specified", context do
+    the_conn = put_req_header(context.conn, "authorization", "Bearer #{context.jwt}")
+
+    opts = VerifyAuthorization.init(realm: "Bearer")
+
+    conn = VerifyAuthorization.call(the_conn, opts)
+    assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
+    assert conn.assigns[Keys.jwt_key] == context.jwt
+  end
+
+  test "with a realm specified and multiple auth headers", context do
+    claims2 = Claims.app_claims(%{ sub: "user2", aud: "aud2" })
+    { :ok, jwt2 } = Joken.encode(claims2)
+
+    the_conn = context.conn
+    |> put_req_header("authorization", "Bearer #{context.jwt}")
+    |> put_req_header("authorization", "Client #{jwt2}")
+
+    opts = VerifyAuthorization.init(realm: "Client")
+
+    conn = VerifyAuthorization.call(the_conn, opts)
+    assert conn.assigns[Keys.claims_key] == { :ok, claims2 }
+    assert conn.assigns[Keys.jwt_key] == jwt2
+  end
+
+  test "pulls different tokens into different locations", context do
+    claims2 = Claims.app_claims(%{ sub: "user2", aud: "aud2" })
+    { :ok, jwt2 } = Joken.encode(claims2)
+
+    # Can't use the put_req_header here since it overrides previous values
+    the_conn = %{ context.conn | req_headers: [{"authorization", "Bearer #{context.jwt}"}, {"authorization", "Client #{jwt2}"}] }
+
+    defaultOpts = VerifyAuthorization.init(realm: "Bearer")
+    clientOpts = VerifyAuthorization.init(realm: "Client", key: :client)
+
+    conn = the_conn
+    |> VerifyAuthorization.call(defaultOpts)
+    |> VerifyAuthorization.call(clientOpts)
+
+    assert conn.assigns[Keys.claims_key(:client)] == { :ok, claims2 }
+    assert conn.assigns[Keys.jwt_key(:client)] == jwt2
+    assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
+    assert conn.assigns[Keys.jwt_key] == context.jwt
+  end
 end
