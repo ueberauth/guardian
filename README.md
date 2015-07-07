@@ -13,6 +13,10 @@ utilize your authentication via channels, Guardian is your friend.
 The core currency of authentication in Guardian is JWT. You can use the JWT to
 authenticate web endpoints, channels, and TCP sockets.
 
+### UPDATE
+
+Temporarily the `:csrf` token type is not recommended. Plug has started to use masked tokens which currently do not work. I'm working to find a solution but until then they will not work :'(
+
 ## Installation
 
 Guardian relies on [Joken](https://github.com/bryanjos/joken). You'll need to
