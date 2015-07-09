@@ -2,6 +2,9 @@ defmodule Guardian.PlugTest do
   require Plug.Test
   use ExUnit.Case, async: true
   use Plug.Test
+  import Guardian.TestHelper
+
+  alias Plug.Session.COOKIE, as: CookieStore
 
   setup do
     { :ok, %{ conn: conn(:post, "/") } }
@@ -104,35 +107,85 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.current_token(context.conn, :secret) == nil
   end
 
-  # TODO work out how to test with plugs
-  # test "sign_out/1", context do
-  #   cleared_conn = context.conn
-  #   |> Plug.Conn.assign(Guardian.Keys.claims_key(:default), %{ claims: "yeah" })
-  #   |> Plug.Conn.assign(Guardian.Keys.claims_key(:secret), %{ claims: "yeah" })
-  #   |> Plug.Conn.assign(Guardian.Keys.resource_key(:default), "resource")
-  #   |> Plug.Conn.assign(Guardian.Keys.resource_key(:secret), "resource")
-  #   |> Plug.Conn.assign(Guardian.Keys.jwt_key(:default), "token")
-  #   |> Plug.Conn.assign(Guardian.Keys.jwt_key(:secret), "token")
-  #   |> Guardian.Plug.sign_out
+  test "sign_out/1", context do
+    conn = conn_with_fetched_session(context.conn)
+    |> Guardian.Plug.sign_in(%{ user: "here" }, :token)
 
-  #   assert cleared_conn.assigns[Guardian.Keys.claims_key(:default)] == nil
-  #   assert cleared_conn.assigns[Guardian.Keys.claims_key(:secret)] == nil
-  #   assert cleared_conn.assigns[Guardian.Keys.resource_key(:default)] == nil
-  #   assert cleared_conn.assigns[Guardian.Keys.resource_key(:secret)] == nil
-  #   assert cleared_conn.assigns[Guardian.Keys.jwt_key(:default)] == nil
-  #   assert cleared_conn.assigns[Guardian.Keys.jwt_key(:secret)] == nil
-  # end
+    assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
 
-  # test "sign_out/2", context do
-  # end
+    cleared_conn = conn
+    |> Plug.Conn.assign(Guardian.Keys.claims_key(:default), %{ claims: "yeah" })
+    |> Plug.Conn.assign(Guardian.Keys.claims_key(:secret), %{ claims: "yeah" })
+    |> Plug.Conn.assign(Guardian.Keys.resource_key(:default), "resource")
+    |> Plug.Conn.assign(Guardian.Keys.resource_key(:secret), "resource")
+    |> Plug.Conn.assign(Guardian.Keys.jwt_key(:default), "token")
+    |> Plug.Conn.assign(Guardian.Keys.jwt_key(:secret), "token")
+    |> Guardian.Plug.sign_out
 
-  # test "sign_in(object)", context do
-  # end
+    assert cleared_conn.assigns[Guardian.Keys.claims_key(:default)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.claims_key(:secret)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.resource_key(:default)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.resource_key(:secret)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.jwt_key(:default)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.jwt_key(:secret)] == nil
+  end
 
-  # test "sign_in(object, type)", context do
-  # end
+  test "sign_out/2", context do
+    conn = conn_with_fetched_session(context.conn)
 
-  # test "sign_in(object, claims)", context do
-  # end
+    cleared_conn = conn
+    |> Plug.Conn.assign(Guardian.Keys.claims_key(:secret), %{ claims: "admin" })
+    |> Plug.Conn.assign(Guardian.Keys.claims_key(:default), %{ claims: "default" })
+    |> Plug.Conn.assign(Guardian.Keys.resource_key(:secret), "admin_resource")
+    |> Plug.Conn.assign(Guardian.Keys.resource_key(:default), "default_resource")
+    |> Plug.Conn.assign(Guardian.Keys.jwt_key(:secret), "admin_token")
+    |> Plug.Conn.assign(Guardian.Keys.jwt_key(:default), "default_token")
+    |> Guardian.Plug.sign_out(:secret)
+
+    assert cleared_conn.assigns[Guardian.Keys.claims_key(:secret)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.claims_key] == %{ claims: "default" }
+    assert cleared_conn.assigns[Guardian.Keys.resource_key(:secret)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.resource_key] == "default_resource"
+    assert cleared_conn.assigns[Guardian.Keys.jwt_key(:secret)] == nil
+    assert cleared_conn.assigns[Guardian.Keys.jwt_key] == "default_token"
+  end
+
+  test "sign_in(object)", context do
+    conn = conn_with_fetched_session(context.conn)
+    |> Guardian.Plug.sign_in(%{user: "here"})
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+  end
+
+  test "sign_in(object, type)", context do
+    conn = conn_with_fetched_session(context.conn)
+    |> Guardian.Plug.sign_in(%{user: "here"})
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+
+    jwt = conn.assigns[Guardian.Keys.jwt_key]
+    { :ok, claims } = Guardian.verify(jwt)
+
+    assert claims.sub.user == "here"
+  end
+
+  test "sign_in(object, type, claims)", context do
+    conn = conn_with_fetched_session(context.conn)
+    |> Guardian.Plug.sign_in(%{user: "here"}, :token, here: "we are")
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+
+    jwt = conn.assigns[Guardian.Keys.jwt_key]
+    { :ok, claims } = Guardian.verify(jwt)
+
+    assert claims.sub.user == "here"
+    assert claims.here == "we are"
+  end
 end
 

@@ -1,3 +1,8 @@
+# v 0.4.0
+
+Remove CSRF tokens support. CSRF tokens are masked and so cannot be adequately
+implemented.
+
 # v 0.3.0
 
 * Add callback hooks for authentication things

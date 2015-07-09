@@ -17,7 +17,6 @@ defmodule Guardian.Plug.VerifySession do
   In the case of an error, the claims will be set to { :error, reason }
   """
   import Guardian.Keys
-  import Guardian.CSRFProtection
 
   @doc false
   def init(opts \\ %{}), do: Enum.into(opts, %{})
@@ -25,27 +24,28 @@ defmodule Guardian.Plug.VerifySession do
   @doc false
   def call(conn, opts) do
     key = Dict.get(opts, :key, :default)
-    jwt = Plug.Conn.get_session(conn, base_key(key))
 
-    if jwt do
-      case Guardian.verify(jwt, %{ csrf: fetch_csrf_token(conn) }) do
-        { :ok, claims } ->
+    case Guardian.Plug.claims(conn, key) do
+      { :ok, _ } -> conn
+      { :error, :no_session } ->
+        jwt = Plug.Conn.get_session(conn, base_key(key))
+
+        if jwt do
+          case Guardian.verify(jwt, %{ }) do
+            { :ok, claims } ->
+              conn
+              |> Guardian.Plug.set_claims({ :ok, claims }, key)
+              |> Guardian.Plug.set_current_token(jwt, key)
+            { :error, reason } ->
+              conn
+              |> Plug.Conn.delete_session(base_key(key))
+              |> Guardian.Plug.set_claims({ :error, reason }, key)
+          end
+        else
           conn
-          |> Guardian.Plug.set_claims({ :ok, claims }, key)
-          |> Guardian.Plug.set_current_token(jwt, key)
-        { :error, reason } ->
-          conn
-          |> Plug.Conn.delete_session(base_key(key))
-          |> Guardian.Plug.set_claims({ :error, reason }, key)
-      end
-    else
-      conn
+        end
+      _ -> conn
     end
-  end
-
-  @doc false
-  defp fetch_csrf_token(conn) do
-    csrf_from_header(conn) || csrf_from_params(conn) || csrf_from_session(conn)
   end
 end
 

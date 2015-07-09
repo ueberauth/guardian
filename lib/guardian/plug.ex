@@ -7,8 +7,8 @@ defmodule Guardian.Plug do
   ## Example
 
       Guarian.Plug.sign_in(conn, user)
-      Guardian.Plug.sign_in(conn, user, :csrf)
-      Guardian.Plug.sign_in(conn, user, :csrf, %{ claims: "i", make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)
+      Guardian.Plug.sign_in(conn, user, :token)
+      Guardian.Plug.sign_in(conn, user, :token, %{ claims: "i", make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)
 
 
   ## Example
@@ -30,8 +30,6 @@ defmodule Guardian.Plug do
   Sign in a resource (that your configured serializer knows about) into the current web session.
 
   By specifying the 'type' of the token, you're setting the aud field in the JWT.
-
-  Using the csrf type is special. It will encode the csrf token into the token, and that token is only useful when paired with that csrf
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
@@ -55,11 +53,6 @@ defmodule Guardian.Plug do
   def sign_in(conn, object, type, claims) do
     the_key = Dict.get(claims, :key, :default)
     claims = Dict.delete(claims, :key)
-
-    if type == :csrf || type == "csrf" do
-      csrf_token = Dict.get(claims, :csrf, Dict.get(claims, "csrf", Plug.CSRFProtection.get_csrf_token))
-      claims = Dict.put(claims, :csrf, csrf_token)
-    end
 
     case Guardian.mint(object, type, claims) do
       { :ok, jwt, full_claims } ->
@@ -141,6 +134,8 @@ defmodule Guardian.Plug do
   defp sign_out_via_key(conn, the_key) do
     Plug.Conn.delete_session(conn, claims_key(the_key))
     |> clear_resource_assign(the_key)
+    |> clear_claims_assign(the_key)
+    |> clear_jwt_assign(the_key)
   end
 
   defp clear_resource_assign(conn, :all) do
@@ -150,5 +145,21 @@ defmodule Guardian.Plug do
   end
 
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
+
+  defp clear_claims_assign(conn, :all) do
+    Dict.keys(conn.assigns)
+    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_")))
+    |> Enum.reduce(conn, fn(key, c) -> Plug.Conn.assign(c, key, nil) end)
+  end
+
+  defp clear_claims_assign(conn, key), do: Plug.Conn.assign(conn, claims_key(key), nil)
+
+  defp clear_jwt_assign(conn, :all) do
+    Dict.keys(conn.assigns)
+    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_")))
+    |> Enum.reduce(conn, fn(key, c) -> Plug.Conn.assign(c, key, nil) end)
+  end
+
+  defp clear_jwt_assign(conn, key), do: Plug.Conn.assign(conn, jwt_key(key), nil)
 end
 

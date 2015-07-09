@@ -11,7 +11,8 @@ outside of it. If you're implementing a TCP/UDP protocol directly, or want to
 utilize your authentication via channels, Guardian is your friend.
 
 The core currency of authentication in Guardian is JWT. You can use the JWT to
-authenticate web endpoints, channels, and TCP sockets.
+authenticate web endpoints, channels, and TCP sockets and it can contain any
+authenticated assertions that the issuer wants to include.
 
 ### UPDATE
 
@@ -30,7 +31,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.2.0"}
+    {:guardian, "~> 0.4.0"}
     # ...
   ]
 end
@@ -189,8 +190,6 @@ Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
 ```
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :csrf) # sign in using a csrf signed token
-
 Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to use for the token jwt
 
 Guardian.Plug.sign_in(conn, user, :token, key: :secret)  # create a token in the :secret location
@@ -200,7 +199,7 @@ To attach permissions to the token, use the `:perms` key and pass it a map.
 Note. To add permissions, you should configure them in your guardian config.
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :csrf, perms: %{ default: [:read, :write], admin: [:all] })
+Guardian.Plug.sign_in(conn, user, :token, perms: %{ default: [:read, :write], admin: [:all] })
 
 Guardian.Plug.sign_in(conn, user, :token, key: :secret, perms: %{ default: [:read, :write], admin: [:all]})  # create a token in the :secret location
 ```
@@ -250,32 +249,20 @@ This will give you a minted JWT to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
 used as the _type_ of token.
 
-CSRF token protection can be put into the JWT that is produced when you mint.
-When you're inside a plug, you can simply call mint with the type
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf)
-```
-
-If you are not inside plug, you'll need to supply the csrf token to use.
-
-```elixir
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf, %{ csrf: "some token" })
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :token)
 ```
 
 Add some permissions
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :csrf, csrf: "some token", perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
+{ :ok, jwt, full_claims } = Guardian.mint(resource, :token, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
 ```
 
 Currently suggested token types are:
 
-* `"token"` - Use for API or CORS access. These are basic tokens with no csrf checking.
-* `"csrf"` - Use for browser based access. These require a the CSRF token signed into the token to match the CSRF token for the request
-
-There is a todo on Guardian to integrate signed csrf for a "csrf" token type and
-perform csrf checking.
+* `"token"` - Use for API or CORS access. These are basic tokens.
 
 You can also customize the claims you're asserting.
 
@@ -384,10 +371,6 @@ config :guardian, Guardian,
        #…
 ```
 
-
-
-
-
 ### Phoenix Channels
 
 Guardian uses JWTs to make the integration of authentication management as
@@ -417,8 +400,6 @@ end
 Guardian picks up on joins that have been made and automatically verifies the
 token and makes available the claims and resource making the request.
 
-For non csrf protected tokens, the javascript to join a channel is simple.
-
 ```javascript
 let socket = new Socket("/ws");
 socket.connect();
@@ -426,21 +407,9 @@ let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
 let chan = socket.chan("pings", { guardian_token: guardianToken });
 ```
 
-To add csrf protection, use the csrf token type when signing in, then pass up
-the token when joining.
-
-```javascript
-let socket = new Socket("/ws");
-socket.connect();
-let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
-let csrfToken = jQuery('meta[name="csrf_token"]').attr('content');
-let chan = socket.chan("pings", { guardian_token: guardianToken, csrf_token: csrfToken });
-```
-
 How to get the tokens onto the page?
 
 ```eex
-<meta name='csrf_token' content='<%= Plug.CSRFProtection.get_csrf_token %>'>
 <%= if Guardian.Plug.current_token(@conn) do %>
   <meta name='guardian_token' content="<%= Guardian.Plug.current_token(@conn) %>">
 <% end %>
@@ -457,11 +426,12 @@ feedback to get up and running.
 - [x] Integration with Plug
 - [x] Basic integrations like raw TCP
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
-- [x] Create a "csrf" token type that ensures that CSRF protection is included
+- [-] Create a "csrf" token type that ensures that CSRF protection is included
 - [x] Integration with Phoenix channels
 - [x] Integrated permission sets
-- [ ] Hooks into the authentication cycle
-- [ ] Flexible strategy based authentication
+- [x] Hooks into the authentication cycle
+- [ ] Revoke tokens
+- [ ] Refresh tokens
 - [ ] Two-factor authentication
 - [ ] Single sign-in
-- [ ] Device specific signing
+- [ ] Device specific signing (can be implemented via custom claims atm)
