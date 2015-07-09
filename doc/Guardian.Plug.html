@@ -25,7 +25,7 @@
     </script>
 
     <section id="content">
-      <div class="breadcrumbs">guardian v0.1.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a></div>
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a></div>
       <h1>
         Guardian.Plug
         
@@ -49,8 +49,8 @@
 <p>Guardian.Plug is not itself a plug.</p>
 <h2>Example</h2>
 <pre><code class="elixir">Guarian.Plug.sign_in(conn, user)
-Guardian.Plug.sign_in(conn, user, :csrf)
-Guardian.Plug.sign_in(conn, user, :csrf, %{ claims: &quot;i&quot;, make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)</code></pre>
+Guardian.Plug.sign_in(conn, user, :token)
+Guardian.Plug.sign_in(conn, user, :token, %{ claims: &quot;i&quot;, make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)</code></pre>
 <h2>Example</h2>
 <pre><code class="elixir">Guardian.Plug.sign_out(conn) # sign out all sessions
 Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session</code></pre>
@@ -212,7 +212,6 @@ Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session</code>
   <section class="docstring">
     <p>Sign in a resource (that your configured serializer knows about) into the current web session.</p>
 <p>By specifying the ‘type’ of the token, you’re setting the aud field in the JWT.</p>
-<p>Using the csrf type is special. It will encode the csrf token into the token, and that token is only useful when paired with that csrf</p>
 
   </section>
   
@@ -237,6 +236,9 @@ Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session</code>
   <section class="docstring">
     <p>Same as sign_in/3 but also encodes all claims into the JWT.</p>
 <p>The <code class="inline">:key</code> key in the claims map is special in that it sets the location of the storage.</p>
+<p>The :perms key will provide the ability to encode permissions into the token. The value at :perms should be a map</p>
+<h3>Example</h3>
+<pre><code class="elixir">Guaridan.sign_in(conn, user, :token, perms: %{ default: [:read, :write] })</code></pre>
 
   </section>
   

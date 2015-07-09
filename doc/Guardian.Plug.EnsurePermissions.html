@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Guardian.Plug.VerifyAuthorization</title>
+    <title>Guardian.Plug.EnsurePermissions</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
     <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
@@ -25,9 +25,9 @@
     </script>
 
     <section id="content">
-      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a> &rarr; <a href="Guardian.Plug.VerifyAuthorization.html">VerifyAuthorization</a></div>
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a> &rarr; <a href="Guardian.Plug.EnsurePermissions.html">EnsurePermissions</a></div>
       <h1>
-        Guardian.Plug.VerifyAuthorization
+        Guardian.Plug.EnsurePermissions
         
       </h1>
 
@@ -45,15 +45,13 @@
 
       
         <section id="moduledoc" class="docstring">
-          <p>Use this plug to verify a token contained in the header.</p>
-<p>You should set the value of the Authorization header to:</p>
-<pre><code class="elixir">Authorization: &lt;jwt&gt;</code></pre>
-<h2>Example</h2>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization</code></pre>
-<h2>Example</h2>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization, key: :secret</code></pre>
-<p>Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1</p>
-<p>In the case of an error, the claims will be set to { :error, reason }</p>
+          <p>Use this plug to ensure that there are the correct permissions set in the claims found on the connection.</p>
+<h3>Example</h3>
+<pre><code class="elixir">plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], on_failure: { SomeMod, :some_func } # read and write permissions for the admin set
+plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], default: [:profile], on_failure: { SomeMod, :some_func } # read AND write permissions for the admin set AND :profile for the default set
+
+plug Guardian.Plug.EnsurePermissions, key: :secret, admin: [:read, :write], on_failure: { SomeMod, :some_func } # admin :read AND :write for the claims located in the :secret location</code></pre>
+<p>On failure will be handed the connection with the conn, and params where reason: :forbidden</p>
 
         </section>
       
@@ -64,11 +62,7 @@
         <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
         <table class="summary">
           <tr>
-  <td class="summary_signature"><a href="#call/2">call(conn, opts)</a></td>
-  
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#init/1">init(opts \\ %{})</a></td>
+  <td class="summary_signature"><a href="#init/1">init(opts)</a></td>
   
 </tr>
 
@@ -81,23 +75,8 @@
         <section id="functions_details" class="details_list">
           <h2>Functions</h2>
           <section class="detail">
-  <div class="detail_header" id="call/2">
-    <span class="signature"><strong>call(conn, opts)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#call/2" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-  <section class="docstring">
-    
-  </section>
-  
-</section>
-<section class="detail">
   <div class="detail_header" id="init/1">
-    <span class="signature"><strong>init(opts \\ %{})</strong></span>
+    <span class="signature"><strong>init(opts)</strong></span>
     <div class="detail_header_links">
       <span class="detail_type">(function)</span>
       <a href="#init/1" class="detail_link" title="Link to this function">#</a>

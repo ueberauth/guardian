@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Guardian.Hooks.Default</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
+    <script type="text/javascript" charset="utf-8">
+      relpath = '';
+      if (relpath != '') relpath += '/';
+    </script>
+
+    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      hljs.initHighlightingOnLoad();
+      hljs.configure({languages: []}); //disable autodetect
+    </script>
+  </head>
+
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+
+    <section id="content">
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Hooks.html">Hooks</a> &rarr; <a href="Guardian.Hooks.Default.html">Default</a></div>
+      <h1>
+        Guardian.Hooks.Default
+        
+      </h1>
+
+      <ul class="summary_links">
+        
+          <li><a href="#summary">Summary</a></li>
+        
+        
+        
+          <li><a href="#functions_details">Functions</a></li>
+        
+        
+        
+      </ul>
+
+      
+
+      
+
+      
+        <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
+        <table class="summary">
+          <tr>
+  <td class="summary_signature"><a href="#after_mint/4">after_mint(, , , )</a></td>
+  
+    <td class="summary_synopsis"><p>Callback implementation for <a href="Guardian.Hooks.html#c:after_mint/4"><code class="inline">Guardian.Hooks.after_mint/4</code></a></p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#after_sign_in/2">after_sign_in(conn, )</a></td>
+  
+    <td class="summary_synopsis"><p>Callback implementation for <a href="Guardian.Hooks.html#c:after_sign_in/2"><code class="inline">Guardian.Hooks.after_sign_in/2</code></a></p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#before_mint/3">before_mint(resource, type, claims)</a></td>
+  
+    <td class="summary_synopsis"><p>Callback implementation for <a href="Guardian.Hooks.html#c:before_mint/3"><code class="inline">Guardian.Hooks.before_mint/3</code></a></p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#before_sign_out/2">before_sign_out(conn, )</a></td>
+  
+    <td class="summary_synopsis"><p>Callback implementation for <a href="Guardian.Hooks.html#c:before_sign_out/2"><code class="inline">Guardian.Hooks.before_sign_out/2</code></a></p>
+</td>
+  
+</tr>
+
+        </table>
+      
+
+      
+
+      
+        <section id="functions_details" class="details_list">
+          <h2>Functions</h2>
+          <section class="detail">
+  <div class="detail_header" id="after_mint/4">
+    <span class="signature"><strong>after_mint(, , , )</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#after_mint/4" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Callback implementation for <a href="Guardian.Hooks.html#c:after_mint/4"><code class="inline">Guardian.Hooks.after_mint/4</code></a>.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="after_sign_in/2">
+    <span class="signature"><strong>after_sign_in(conn, )</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#after_sign_in/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Callback implementation for <a href="Guardian.Hooks.html#c:after_sign_in/2"><code class="inline">Guardian.Hooks.after_sign_in/2</code></a>.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="before_mint/3">
+    <span class="signature"><strong>before_mint(resource, type, claims)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#before_mint/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Callback implementation for <a href="Guardian.Hooks.html#c:before_mint/3"><code class="inline">Guardian.Hooks.before_mint/3</code></a>.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="before_sign_out/2">
+    <span class="signature"><strong>before_sign_out(conn, )</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#before_sign_out/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Callback implementation for <a href="Guardian.Hooks.html#c:before_sign_out/2"><code class="inline">Guardian.Hooks.before_sign_out/2</code></a>.</p>
+
+  </section>
+  
+</section>
+
+        </section>
+      
+
+      
+
+      
+    </section>
+  </body>
+</html>

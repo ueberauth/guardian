@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Guardian.Permissions</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
+    <script type="text/javascript" charset="utf-8">
+      relpath = '';
+      if (relpath != '') relpath += '/';
+    </script>
+
+    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      hljs.initHighlightingOnLoad();
+      hljs.configure({languages: []}); //disable autodetect
+    </script>
+  </head>
+
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+
+    <section id="content">
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Permissions.html">Permissions</a></div>
+      <h1>
+        Guardian.Permissions
+        
+      </h1>
+
+      <ul class="summary_links">
+        
+          <li><a href="#summary">Summary</a></li>
+        
+        
+        
+          <li><a href="#functions_details">Functions</a></li>
+        
+        
+        
+      </ul>
+
+      
+        <section id="moduledoc" class="docstring">
+          <p>Functions for dealing with permissions sets.</p>
+<p>Guardian provides facilities for working with many permission sets in parallel.
+Guardian must be configured with it’s permissions at start time.</p>
+<pre><code class="elixir">config :guardian, Guardian,
+       permissions: %{
+         default: [
+           :read_profile,
+           :write_profile,
+           :create_item,
+           :read_item,
+           :write_item,
+           :delete_item
+         ],
+        admin: [
+          :users_read,
+          :users_write,
+          :financials_read,
+          :financials_write,
+        ]
+       }</code></pre>
+<p>Guardian.Permissions encodes the permissions for each as bitstrings (integers) so you have 31 permissions per group. (remember javascript is only a 32 bit system)
+Guardian tokens will remain small, event with a full 31 permissions in a set. You should use less sets and more permissions, rather than more sets with fewer permissions per set.
+Permissions that are unknown are ignored. This is to support backwards compatibility with previously issued tokens.</p>
+<h3>Example working with permissions manually</h3>
+<pre><code class="elixir"># Accessing default permissions
+Guardian.Permissions.to_value([:read_profile, :write_profile]) # 3
+Guardian.Permissions.to_list(3) # [:read_profile, :write_profile]
+
+# Accessing &#39;admin&#39; permissions (see config above)
+Guardian.Permissions.to_value([:financials_read, :financials_write], :admin) # 12
+Guardian.Permissions.to_list(12, :admin) # [:financials_read, :financials_write]
+
+# Checking permissions
+Guardian.Permissions.all?(3, [:users_read, :users_write], :admin) # true
+Guardian.Permissions.all?(1, [:users_read, :users_write], :admin) # false
+
+Guardian.Permissions.any?(12, [:users_read, :financial_read], :admin) # true
+Guardian.Permissions.any?(11, [:read_profile, :read_item]) # true
+Guardian.Permissions.any?(11, [:delete_item, :write_item]) # false</code></pre>
+<h3>Reading permissions from claims</h3>
+<p>Permissions are encoded into claims under the :pem key and are a map of “type”: <value as integer></p>
+<pre><code class="elixir">claims = %{ pem: %{
+  &quot;default&quot; =&gt; 3,
+  &quot;admin&quot; =&gt; 1
+} }
+
+
+Guardian.Permissions.from_claims(claims) # 3
+Guardian.Permissions.from_claims(claims, :admin) # 1
+
+# returns [:users_read]
+Guardian.Permissions.from_claims(claims) |&gt; Guardian.Permissions.to_list</code></pre>
+<h3>Adding permissions to claims</h3>
+<p>This will encode the permissions as a map with integer values</p>
+<pre><code class="elixir">Guardian.Claims.permissions(existing_claims, admin: [:users_read], default: [:read_item, :write_item])</code></pre>
+<p>Assign all permissions (and all future ones)</p>
+<pre><code class="elixir">max = Guardian.Permissions.max
+Guardian.Claims.permissions(existing_claims, admin: max, default: max)</code></pre>
+<h3>Signing in with permissions</h3>
+<p>This will encode the permissions as a map with integer values</p>
+<pre><code class="elixir">Guardian.Plug.sign_in(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })</code></pre>
+<h3>Minting credentials with permissions</h3>
+<p>This will encode the permissions as a map with integer values</p>
+<pre><code class="elixir">Guardian.mint(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })</code></pre>
+
+        </section>
+      
+
+      
+
+      
+        <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
+        <table class="summary">
+          <tr>
+  <td class="summary_signature"><a href="#all?/3">all?(value, expected, key \\ :default)</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#any?/3">any?(value, expected, key \\ :default)</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#available/0">available()</a></td>
+  
+    <td class="summary_synopsis"><p>Fetches the list of known permissions for the default type</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#available/1">available(type)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetches the list of known permissions for the given type</p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#from_claims/1">from_claims(claims)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetches the permissions from the claims. Permissions live in the :pem key and are a map
+of
+  “<type>“: <value of permissions as integer></p>
+</td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#max/0">max()</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#to_list/1">to_list(thing)</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#to_list/2">to_list(list, type)</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#to_list/3">to_list(, type, list)</a></td>
+  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#to_value/1">to_value(list)</a></td>
+  
+    <td class="summary_synopsis"><p>Fetches the value as a bitstring (integer) of the list of permissions in the <code class="inline">type</code> list</p>
+</td>
+  
+</tr>
+
+        </table>
+      
+
+      
+
+      
+        <section id="functions_details" class="details_list">
+          <h2>Functions</h2>
+          <section class="detail">
+  <div class="detail_header" id="all?/3">
+    <span class="signature"><strong>all?(value, expected, key \\ :default)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#all?/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="any?/3">
+    <span class="signature"><strong>any?(value, expected, key \\ :default)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#any?/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="available/0">
+    <span class="signature"><strong>available()</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#available/0" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>available :: List</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Fetches the list of known permissions for the default type</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="available/1">
+    <span class="signature"><strong>available(type)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#available/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>available(atom) :: List</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Fetches the list of known permissions for the given type</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="from_claims/1">
+    <span class="signature"><strong>from_claims(claims)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#from_claims/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>from_claims(Map) :: Lsit</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Fetches the permissions from the claims. Permissions live in the :pem key and are a map
+of
+  “<type>“: <value of permissions as integer></p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="max/0">
+    <span class="signature"><strong>max()</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#max/0" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="to_list/1">
+    <span class="signature"><strong>to_list(thing)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#to_list/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="to_list/2">
+    <span class="signature"><strong>to_list(list, type)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#to_list/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="to_list/3">
+    <span class="signature"><strong>to_list(, type, list)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#to_list/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="to_value/1">
+    <span class="signature"><strong>to_value(list)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#to_value/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>to_value(Integer) :: Integer</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Fetches the value as a bitstring (integer) of the list of permissions in the <code class="inline">type</code> list</p>
+
+  </section>
+  
+</section>
+
+        </section>
+      
+
+      
+
+      
+    </section>
+  </body>
+</html>

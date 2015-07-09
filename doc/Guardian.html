@@ -25,7 +25,7 @@
     </script>
 
     <section id="content">
-      <div class="breadcrumbs">guardian v0.1.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a></div>
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a></div>
       <h1>
         Guardian
         
@@ -53,8 +53,8 @@ Where authentication is required.</p>
 <pre><code class="elixir">config :guardian, Guardian,
   issuer: &quot;MyApp&quot;,
   ttl: { 30, :days },
-  secret_key: &quot;lksdjowiurowieurlkjsdlwwer&quot;,
-  serializer: MyApp.GuardianSerializer</code></pre>
+  serializer: MyApp.GuardianSerializer,
+  secret_key: &quot;lksjdlkjsdflkjsdf&quot;</code></pre>
 <p>Guardian uses Joken, so you will also need to configure that.</p>
 
         </section>
@@ -203,7 +203,6 @@ Where authentication is required.</p>
   <section class="docstring">
     <p>Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
 <p>The aud can be anything but suggested is “token”.</p>
-<p>The “csrf” audience is special in that it will encode the CSRF token into the JWT. Thereafter whenver verifying the JWT, the CSRF token must be given, and must match.</p>
 
   </section>
   
@@ -227,6 +226,9 @@ Where authentication is required.</p>
   
   <section class="docstring">
     <p>Like mint/2 but also encode anything found inside the claims map into the JWT.</p>
+<p>To encode permissions into the token, use the <code class="inline">:perms</code> key and pass it a map with the relevant permissions (must be configured)</p>
+<h3>Example</h3>
+<pre><code class="elixir">Guardian.mint(user, :token, perms: %{ default: [:read, :write] })</code></pre>
 
   </section>
   
@@ -296,7 +298,6 @@ Where authentication is required.</p>
   
   <section class="docstring">
     <p>Verify the given JWT.</p>
-<p>If the CSRF token type is used, you must pass at least %{ csrf: &lt;token } as the params</p>
 
   </section>
   
@@ -343,7 +344,6 @@ Where authentication is required.</p>
   
   <section class="docstring">
     <p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
-<p>If the token type is “csrf” the params must contain %{ csrf: csrf_token }</p>
 
   </section>
   

@@ -25,7 +25,7 @@
     </script>
 
     <section id="content">
-      <div class="breadcrumbs">guardian v0.1.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Channel.html">Channel</a></div>
+      <div class="breadcrumbs">guardian v0.4.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Channel.html">Channel</a></div>
       <h1>
         Guardian.Channel
         
@@ -66,15 +66,13 @@
   end
 end</code></pre>
 <p>Tokens will be parsed and the claims and resource assigned to the socket.</p>
-<p>When using <code class="inline">:csrf</code> token types, you need to pass the csrf token up with the join message.</p>
 <h2>Example</h2>
 <pre><code class="elixir">let socket = new Socket(&quot;/ws&quot;);
 socket.connect();
 
 let guardianToken = jQuery(&#39;meta[name=&quot;guardian_token&quot;]&#39;).attr(&#39;content&#39;);
-let csrfToken = jQuery(&#39;meta[name=&quot;csrf_token&quot;]&#39;).attr(&#39;content&#39;);
 
-let chan = socket.chan(&quot;pings&quot;, { guardian_token: guardianToken, csrf_token: csrfToken });</code></pre>
+let chan = socket.chan(&quot;pings&quot;, { guardian_token: guardianToken });</code></pre>
 
         </section>
       
