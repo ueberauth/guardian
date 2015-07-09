@@ -46,7 +46,7 @@ defmodule Guardian.JWT do
 
   @doc false
   def load_required_atoms do
-    IO.puts("Loading required atoms #{inspect([:iat, :aud, :sub, :exp, :iss, :s_csrf])}")
+    IO.puts("Loading required atoms #{inspect([:iat, :aud, :sub, :exp, :iss, :pems])}")
     :ok
   end
 

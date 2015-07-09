@@ -12,8 +12,8 @@ defmodule Guardian do
       config :guardian, Guardian,
         issuer: "MyApp",
         ttl: { 30, :days },
-        secret_key: "lksdjowiurowieurlkjsdlwwer",
-        serializer: MyApp.GuardianSerializer
+        serializer: MyApp.GuardianSerializer,
+        secret_key: "lksjdlkjsdflkjsdf"
 
   Guardian uses Joken, so you will also need to configure that.
   """
@@ -35,8 +35,6 @@ defmodule Guardian do
   Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT
 
   The aud can be anything but suggested is "token".
-
-  The "csrf" audience is special in that it will encode the CSRF token into the JWT. Thereafter whenver verifying the JWT, the CSRF token must be given, and must match.
   """
   @spec mint(any, atom | String.t) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def mint(object, audience), do: mint(object, audience, %{})
@@ -55,12 +53,6 @@ defmodule Guardian do
   """
   @spec mint(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def mint(object, audience, claims) do
-    if audience == :csrf || audience == "csrf" do
-      csrf_token = Dict.get(claims, :csrf, Dict.get(claims, "csrf"))
-      if !csrf_token, do: raise "No CSRF token found"
-      claims = Guardian.Claims.csrf(claims, csrf_token)
-    end
-
     perms = Dict.get(claims, :perms, %{})
     claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete(:perms)
 
@@ -103,17 +95,13 @@ defmodule Guardian do
 
   @doc """
   Verify the given JWT.
-
-  If the CSRF token type is used, you must pass at least %{ csrf: <token } as the params
   """
   @spec verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
   def verify(jwt, params) do
     if verify_issuer?, do: params = Dict.put_new(params, :iss, issuer)
 
-    check_params = Dict.delete(params, :s_csrf)
-
     try do
-      case Joken.decode(jwt, check_params) do
+      case Joken.decode(jwt, params) do
         { :ok, claims } -> verify_claims!(claims, params)
         { :error, "Missing signature" } -> { :error, :missing_signature }
         { :error, "Invalid signature" } -> { :error, :invalid_signature }
@@ -143,8 +131,6 @@ defmodule Guardian do
 
   @doc """
   If successfully verified, returns the claims encoded into the JWT. Raises otherwise
-
-  If the token type is "csrf" the params must contain %{ csrf: csrf_token }
   """
   @spec verify!(String.t, Map) :: Map
   def verify!(jwt, params) do
@@ -160,20 +146,6 @@ defmodule Guardian do
   @spec issuer() :: String.t
   def issuer, do: config(:issuer, to_string(node))
 
-  defp verify_claims!(claims = %{ aud: "csrf"}, nil), do: { :error, :invalid_csrf }
-  defp verify_claims!(claims = %{ aud: "csrf"}, params), do: verify_claims!(claims, claims.s_csrf, params)
-
-  defp verify_claims!(claims = %{ aud: "csrf" }, nil, _), do: { :error, :invalid_csrf }
-
-  @doc false
-  defp verify_claims!(claims = %{ aud: "csrf" }, signed, params) when is_list(params), do: verify_claims!(claims, signed, Enum.into(params, %{}))
-  defp verify_claims!(claims = %{ aud: "csrf" }, signed, params) do
-    if Guardian.CSRFProtection.verify(signed, Dict.get(params, :csrf, Dict.get(params, "csrf"))) do
-      { :ok, claims }
-    else
-      { :error, :invalid_csrf }
-    end
-  end
 
   defp verify_claims!(claims, params) do
     has_aud_key? = Dict.has_key?(params, :aud)

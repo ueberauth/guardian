@@ -25,27 +25,20 @@ defmodule Guardian.Channel do
 
   Tokens will be parsed and the claims and resource assigned to the socket.
 
-  When using `:csrf` token types, you need to pass the csrf token up with the join message.
-
   ## Example
 
       let socket = new Socket("/ws");
       socket.connect();
 
       let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
-      let csrfToken = jQuery('meta[name="csrf_token"]').attr('content');
 
-      let chan = socket.chan("pings", { guardian_token: guardianToken, csrf_token: csrfToken });
+      let chan = socket.chan("pings", { guardian_token: guardianToken });
   """
   defmacro __using__(opts) do
     opts = Enum.into(opts, %{})
     key = Dict.get(opts, :key, :default)
 
     quote do
-      def join(room, auth = %{ "guardian_token" => jwt, "csrf_token" => csrf_token }, socket) do
-        handle_guardian_join(room, jwt, %{ csrf: csrf_token }, socket)
-      end
-
       def join(room, auth = %{ "guardian_token" => jwt }, socket) do
         handle_guardian_join(room, jwt, %{ }, socket)
       end

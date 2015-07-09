@@ -38,9 +38,6 @@ defmodule Guardian.Claims do
   def iat(claims, ts), do: Dict.put(claims, :iat, ts)
 
   @doc false
-  def csrf(claims, token), do: Dict.put(claims, :s_csrf, Guardian.CSRFProtection.signature(token))
-
-  @doc false
   def ttl(claims = %{ ttl: requested_ttl }) do
     claims
     |> Dict.delete(:ttl)
