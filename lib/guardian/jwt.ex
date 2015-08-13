@@ -10,9 +10,9 @@ defmodule Guardian.JWT do
 
   def algorithm, do: :HS256
 
-  def claim(_, _), do: nil
+  def claim(_, _, _ \\ nil), do: nil
 
-  def validate_claim(:iss, payload) do
+  def validate_claim(:iss, payload, _) do
     verify_issuer = Guardian.config(:verify_issuer, false)
     if verify_issuer do
       if Dict.get(payload, :iss) == Guardian.config(:issuer), do: :ok, else: { :error, :invalid_issuer }
@@ -21,28 +21,28 @@ defmodule Guardian.JWT do
     end
   end
 
-  def validate_claim(:nbf, payload) do
+  def validate_claim(:nbf, payload, _) do
     case Dict.get(payload, :nbf) do
       nil -> :ok
       nbf -> if nbf > Guardian.Utils.timestamp, do: { :error, :token_not_yet_valid }, else: :ok
     end
   end
 
-  def validate_claim(:iat, payload) do
+  def validate_claim(:iat, payload, _) do
     case Dict.get(payload, :iat) do
       nil -> :ok
       iat -> if iat > Guardian.Utils.timestamp, do: { :error, :token_not_yet_valid }, else: :ok
     end
   end
 
-  def validate_claim(:exp, payload) do
+  def validate_claim(:exp, payload, _) do
     case Dict.get(payload, :exp) do
       nil -> :ok
       exp -> if Dict.get(payload, :exp) < Guardian.Utils.timestamp, do: { :error, :token_expired }, else: :ok
     end
   end
 
-  def validate_claim(key, value), do: :ok
+  def validate_claim(key, value, _), do: :ok
 
   @doc false
   def load_required_atoms do

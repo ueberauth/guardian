@@ -38,7 +38,7 @@ defmodule Guardian.Mixfile do
   defp deps do
     ds = [
       {:calendar, "~> 0.6.7"},
-      {:joken, "~> 0.14.1"},
+      {:joken, "~> 0.15"},
       {:poison, "~>1.4"},
       {:ex_doc, "~>0.7"},
     ]

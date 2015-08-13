@@ -119,7 +119,7 @@ defmodule Guardian do
     rescue
       e ->
         IO.puts(Exception.format_stacktrace(System.stacktrace))
-        { :error, e.message }
+        { :error, inspect(e) }
     end
   end
 
