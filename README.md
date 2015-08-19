@@ -282,7 +282,7 @@ end
 Accessing the resource from a set of claims:
 
 ```elixir
-case Guardian.serializer.from_token(claims) do
+case Guardian.serializer.from_token(claims.sub) do
   { :ok, resource } -> do_things_with_resource(resource)
   { :error, reason } -> do_things_without_a_resource(reason)
 end
