@@ -6,7 +6,7 @@ defmodule Guardian.Plug do
 
   ## Example
 
-      Guarian.Plug.sign_in(conn, user)
+      Guardian.Plug.sign_in(conn, user)
       Guardian.Plug.sign_in(conn, user, :token)
       Guardian.Plug.sign_in(conn, user, :token, %{ claims: "i", make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)
 
