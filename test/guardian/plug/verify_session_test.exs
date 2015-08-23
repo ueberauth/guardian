@@ -5,7 +5,7 @@ defmodule Guardian.Plug.VerifySessionTest do
 
   setup do
     conn = conn_with_fetched_session(conn(:get, "/"))
-    claims = Guardian.Claims.app_claims(%{ sub: "user", aud: "aud" })
+    claims = Guardian.Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
     { :ok, jwt } = Joken.encode(claims)
     { :ok, conn: conn, jwt: jwt, claims: claims }
   end

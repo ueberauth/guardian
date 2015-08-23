@@ -48,7 +48,7 @@ defmodule Guardian.Channel do
       defp handle_guardian_join(room, jwt, params, socket) do
         case Guardian.verify(jwt, params) do
           { :ok, claims } ->
-            case Guardian.serializer.from_token(Dict.get(claims, :sub)) do
+            case Guardian.serializer.from_token(Dict.get(claims, "sub")) do
               { :ok, resource } ->
                 authed_socket = socket
                 |> assign(Guardian.Keys.claims_key(unquote(key)), claims)

@@ -110,12 +110,12 @@ defmodule Guardian.Permissions do
     end)
 
     def from_claims(claims, unquote(type)) do
-      c = Dict.get(claims, :pem, %{})
+      c = Dict.get(claims, :pem, Dict.get(claims, "pem", %{}))
       Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
     end
 
     def from_claims(claims, unquote(to_string(type))) do
-      c = Dict.get(claims, :pem, %{})
+      c = Dict.get(claims, :pem, Dict.get(claims, "pem", %{}))
       Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
     end
   end)
@@ -171,7 +171,7 @@ defmodule Guardian.Permissions do
   Fetches the value as a bitstring (integer) of the list of permissions in the `type` list
   """
   @spec to_value(Integer, atom) :: Integer
-  def to_value(num, type) when is_integer(num), do: num
+  def to_value(num, _) when is_integer(num), do: num
 
   @doc false
   def to_value(list, type) when is_list(list), do: to_value(list, type, 0)
@@ -180,13 +180,13 @@ defmodule Guardian.Permissions do
   def to_value(atom, type) when is_atom(atom), do: to_value([atom], type, 0)
 
   @doc false
-  def to_value([], type, acc), do: acc
+  def to_value([], _, acc), do: acc
 
   @doc false
-  def to_value([head | tail], type, val), do: to_value(tail, type, val)
+  def to_value([_ | tail], type, val), do: to_value(tail, type, val)
 
   def to_list(thing), do: to_list(thing, :default)
   def to_list(list, type) when is_list(list), do: list |> to_value(type) |> to_list(type)
   def to_list(num, type) when is_integer(num), do: to_list(num, type, [])
-  def to_list(_, type, list), do: list # once we get to here, we've got all we can
+  def to_list(_, _, list), do: list # once we get to here, we've got all we can
 end

@@ -6,6 +6,6 @@ defmodule Guardian.UtilsTest do
   end
 
   test "timestamp" do
-    assert Guardian.Utils.timestamp == Calendar.DateTime.now("Etc/UTC") |> Calendar.DateTime.Format.unix
+    assert Guardian.Utils.timestamp == Calendar.DateTime.now_utc |> Calendar.DateTime.Format.unix
   end
 end

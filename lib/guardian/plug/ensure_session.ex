@@ -26,7 +26,7 @@ defmodule Guardian.Plug.EnsureSession do
     key = Dict.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
-      { :ok, claims } -> conn
+      { :ok, _ } -> conn
       { :error, reason } -> handle_error(conn, { :error, reason }, opts)
       _ -> handle_error(conn, { :error, :no_session }, opts)
     end

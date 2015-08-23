@@ -2,7 +2,13 @@ defmodule GuardianTest do
   use ExUnit.Case, async: true
 
   setup do
-    claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "MyApp", sub: "User:1", something_else: "foo"}
+    claims = %{
+      "aud" => "token",
+      "exp" => Guardian.Utils.timestamp + 100_00,
+      "iat" => Guardian.Utils.timestamp,
+      "iss" => "MyApp",
+      "sub" => "User:1",
+      "something_else" => "foo"}
     { :ok, jwt} = Joken.encode(claims)
 
     { :ok, %{
@@ -48,7 +54,7 @@ defmodule GuardianTest do
   end
 
   test "fails if the expiry has passed", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, :exp, Guardian.Utils.timestamp - 10))
+    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
     assert Guardian.verify(jwt) == { :error, :token_expired }
   end
 
@@ -61,7 +67,7 @@ defmodule GuardianTest do
   end
 
   test "verify! with a bad token", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, :exp, Guardian.Utils.timestamp - 10))
+    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
 
     assert_raise(RuntimeError, fn() -> Guardian.verify!(jwt) end)
   end
@@ -74,33 +80,33 @@ defmodule GuardianTest do
     { :ok, jwt, _ } = Guardian.mint("thinger")
 
     { :ok, claims } = Guardian.verify(jwt)
-    assert claims.aud == "token"
-    assert claims.sub == "thinger"
-    assert claims.iat
-    assert claims.exp > claims.iat
-    assert claims.iss == Guardian.issuer
+    assert claims["aud"] == "token"
+    assert claims["sub"] == "thinger"
+    assert claims["iat"]
+    assert claims["exp"] > claims["iat"]
+    assert claims["iss"] == Guardian.issuer
   end
 
   test "mint(object, audience)" do
     { :ok, jwt, _ } = Guardian.mint("thinger", "my_aud")
 
     { :ok, claims } = Guardian.verify(jwt)
-    assert claims.aud == "my_aud"
-    assert claims.sub == "thinger"
-    assert claims.iat
-    assert claims.exp > claims.iat
-    assert claims.iss == Guardian.issuer
+    assert claims["aud"] == "my_aud"
+    assert claims["sub"] == "thinger"
+    assert claims["iat"]
+    assert claims["exp"] > claims["iat"]
+    assert claims["iss"] == Guardian.issuer
   end
 
   test "mint(object, audience, claims)" do
     { :ok, jwt, _ } = Guardian.mint("thinger", "my_aud", some: "thing")
 
     { :ok, claims } = Guardian.verify(jwt)
-    assert claims.aud == "my_aud"
-    assert claims.sub == "thinger"
-    assert claims.iat
-    assert claims.exp > claims.iat
-    assert claims.iss == Guardian.issuer
-    assert claims.some == "thing"
+    assert claims["aud"] == "my_aud"
+    assert claims["sub"] == "thinger"
+    assert claims["iat"]
+    assert claims["exp"] > claims["iat"]
+    assert claims["iss"] == Guardian.issuer
+    assert claims["some"] == "thing"
   end
 end

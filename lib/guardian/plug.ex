@@ -17,7 +17,6 @@ defmodule Guardian.Plug do
       Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session
   """
 
-  import Guardian.Utils
   import Guardian.Keys
 
   @doc """

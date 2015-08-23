@@ -8,7 +8,7 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
   alias Plug.Conn
 
   setup do
-    claims = Claims.app_claims(%{ sub: "user", aud: "aud" })
+    claims = Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
     { :ok, jwt } = Joken.encode(claims)
     { :ok, conn: conn(:get, "/"), jwt: jwt, claims: claims }
   end
@@ -61,7 +61,7 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
   end
 
   test "with a realm specified and multiple auth headers", context do
-    claims2 = Claims.app_claims(%{ sub: "user2", aud: "aud2" })
+    claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
     { :ok, jwt2 } = Joken.encode(claims2)
 
     the_conn = context.conn
@@ -76,7 +76,7 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
   end
 
   test "pulls different tokens into different locations", context do
-    claims2 = Claims.app_claims(%{ sub: "user2", aud: "aud2" })
+    claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
     { :ok, jwt2 } = Joken.encode(claims2)
 
     # Can't use the put_req_header here since it overrides previous values

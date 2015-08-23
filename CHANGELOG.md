@@ -1,3 +1,7 @@
+# v 0.5.0
+
+Use strings for keys in the token.
+
 # v 0.4.0
 
 Remove CSRF tokens support. CSRF tokens are masked and so cannot be adequately

@@ -4,21 +4,19 @@ defmodule Guardian.PlugTest do
   use Plug.Test
   import Guardian.TestHelper
 
-  alias Plug.Session.COOKIE, as: CookieStore
-
   setup do
     { :ok, %{ conn: conn(:post, "/") } }
   end
 
   test "set_claims with no key", context do
-    claims = %{ some: "claim" }
+    claims = %{ "some" => "claim" }
     new_conn = Guardian.Plug.set_claims(context.conn, claims)
 
     assert new_conn.assigns[Guardian.Keys.claims_key(:default)] == claims
   end
 
   test "set_claims with a key", context do
-    claims = %{ some: "claim" }
+    claims = %{ "some" => "claim" }
     new_conn = Guardian.Plug.set_claims(context.conn, claims, :secret)
     assert new_conn.assigns[Guardian.Keys.claims_key(:secret)] == claims
   end
@@ -28,7 +26,7 @@ defmodule Guardian.PlugTest do
   end
 
   test "claims with no key and a value", context do
-    claims = %{ some: "claim" }
+    claims = %{ "some" => "claim" }
     new_conn = Plug.Conn.assign(context.conn, Guardian.Keys.claims_key(:default), { :ok, claims })
     assert Guardian.Plug.claims(new_conn) == { :ok, claims }
   end
@@ -38,7 +36,7 @@ defmodule Guardian.PlugTest do
   end
 
   test "claims with a key and a value", context do
-    claims = %{ some: "claim" }
+    claims = %{ "some" => "claim" }
     new_conn = Plug.Conn.assign(context.conn, Guardian.Keys.claims_key(:secret), { :ok, claims })
     assert Guardian.Plug.claims(new_conn, :secret) == { :ok, claims }
   end
@@ -170,7 +168,7 @@ defmodule Guardian.PlugTest do
     jwt = conn.assigns[Guardian.Keys.jwt_key]
     { :ok, claims } = Guardian.verify(jwt)
 
-    assert claims.sub.user == "here"
+    assert claims["sub"]["user"] == "here"
   end
 
   test "sign_in(object, type, claims)", context do
@@ -184,8 +182,8 @@ defmodule Guardian.PlugTest do
     jwt = conn.assigns[Guardian.Keys.jwt_key]
     { :ok, claims } = Guardian.verify(jwt)
 
-    assert claims.sub.user == "here"
-    assert claims.here == "we are"
+    assert claims["sub"]["user"] == "here"
+    assert claims["here"] == "we are"
   end
 end
 

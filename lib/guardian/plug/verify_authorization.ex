@@ -70,17 +70,17 @@ defmodule Guardian.Plug.VerifyAuthorization do
     fetch_token(conn, opts, Plug.Conn.get_req_header(conn, "authorization"))
   end
 
-  defp fetch_token(conn, opts, nil), do: nil
-  defp fetch_token(conn, opts, []), do: nil
+  defp fetch_token(_, _, nil), do: nil
+  defp fetch_token(_, _, []), do: nil
 
   defp fetch_token(conn, opts = %{realm_reg: reg}, [token|tail]) do
     trimmed_token = String.strip(token)
-    case Regex.run(reg, token) do
+    case Regex.run(reg, trimmed_token) do
       [_, match] -> String.strip(match)
       _ -> fetch_token(conn, opts, tail)
     end
   end
 
-  defp fetch_token(conn, _, [token|_tail]), do: String.strip(token)
+  defp fetch_token(_, _, [token|_tail]), do: String.strip(token)
 end
 

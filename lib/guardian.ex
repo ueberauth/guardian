@@ -53,8 +53,9 @@ defmodule Guardian do
   """
   @spec mint(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def mint(object, audience, claims) do
-    perms = Dict.get(claims, :perms, %{})
-    claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete(:perms)
+    claims = stringify_keys(claims)
+    perms = Dict.get(claims, "perms", %{})
+    claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete("perms")
 
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
@@ -98,7 +99,9 @@ defmodule Guardian do
   """
   @spec verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
   def verify(jwt, params) do
-    if verify_issuer?, do: params = Dict.put_new(params, :iss, issuer)
+    params = stringify_keys(params)
+    if verify_issuer?, do: params = Dict.put_new(params, "iss", issuer)
+    params = stringify_keys(params)
 
     try do
       case Joken.decode(jwt, params) do
@@ -148,8 +151,8 @@ defmodule Guardian do
 
 
   defp verify_claims!(claims, params) do
-    has_aud_key? = Dict.has_key?(params, :aud)
-    if has_aud_key? && Dict.get(params, :aud) != Dict.get(claims, :aud), do: { :error, :invalid_audience }, else: { :ok, claims }
+    has_aud_key? = Dict.has_key?(params, "aud")
+    if has_aud_key? && Dict.get(params, "aud") != Dict.get(claims, "aud"), do: { :error, :invalid_audience }, else: { :ok, claims }
   end
 
   defp verify_issuer?, do: config(:verify_issuer, false)

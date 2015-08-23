@@ -2,10 +2,8 @@ defmodule Guardian.Plug.EnsurePermissionTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias Guardian.Claims
   alias Guardian.Keys
   alias Guardian.Plug.EnsurePermissions
-  alias Plug.Conn
 
   defmodule TestHandler do
     def forbidden(conn, _) do
@@ -26,7 +24,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
 
     pems = Guardian.Permissions.to_value([:read, :write])
-    claims = %{ pem: %{ default: pems } }
+    claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
     |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
@@ -40,7 +38,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
 
     pems = Guardian.Permissions.to_value([:read])
-    claims = %{ pem: %{ default: pems } }
+    claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
     |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
@@ -54,7 +52,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
 
     pems = Guardian.Permissions.to_value([:other_read], :other)
-    claims = %{ pem: %{ default: pems } }
+    claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
     |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
@@ -69,7 +67,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
     pems = Guardian.Permissions.to_value([:read, :write, :update, :delete], :default)
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
-    claims = %{ pem: %{ default: pems, other: other_pems } }
+    claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
     expected_conn = conn(:get, "/get")
     |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
@@ -84,7 +82,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
     pems = Guardian.Permissions.to_value([:read, :write, :update, :delete], :default)
     other_pems = Guardian.Permissions.to_value([:other_read, :other_write], :other)
-    claims = %{ pem: %{ default: pems, other: other_pems } }
+    claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
     expected_conn = conn(:get, "/get")
     |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
