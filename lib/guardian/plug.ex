@@ -60,7 +60,7 @@ defmodule Guardian.Plug do
         |> set_current_resource(object, the_key)
         |> set_claims(full_claims, the_key)
         |> set_current_token(jwt, the_key)
-        |> Guardian.hooks_module.after_sign_in(the_key)
+        |> Guardian.Hooks.run_after_sign_in(the_key)
 
       { :error, reason } -> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
     end
@@ -75,7 +75,7 @@ defmodule Guardian.Plug do
   @spec sign_out(Plug.Conn.t) :: Plug.Conn.t
   def sign_out(conn, the_key \\ :all) do
     conn
-    |> Guardian.hooks_module.before_sign_out(the_key)
+    |> Guardian.Hooks.run_before_sign_out(the_key)
     |> clear_resource_assign(the_key)
     |> sign_out_via_key(the_key)
   end

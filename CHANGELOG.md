@@ -1,3 +1,7 @@
+# v 0.5.1
+
+Allow multiple hooks to be registered to Guardian
+
 # v 0.5.0
 
 Use strings for keys in the token.

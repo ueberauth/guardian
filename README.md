@@ -367,6 +367,14 @@ config :guardian, Guardian,
        #…
 ```
 
+You can use multiple hooks modules
+
+```elixir
+config :guardian, Guardian,
+       hooks: [MyApp.GuardianHooks, MyApp.SomeOtherHooks]
+       #…
+```
+
 ### Phoenix Channels
 
 Guardian uses JWTs to make the integration of authentication management as

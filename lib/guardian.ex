@@ -22,9 +22,6 @@ defmodule Guardian do
   if !Application.get_env(:guardian, Guardian), do: raise "Guardian is not configured"
   if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
-  # make our atoms that we know we need
-
-
   @doc """
   Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.
   """
@@ -63,23 +60,27 @@ defmodule Guardian do
         |> Guardian.Claims.aud(audience)
         |> Guardian.Claims.sub(sub)
 
-        case Guardian.hooks_module.before_mint(object, audience, full_claims) do
-          { :ok, { resource, t, hooked_claims } } ->
+        case Guardian.Hooks.run_before_mint(object, audience, full_claims) do
+          { :error, reason } -> { :error, reason }
+          { :ok, { resource, type, hooked_claims } } ->
             case Joken.encode(hooked_claims) do
               { :ok, jwt } ->
-                Guardian.hooks_module.after_mint(resource, t, hooked_claims, jwt)
+                Guardian.Hooks.run_after_mint(resource, type, hooked_claims, jwt)
                 { :ok, jwt, hooked_claims }
               { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
               { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
             end
-          { :error, reason } -> { :error, reason }
         end
       { :error, reason } -> { :error, reason }
     end
   end
 
   @doc false
-  def hooks_module, do: config(:hooks, Guardian.Hooks.Default)
+  def hooks_modules, do: fetch_hooks_modules(config(:hooks, Guardian.Hooks.Default))
+
+  defp fetch_hooks_modules(modules) when is_list(modules), do: modules
+  defp fetch_hooks_modules(module) when is_atom(module), do: [module]
+  defp fetch_hooks_modules(nil), do: []
 
   @doc """
   Fetch the configured serializer module
