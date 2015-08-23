@@ -40,11 +40,11 @@ defmodule Guardian.Mixfile do
       {:calendar, "~> 0.9.0"},
       {:joken, "~> 0.15.0"},
       {:poison, "~>1.5"},
-      {:ex_doc, "~>0.7"},
+      {:ex_doc, "~>0.8"},
     ]
 
     if Mix.env == :test || Mix.env == :dev do
-      [ { :plug, ">=0.0.1" } | [ {:ex_doc, "~>0.7"} | [ {:earmark, ">= 0.0.0"} |ds ]]]
+      [ { :plug, "~> 1.0" } | [ {:ex_doc, "~>0.8"} | [ {:earmark, ">= 0.0.0"} |ds ]]]
     else
       ds
     end
