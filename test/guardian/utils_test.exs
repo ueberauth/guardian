@@ -6,6 +6,7 @@ defmodule Guardian.UtilsTest do
   end
 
   test "timestamp" do
-    assert Guardian.Utils.timestamp == Calendar.DateTime.now_utc |> Calendar.DateTime.Format.unix
+    {mgsec, sec, _usec} = :os.timestamp
+    assert Guardian.Utils.timestamp == mgsec * 1_000_000 + sec
   end
 end
