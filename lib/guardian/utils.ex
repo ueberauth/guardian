@@ -7,5 +7,8 @@ defmodule Guardian.Utils do
   end
 
   @doc false
-  def timestamp, do: Calendar.DateTime.now_utc |> Calendar.DateTime.Format.unix
+  def timestamp do
+    {mgsec, sec, _usec} = :os.timestamp
+    mgsec * 1_000_000 + sec
+  end
 end
