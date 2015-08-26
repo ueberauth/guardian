@@ -38,8 +38,7 @@ defmodule Guardian.Mixfile do
   defp deps do
     ds = [
       {:joken, "~> 0.15.0"},
-      {:poison, "~>1.5"},
-      {:ex_doc, "~>0.8"},
+      {:poison, "~>1.5"}
     ]
 
     if Mix.env == :test || Mix.env == :dev do
