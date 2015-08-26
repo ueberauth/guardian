@@ -23,7 +23,7 @@ defmodule Guardian.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger]]
+    [applications: [:logger, :joken, :poison]]
   end
 
   # Dependencies can be Hex packages:
