@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     
-        <title>Guardian.Plug.LoadResource – guardian v0.5.2</title>
+        <title>Guardian.Plug.LoadResource – guardian v0.6.0</title>
       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc">
@@ -24,7 +24,7 @@
 
   <h1 id="full_list_header">
     
-      guardian v0.5.2
+      guardian v0.6.0
     
   </h1>
 
@@ -74,7 +74,7 @@
         <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
-        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Plug.html#content">Plug</a> &rarr; <a href="Guardian.Plug.LoadResource.html#content">LoadResource</a>
+        guardian v0.6.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Plug.html#content">Plug</a> &rarr; <a href="Guardian.Plug.LoadResource.html#content">LoadResource</a>
       </div>
 
       <h1>
@@ -95,7 +95,8 @@
           <p>Fetches the resource specified in a set of claims.</p>
 <p>The Guardian.serializer/0 is used once the subject is extracted from the token.</p>
 <p>The resource becomes available at Guardian.Plug.current_resource(conn) if successful.</p>
-<p>If there is no valid JWT in the request so far (Guardian.Plug.VerifySession / Guardian.Plug.VerifyAuthorization) did not find a valid token
+<p>If there is no valid JWT in the request so far (Guardian.Plug.VerifySession /
+Guardian.Plug.VerifyHeader) did not find a valid token
 then nothing will occur, and the Guardian.Plug.current_resource/1 will be nil</p>
 
         </section>

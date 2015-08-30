@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     
-        <title>Guardian.Plug.VerifyAuthorization – guardian v0.5.2</title>
+        <title>Guardian.Plug.VerifyHeader – guardian v0.6.0</title>
       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc">
@@ -24,7 +24,7 @@
 
   <h1 id="full_list_header">
     
-      guardian v0.5.2
+      guardian v0.6.0
     
   </h1>
 
@@ -74,11 +74,11 @@
         <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
-        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Plug.html#content">Plug</a> &rarr; <a href="Guardian.Plug.VerifyAuthorization.html#content">VerifyAuthorization</a>
+        guardian v0.6.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Plug.html#content">Plug</a> &rarr; <a href="Guardian.Plug.VerifyHeader.html#content">VerifyHeader</a>
       </div>
 
       <h1>
-        Guardian.Plug.VerifyAuthorization
+        Guardian.Plug.VerifyHeader
         
       </h1>
 
@@ -100,16 +100,16 @@
 <p>You should set the value of the Authorization header to:</p>
 <pre><code class="elixir">Authorization: &lt;jwt&gt;</code></pre>
 <h2>Example</h2>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization</code></pre>
+<pre><code class="elixir">plug Guardian.Plug.VerifyHeader</code></pre>
 <h2>Example</h2>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization, key: :secret</code></pre>
+<pre><code class="elixir">plug Guardian.Plug.VerifyHeader, key: :secret</code></pre>
 <p>Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1</p>
 <p>In the case of an error, the claims will be set to { :error, reason }</p>
 <p>A “realm” can be specified when using the plug. Realms are like the name of the token and allow many tokens to be sent with a single request.</p>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization, realm: &quot;Bearer&quot;</code></pre>
+<pre><code class="elixir">plug Guardian.Plug.VerifyHeader, realm: &quot;Bearer&quot;</code></pre>
 <p>When a realm is not specified, the first authorization header found is used, and assumed to be a raw token</p>
 <h4>example</h4>
-<pre><code class="elixir">plug Guardian.Plug.VerifyAuthorization
+<pre><code class="elixir">plug Guardian.Plug.VerifyHeader
 
 # will take the first auth header
 # Authorization: &lt;jwt&gt;</code></pre>

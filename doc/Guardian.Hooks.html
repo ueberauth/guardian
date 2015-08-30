@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     
-        <title>Guardian.Hooks – guardian v0.5.2</title>
+        <title>Guardian.Hooks – guardian v0.6.0</title>
       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc">
@@ -24,7 +24,7 @@
 
   <h1 id="full_list_header">
     
-      guardian v0.5.2
+      guardian v0.6.0
     
   </h1>
 
@@ -74,7 +74,7 @@
         <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
-        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Hooks.html#content">Hooks</a>
+        guardian v0.6.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Hooks.html#content">Hooks</a>
       </div>
 
       <h1>
@@ -115,11 +115,11 @@
         <section id="callbacks_details" class="details_list">
           <h1>Callbacks</h1>
           <section class="detail">
-  <div class="detail_header" id="c:before_mint/3">
-    <span class="signature"><strong>before_mint/3</strong></span>
+  <div class="detail_header" id="c:before_encode_and_sign/3">
+    <span class="signature"><strong>before_encode_and_sign/3</strong></span>
     <div class="detail_header_links">
       <span class="detail_type">(callback)</span>
-      <a href="#c:before_mint/3" class="detail_link" title="Link to this callback">#</a>
+      <a href="#c:before_encode_and_sign/3" class="detail_link" title="Link to this callback">#</a>
       <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
     </div>
   </div>
@@ -127,7 +127,7 @@
     <p>Specs:</p>
     <ul class="spec">
       
-        <li>before_mint(resource :: term, type :: atom, claims :: Map) :: term</li>
+        <li>before_encode_and_sign(resource :: term, type :: atom, claims :: Map) :: term</li>
       
     </ul>
   
@@ -137,11 +137,11 @@
   
 </section>
 <section class="detail">
-  <div class="detail_header" id="c:after_mint/4">
-    <span class="signature"><strong>after_mint/4</strong></span>
+  <div class="detail_header" id="c:after_encode_and_sign/4">
+    <span class="signature"><strong>after_encode_and_sign/4</strong></span>
     <div class="detail_header_links">
       <span class="detail_type">(callback)</span>
-      <a href="#c:after_mint/4" class="detail_link" title="Link to this callback">#</a>
+      <a href="#c:after_encode_and_sign/4" class="detail_link" title="Link to this callback">#</a>
       <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
     </div>
   </div>
@@ -149,7 +149,7 @@
     <p>Specs:</p>
     <ul class="spec">
       
-        <li>after_mint(resource :: term, type :: atom, claims :: Map, token :: <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: term</li>
+        <li>after_encode_and_sign(resource :: term, type :: atom, claims :: Map, token :: <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: term</li>
       
     </ul>
   

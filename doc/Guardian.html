@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     
-        <title>Guardian – guardian v0.5.2</title>
+        <title>Guardian – guardian v0.6.0</title>
       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc">
@@ -24,7 +24,7 @@
 
   <h1 id="full_list_header">
     
-      guardian v0.5.2
+      guardian v0.6.0
     
   </h1>
 
@@ -74,7 +74,7 @@
         <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
-        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a>
+        guardian v0.6.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a>
       </div>
 
       <h1>
@@ -118,23 +118,43 @@ Where authentication is required.</p>
           <h1>Summary</h1>
           <table class="summary">
             <tr>
+  <td class="summary_signature"><a href="#decode_and_verify!/1">decode_and_verify!(jwt)</a></td>
+  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#decode_and_verify!/2">decode_and_verify!(jwt, params)</a></td>
+  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#decode_and_verify/1">decode_and_verify(jwt)</a></td>
+  <td class="summary_synopsis"><p>Verify the given JWT. This will decode_and_verify via decode_and_verify/2</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#decode_and_verify/2">decode_and_verify(jwt, params)</a></td>
+  <td class="summary_synopsis"><p>Verify the given JWT</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#encode_and_sign/1">encode_and_sign(object)</a></td>
+  <td class="summary_synopsis"><p>Encode and sign a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#encode_and_sign/2">encode_and_sign(object, audience)</a></td>
+  <td class="summary_synopsis"><p>Like encode_and_sign/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#encode_and_sign/3">encode_and_sign(object, audience, claims)</a></td>
+  <td class="summary_synopsis"><p>Like encode_and_sign/2 but also encode anything found inside the claims map into the JWT</p>
+</td>
+</tr>
+<tr>
   <td class="summary_signature"><a href="#issuer/0">issuer()</a></td>
   <td class="summary_synopsis"><p>The configured issuer. If not configured, defaults to the node that issued</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#mint/1">mint(object)</a></td>
-  <td class="summary_synopsis"><p>Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#mint/2">mint(object, audience)</a></td>
-  <td class="summary_synopsis"><p>Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#mint/3">mint(object, audience, claims)</a></td>
-  <td class="summary_synopsis"><p>Like mint/2 but also encode anything found inside the claims map into the JWT</p>
 </td>
 </tr>
 <tr>
@@ -155,26 +175,6 @@ This provides a hook to revoke, the logic for revocation of belongs in a Guardia
   <td class="summary_synopsis"><p>Fetch the configured serializer module</p>
 </td>
 </tr>
-<tr>
-  <td class="summary_signature"><a href="#verify!/1">verify!(jwt)</a></td>
-  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#verify!/2">verify!(jwt, params)</a></td>
-  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#verify/1">verify(jwt)</a></td>
-  <td class="summary_synopsis"><p>Verify the given JWT. This will verify via verify/2</p>
-</td>
-</tr>
-<tr>
-  <td class="summary_signature"><a href="#verify/2">verify(jwt, params)</a></td>
-  <td class="summary_synopsis"><p>Verify the given JWT</p>
-</td>
-</tr>
 
           </table>
         </section>
@@ -186,6 +186,171 @@ This provides a hook to revoke, the logic for revocation of belongs in a Guardia
         <section id="functions_details" class="details_list">
           <h1>Functions</h1>
           <section class="detail">
+  <div class="detail_header" id="decode_and_verify/1">
+    <span class="signature"><strong>decode_and_verify(jwt)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#decode_and_verify/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>decode_and_verify(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: {:ok, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Verify the given JWT. This will decode_and_verify via decode_and_verify/2</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="decode_and_verify/2">
+    <span class="signature"><strong>decode_and_verify(jwt, params)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#decode_and_verify/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>decode_and_verify(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: {:ok, Map} | {:error, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Verify the given JWT.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="decode_and_verify!/1">
+    <span class="signature"><strong>decode_and_verify!(jwt)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#decode_and_verify!/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>decode_and_verify!(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: Map</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="decode_and_verify!/2">
+    <span class="signature"><strong>decode_and_verify!(jwt, params)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#decode_and_verify!/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>decode_and_verify!(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: Map</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="encode_and_sign/1">
+    <span class="signature"><strong>encode_and_sign(object)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#encode_and_sign/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>encode_and_sign(any) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Encode and sign a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="encode_and_sign/2">
+    <span class="signature"><strong>encode_and_sign(object, audience)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#encode_and_sign/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>encode_and_sign(any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Like encode_and_sign/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
+<p>The aud can be anything but suggested is “token”.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="encode_and_sign/3">
+    <span class="signature"><strong>encode_and_sign(object, audience, claims)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#encode_and_sign/3" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>encode_and_sign(any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    <p>Like encode_and_sign/2 but also encode anything found inside the claims map into the JWT.</p>
+<p>To encode permissions into the token, use the <code class="inline">:perms</code> key and pass it a map with the relevant permissions (must be configured)</p>
+<h3>Example</h3>
+<pre><code class="elixir">Guardian.encode_and_sign(user, :token, perms: %{ default: [:read, :write] })</code></pre>
+
+  </section>
+  
+</section>
+<section class="detail">
   <div class="detail_header" id="issuer/0">
     <span class="signature"><strong>issuer()</strong></span>
     <div class="detail_header_links">
@@ -204,79 +369,6 @@ This provides a hook to revoke, the logic for revocation of belongs in a Guardia
   
   <section class="docstring">
     <p>The configured issuer. If not configured, defaults to the node that issued.</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="mint/1">
-    <span class="signature"><strong>mint(object)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#mint/1" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>mint(any) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="mint/2">
-    <span class="signature"><strong>mint(object, audience)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#mint/2" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>mint(any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
-<p>The aud can be anything but suggested is “token”.</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="mint/3">
-    <span class="signature"><strong>mint(object, audience, claims)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#mint/3" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>mint(any, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: {:ok, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>Like mint/2 but also encode anything found inside the claims map into the JWT.</p>
-<p>To encode permissions into the token, use the <code class="inline">:perms</code> key and pass it a map with the relevant permissions (must be configured)</p>
-<h3>Example</h3>
-<pre><code class="elixir">Guardian.mint(user, :token, perms: %{ default: [:read, :write] })</code></pre>
 
   </section>
   
@@ -335,98 +427,6 @@ This provides a hook to revoke, the logic for revocation of belongs in a Guardia
   
   <section class="docstring">
     <p>Fetch the configured serializer module</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="verify/1">
-    <span class="signature"><strong>verify(jwt)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#verify/1" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>verify(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: {:ok, Map} | {:error, atom} | {:error, <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>Verify the given JWT. This will verify via verify/2</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="verify/2">
-    <span class="signature"><strong>verify(jwt, params)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#verify/2" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>verify(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: {:ok, Map} | {:error, atom | <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>}</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>Verify the given JWT.</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="verify!/1">
-    <span class="signature"><strong>verify!(jwt)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#verify!/1" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>verify!(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: Map</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
-
-  </section>
-  
-</section>
-<section class="detail">
-  <div class="detail_header" id="verify!/2">
-    <span class="signature"><strong>verify!(jwt, params)</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(function)</span>
-      <a href="#verify!/2" class="detail_link" title="Link to this function">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>verify!(<a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>, Map) :: Map</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    <p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
 
   </section>
   

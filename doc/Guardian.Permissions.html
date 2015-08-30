@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     
-        <title>Guardian.Permissions – guardian v0.5.2</title>
+        <title>Guardian.Permissions – guardian v0.6.0</title>
       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc">
@@ -24,7 +24,7 @@
 
   <h1 id="full_list_header">
     
-      guardian v0.5.2
+      guardian v0.6.0
     
   </h1>
 
@@ -74,7 +74,7 @@
         <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
-        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Permissions.html#content">Permissions</a>
+        guardian v0.6.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Permissions.html#content">Permissions</a>
       </div>
 
       <h1>
@@ -157,9 +157,9 @@ Guardian.Claims.permissions(existing_claims, admin: max, default: max)</code></p
 <h3>Signing in with permissions</h3>
 <p>This will encode the permissions as a map with integer values</p>
 <pre><code class="elixir">Guardian.Plug.sign_in(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })</code></pre>
-<h3>Minting credentials with permissions</h3>
+<h3>Encoding credentials with permissions</h3>
 <p>This will encode the permissions as a map with integer values</p>
-<pre><code class="elixir">Guardian.mint(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })</code></pre>
+<pre><code class="elixir">Guardian.encode_and_sign(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })</code></pre>
 
         </section>
       
