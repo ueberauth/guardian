@@ -137,7 +137,7 @@ defmodule Guardian.Permissions do
 
   def all?(value, expected, key \\ :default) do
     expected_value = to_value(expected, key)
-    (to_value(value, key) &&& expected_value) == expected_value
+    if expected_value == 0, do: false, else: (to_value(value, key) &&& expected_value) == expected_value
   end
 
   def any?(value, expected, key \\ :default) do
