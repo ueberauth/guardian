@@ -60,7 +60,7 @@ defmodule Guardian.Plug do
         |> set_current_resource(object, the_key)
         |> set_claims(full_claims, the_key)
         |> set_current_token(jwt, the_key)
-        |> Guardian.Hooks.run_after_sign_in(the_key)
+        |> Guardian.hooks_module.after_sign_in(the_key)
 
       { :error, reason } -> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
     end
@@ -75,8 +75,7 @@ defmodule Guardian.Plug do
   @spec sign_out(Plug.Conn.t) :: Plug.Conn.t
   def sign_out(conn, the_key \\ :all) do
     conn
-    |> Guardian.Hooks.run_before_sign_out(the_key)
-    |> clear_resource_assign(the_key)
+    |> Guardian.hooks_module.before_sign_out(the_key)
     |> sign_out_via_key(the_key)
   end
 
@@ -127,38 +126,44 @@ defmodule Guardian.Plug do
   defp sign_out_via_key(conn, :all) do
     conn
     |> Plug.Conn.clear_session
+    |> clear_jwt_assign(:all)
     |> clear_resource_assign(:all)
+    |> clear_claims_assign(:all)
   end
 
   defp sign_out_via_key(conn, the_key) do
     Plug.Conn.delete_session(conn, claims_key(the_key))
+    |> clear_jwt_assign(the_key)
     |> clear_resource_assign(the_key)
     |> clear_claims_assign(the_key)
-    |> clear_jwt_assign(the_key)
   end
 
   defp clear_resource_assign(conn, :all) do
     Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_")))
-    |> Enum.reduce(conn, fn(key, c) -> Plug.Conn.assign(c, key, nil) end)
+    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_resource")))
+    |> Enum.reduce(conn, fn(key, c) -> clear_resource_assign(c, key_from_other(key)) end)
   end
 
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
 
   defp clear_claims_assign(conn, :all) do
     Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_")))
-    |> Enum.reduce(conn, fn(key, c) -> Plug.Conn.assign(c, key, nil) end)
+    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_claims")))
+    |> Enum.reduce(conn, fn(key, c) -> clear_claims_assign(c, key_from_other(key)) end)
   end
 
   defp clear_claims_assign(conn, key), do: Plug.Conn.assign(conn, claims_key(key), nil)
 
   defp clear_jwt_assign(conn, :all) do
     Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_")))
-    |> Enum.reduce(conn, fn(key, c) -> Plug.Conn.assign(c, key, nil) end)
+    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_jwt")))
+    |> Enum.reduce(conn, fn(key, c) -> clear_jwt_assign(c, key_from_other(key)) end)
   end
 
-  defp clear_jwt_assign(conn, key), do: Plug.Conn.assign(conn, jwt_key(key), nil)
+  defp clear_jwt_assign(conn, key) do
+    jwt = current_token(conn, key)
+    claims = claims(conn, key)
+    Guardian.revoke!(jwt, claims)
+    Plug.Conn.assign(conn, jwt_key(key), nil)
+  end
 end
-
