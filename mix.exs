@@ -28,7 +28,8 @@ defmodule Guardian.Mixfile do
      {:poison, "~> 1.5"},
      {:plug, "~> 1.0", only: :test},
      {:ex_doc, "~> 0.8", only: :docs},
-     {:earmark, ">= 0.0.0", only: :docs}]
+     {:earmark, ">= 0.0.0", only: :docs},
+     {:uuid, ">=1.0.1"}]
   end
 
   defp package do

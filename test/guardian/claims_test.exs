@@ -7,6 +7,7 @@ defmodule Guardian.ClaimsTest do
     assert app_claims["iss"] == Guardian.issuer
     assert app_claims["iat"]
     assert app_claims["exp"] > app_claims["iat"]
+    assert app_claims["jti"]
   end
 
   test "app_claims with other claims" do

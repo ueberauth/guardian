@@ -3,7 +3,7 @@ defmodule Guardian.Claims do
   import Guardian.Utils
 
   @doc false
-  def app_claims, do: %{ "iss" => Guardian.issuer } |> iat |> ttl
+  def app_claims, do: %{ "iss" => Guardian.issuer } |> iat |> ttl |> jti
 
   @doc false
   def app_claims(existing_claims) do
@@ -31,6 +31,13 @@ defmodule Guardian.Claims do
   def sub(claims, subject) when is_atom(subject), do: sub(claims, to_string(subject))
   @doc false
   def sub(claims, subject), do: Dict.put(claims, "sub", subject)
+
+  @doc false
+  def jti(claims), do: jti(claims, UUID.uuid4)
+  @doc false
+  def jti(claims, id) when is_atom(id), do: sub(claims, to_string(id))
+  @doc false
+  def jti(claims, id), do: Dict.put(claims, "jti", id)
 
   @doc false
   def iat(claims), do: Dict.put(claims, "iat", timestamp)
