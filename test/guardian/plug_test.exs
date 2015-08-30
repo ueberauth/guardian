@@ -166,7 +166,7 @@ defmodule Guardian.PlugTest do
     assert conn.assigns[Guardian.Keys.jwt_key] != nil
 
     jwt = conn.assigns[Guardian.Keys.jwt_key]
-    { :ok, claims } = Guardian.verify(jwt)
+    { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
   end
@@ -180,7 +180,7 @@ defmodule Guardian.PlugTest do
     assert conn.assigns[Guardian.Keys.jwt_key] != nil
 
     jwt = conn.assigns[Guardian.Keys.jwt_key]
-    { :ok, claims } = Guardian.verify(jwt)
+    { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"

@@ -23,33 +23,33 @@ defmodule Guardian do
   if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
   @doc """
-  Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.
+  Encode and sign a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.
   """
-  @spec mint(any) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
-  def mint(object), do: mint(object, nil, %{})
+  @spec encode_and_sign(any) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
+  def encode_and_sign(object), do: encode_and_sign(object, nil, %{})
 
   @doc """
-  Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT
+  Like encode_and_sign/1 but also accepts the audience (encoded to the aud key) for the JWT
 
   The aud can be anything but suggested is "token".
   """
-  @spec mint(any, atom | String.t) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
-  def mint(object, audience), do: mint(object, audience, %{})
+  @spec encode_and_sign(any, atom | String.t) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
+  def encode_and_sign(object, audience), do: encode_and_sign(object, audience, %{})
 
   @doc false
-  def mint(object, audience, claims) when is_list(claims), do: mint(object, audience, Enum.into(claims, %{}))
+  def encode_and_sign(object, audience, claims) when is_list(claims), do: encode_and_sign(object, audience, Enum.into(claims, %{}))
 
   @doc """
-  Like mint/2 but also encode anything found inside the claims map into the JWT.
+  Like encode_and_sign/2 but also encode anything found inside the claims map into the JWT.
 
   To encode permissions into the token, use the `:perms` key and pass it a map with the relevant permissions (must be configured)
 
   ### Example
 
-      Guardian.mint(user, :token, perms: %{ default: [:read, :write] })
+      Guardian.encode_and_sign(user, :token, perms: %{ default: [:read, :write] })
   """
-  @spec mint(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
-  def mint(object, audience, claims) do
+  @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
+  def encode_and_sign(object, audience, claims) do
     claims = stringify_keys(claims)
     perms = Dict.get(claims, "perms", %{})
     claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete("perms")
@@ -60,12 +60,12 @@ defmodule Guardian do
         |> Guardian.Claims.aud(audience)
         |> Guardian.Claims.sub(sub)
 
-        case Guardian.hooks_module.before_mint(object, audience, full_claims) do
+        case Guardian.hooks_module.before_encode_and_sign(object, audience, full_claims) do
           { :error, reason } -> { :error, reason }
           { :ok, { resource, type, hooked_claims } } ->
             case Joken.encode(hooked_claims) do
               { :ok, jwt } ->
-                Guardian.hooks_module.after_mint(resource, type, hooked_claims, jwt)
+                Guardian.hooks_module.after_encode_and_sign(resource, type, hooked_claims, jwt)
                 { :ok, jwt, hooked_claims }
               { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
               { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
@@ -84,7 +84,7 @@ defmodule Guardian do
   This function is less efficient that revoke!/2. If you have claims, you should use that.
   """
   def revoke!(jwt) do
-    case verify(jwt) do
+    case decode_and_verify(jwt) do
       { :ok, { claims, _ } } -> revoke!(jwt, claims)
       _ -> :ok
     end
@@ -108,17 +108,17 @@ defmodule Guardian do
   def serializer, do: config(:serializer)
 
   @doc """
-  Verify the given JWT. This will verify via verify/2
+  Verify the given JWT. This will decode_and_verify via decode_and_verify/2
   """
-  @spec verify(String.t) :: { :ok, Map } | { :error, atom } | { :error, String.t }
-  def verify(jwt), do: verify(jwt, %{})
+  @spec decode_and_verify(String.t) :: { :ok, Map } | { :error, atom } | { :error, String.t }
+  def decode_and_verify(jwt), do: decode_and_verify(jwt, %{})
 
 
   @doc """
   Verify the given JWT.
   """
-  @spec verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
-  def verify(jwt, params) do
+  @spec decode_and_verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
+  def decode_and_verify(jwt, params) do
     params = stringify_keys(params)
     if verify_issuer?, do: params = Dict.put_new(params, "iss", issuer)
     params = stringify_keys(params)
@@ -153,15 +153,15 @@ defmodule Guardian do
   @doc """
   If successfully verified, returns the claims encoded into the JWT. Raises otherwise
   """
-  @spec verify!(String.t) :: Map
-  def verify!(jwt), do: verify!(jwt, %{})
+  @spec decode_and_verify!(String.t) :: Map
+  def decode_and_verify!(jwt), do: decode_and_verify!(jwt, %{})
 
   @doc """
   If successfully verified, returns the claims encoded into the JWT. Raises otherwise
   """
-  @spec verify!(String.t, Map) :: Map
-  def verify!(jwt, params) do
-    case verify(jwt, params) do
+  @spec decode_and_verify!(String.t, Map) :: Map
+  def decode_and_verify!(jwt, params) do
+    case decode_and_verify(jwt, params) do
       { :ok, claims } -> claims
       { :error, reason } -> raise to_string(reason)
     end

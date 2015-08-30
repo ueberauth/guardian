@@ -53,7 +53,7 @@ defmodule Guardian.Plug do
     the_key = Dict.get(claims, :key, :default)
     claims = Dict.delete(claims, :key)
 
-    case Guardian.mint(object, type, claims) do
+    case Guardian.encode_and_sign(object, type, claims) do
       { :ok, jwt, full_claims } ->
         conn
         |> Plug.Conn.put_session(base_key(the_key), jwt)

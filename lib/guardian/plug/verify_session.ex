@@ -31,7 +31,7 @@ defmodule Guardian.Plug.VerifySession do
         jwt = Plug.Conn.get_session(conn, base_key(key))
 
         if jwt do
-          case Guardian.verify(jwt, %{ }) do
+          case Guardian.decode_and_verify(jwt, %{ }) do
             { :ok, claims } ->
               conn
               |> Guardian.Plug.set_claims({ :ok, claims }, key)

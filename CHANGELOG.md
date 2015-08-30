@@ -1,3 +1,17 @@
+# v 0.6.0
+Rename
+
+    Guardian.mint -> Guardian.encode_and_sign
+    Guardian.verify -> Guardian.decode_and_verify
+
+    Guardian.Plug.EnsureSession -> Guardian.Plug.EnsureAuthenticated
+    Guardian.Plug.VerifyAuthorization -> Guardian.Plug.VerifyHeader
+
+# v 0.5.2
+
+Add new hooks on\_verify and on\_revoke
+Remove multiple hooks registration
+
 # v 0.5.1
 
 Allow multiple hooks to be registered to Guardian
