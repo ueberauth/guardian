@@ -45,6 +45,16 @@ defmodule Guardian.JWT do
     end
   end
 
+  def validate_claim(:aud, payload, opts), do: validate_claim("aud", payload, opts)
+  def validate_claim("aud", payload, opts) do
+    has_aud_key? = Dict.has_key?(opts, "aud")
+    if has_aud_key? && Dict.get(opts, "aud") != Dict.get(payload, "aud") do
+      { :error, :invalid_audience }
+    else
+      { :ok, payload }
+    end
+  end
+
   def validate_claim(_, _, _), do: :ok
 
   @doc false

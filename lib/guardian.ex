@@ -60,12 +60,12 @@ defmodule Guardian do
         |> Guardian.Claims.aud(audience)
         |> Guardian.Claims.sub(sub)
 
-        case Guardian.Hooks.run_before_mint(object, audience, full_claims) do
+        case Guardian.hooks_module.before_mint(object, audience, full_claims) do
           { :error, reason } -> { :error, reason }
           { :ok, { resource, type, hooked_claims } } ->
             case Joken.encode(hooked_claims) do
               { :ok, jwt } ->
-                Guardian.Hooks.run_after_mint(resource, type, hooked_claims, jwt)
+                Guardian.hooks_module.after_mint(resource, type, hooked_claims, jwt)
                 { :ok, jwt, hooked_claims }
               { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
               { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
@@ -76,11 +76,30 @@ defmodule Guardian do
   end
 
   @doc false
-  def hooks_modules, do: fetch_hooks_modules(config(:hooks, Guardian.Hooks.Default))
+  def hooks_module, do: config(:hooks, Guardian.Hooks.Default)
 
-  defp fetch_hooks_modules(modules) when is_list(modules), do: modules
-  defp fetch_hooks_modules(module) when is_atom(module), do: [module]
-  defp fetch_hooks_modules(nil), do: []
+  @doc """
+  Revokes the current token.
+  This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke
+  This function is less efficient that revoke!/2. If you have claims, you should use that.
+  """
+  def revoke!(jwt) do
+    case verify(jwt) do
+      { :ok, { claims, _ } } -> revoke!(jwt, claims)
+      _ -> :ok
+    end
+  end
+
+  @doc """
+  Revokes the current token.
+  This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke
+  """
+  def revoke!(jwt, claims) do
+    case Guardian.hooks_module.on_revoke(claims, jwt) do
+      { :ok, _ } -> :ok
+      { :error, reason } -> { :error, reason }
+    end
+  end
 
   @doc """
   Fetch the configured serializer module
@@ -106,7 +125,11 @@ defmodule Guardian do
 
     try do
       case Joken.decode(jwt, params) do
-        { :ok, claims } -> verify_claims!(claims, params)
+        { :ok, claims } ->
+          case Guardian.hooks_module.on_verify(claims, jwt) do
+            { :ok, { claims, _ } } -> { :ok, claims }
+            { :error, reason } -> reason
+          end
         { :error, "Missing signature" } -> { :error, :missing_signature }
         { :error, "Invalid signature" } -> { :error, :invalid_signature }
         { :error, "Invalid JSON Web Token" } -> { :error, :invalid_jwt }
@@ -149,12 +172,6 @@ defmodule Guardian do
   """
   @spec issuer() :: String.t
   def issuer, do: config(:issuer, to_string(node))
-
-
-  defp verify_claims!(claims, params) do
-    has_aud_key? = Dict.has_key?(params, "aud")
-    if has_aud_key? && Dict.get(params, "aud") != Dict.get(claims, "aud"), do: { :error, :invalid_audience }, else: { :ok, claims }
-  end
 
   defp verify_issuer?, do: config(:verify_issuer, false)
 
