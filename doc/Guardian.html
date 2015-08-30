@@ -1,31 +1,82 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html>
   <head>
-    <title>Guardian</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
-    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
-    <script type="text/javascript" charset="utf-8">
-      relpath = '';
-      if (relpath != '') relpath += '/';
-    </script>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+        <title>Guardian – guardian v0.5.2</title>
+      
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc">
 
-    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      hljs.initHighlightingOnLoad();
-      hljs.configure({languages: []}); //disable autodetect
-    </script>
+    <link rel="stylesheet" href="dist/app.css">
   </head>
-
   <body>
-    <script type="text/javascript" charset="utf-8">
-      if (window.top.frames.main) document.body.className = 'frames';
-    </script>
 
-    <section id="content">
-      <div class="breadcrumbs">guardian v0.5.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a></div>
+    
+    <div class="row row-offcanvas row-offcanvas-left">
+<section id="sidebar" class="col-xs-6 col-sm-3 sidebar-offcanvas">
+  <p class="pull-right visible-xs">
+  <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+    <span class="glyphicon glyphicon-search"></span>
+  </button>
+  </p>
+
+  <h1 id="full_list_header">
+    
+      guardian v0.5.2
+    
+  </h1>
+
+  <h2 id="sub_list_header">
+    
+    <a href="overview.html">Overview</a>
+  </h2>
+
+  <div class="nav">
+    
+      <span><a id="modules_list" href="#full_list">Modules</a></span>
+    
+    
+      <span role="presentation" class="disabled">Exceptions</span>
+    
+    
+      <span role="presentation" class="disabled">Protocols</span>
+    
+  </div>
+
+  <div id="search">
+    <div class="col-xs-10">
+      <div class="input-group input-group-sm">
+        <label for="search_field" class="sr-only">Search</label>
+        <input type="text" id="search_field" class="form-control" placeholder="Search" autocomplete="off" autofocus="autofocus" results="0">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search"></span></button>
+        </span>
+      </div><!-- /input-group -->
+    </div><!-- /.col-xs-10 -->
+    <div class="col-xs-2" id="spinning">
+      <span></span>
+    </div><!-- /.col-xs-2 -->
+  </div><!-- /#search .row -->
+
+  <script src="dist/sidebar_items.js" defer></script>
+
+  <ul id="full_list">
+  </ul>
+
+  <div id="no_results"></div>
+</section><!--/.sidebar-offcanvas -->
+<section id="content" class="col-xs-12 col-sm-9">
+
+
+      <div class="breadcrumbs">
+        <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+          <span class="glyphicon glyphicon-menu-hamburger"></span>
+        </button>
+        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a>
+      </div>
+
       <h1>
         Guardian
         
@@ -33,7 +84,7 @@
 
       <ul class="summary_links">
         
-          <li><a href="#summary">Summary</a></li>
+          <li><a href="#summary_details">Summary</a></li>
         
         
         
@@ -63,80 +114,77 @@ Where authentication is required.</p>
       
 
       
-        <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
-        <table class="summary">
-          <tr>
+        <section id="summary_details" class="details_list">
+          <h1>Summary</h1>
+          <table class="summary">
+            <tr>
   <td class="summary_signature"><a href="#issuer/0">issuer()</a></td>
-  
-    <td class="summary_synopsis"><p>The configured issuer. If not configured, defaults to the node that issued</p>
+  <td class="summary_synopsis"><p>The configured issuer. If not configured, defaults to the node that issued</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#mint/1">mint(object)</a></td>
-  
-    <td class="summary_synopsis"><p>Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT</p>
+  <td class="summary_synopsis"><p>Mint a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#mint/2">mint(object, audience)</a></td>
-  
-    <td class="summary_synopsis"><p>Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
+  <td class="summary_synopsis"><p>Like mint/1 but also accepts the audience (encoded to the aud key) for the JWT</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#mint/3">mint(object, audience, claims)</a></td>
-  
-    <td class="summary_synopsis"><p>Like mint/2 but also encode anything found inside the claims map into the JWT</p>
+  <td class="summary_synopsis"><p>Like mint/2 but also encode anything found inside the claims map into the JWT</p>
 </td>
-  
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#revoke!/1">revoke!(jwt)</a></td>
+  <td class="summary_synopsis"><p>Revokes the current token.
+This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke
+This function is less efficient that revoke!/2. If you have claims, you should use that</p>
+</td>
+</tr>
+<tr>
+  <td class="summary_signature"><a href="#revoke!/2">revoke!(jwt, claims)</a></td>
+  <td class="summary_synopsis"><p>Revokes the current token.
+This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke</p>
+</td>
 </tr>
 <tr>
   <td class="summary_signature"><a href="#serializer/0">serializer()</a></td>
-  
-    <td class="summary_synopsis"><p>Fetch the configured serializer module</p>
+  <td class="summary_synopsis"><p>Fetch the configured serializer module</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#verify!/1">verify!(jwt)</a></td>
-  
-    <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#verify!/2">verify!(jwt, params)</a></td>
-  
-    <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
+  <td class="summary_synopsis"><p>If successfully verified, returns the claims encoded into the JWT. Raises otherwise</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#verify/1">verify(jwt)</a></td>
-  
-    <td class="summary_synopsis"><p>Verify the given JWT. This will verify via verify/2</p>
+  <td class="summary_synopsis"><p>Verify the given JWT. This will verify via verify/2</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#verify/2">verify(jwt, params)</a></td>
-  
-    <td class="summary_synopsis"><p>Verify the given JWT</p>
+  <td class="summary_synopsis"><p>Verify the given JWT</p>
 </td>
-  
 </tr>
 
-        </table>
+          </table>
+        </section>
       
 
       
 
       
         <section id="functions_details" class="details_list">
-          <h2>Functions</h2>
+          <h1>Functions</h1>
           <section class="detail">
   <div class="detail_header" id="issuer/0">
     <span class="signature"><strong>issuer()</strong></span>
@@ -229,6 +277,41 @@ Where authentication is required.</p>
 <p>To encode permissions into the token, use the <code class="inline">:perms</code> key and pass it a map with the relevant permissions (must be configured)</p>
 <h3>Example</h3>
 <pre><code class="elixir">Guardian.mint(user, :token, perms: %{ default: [:read, :write] })</code></pre>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="revoke!/1">
+    <span class="signature"><strong>revoke!(jwt)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#revoke!/1" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Revokes the current token.
+This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke
+This function is less efficient that revoke!/2. If you have claims, you should use that.</p>
+
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="revoke!/2">
+    <span class="signature"><strong>revoke!(jwt, claims)</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(function)</span>
+      <a href="#revoke!/2" class="detail_link" title="Link to this function">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+  <section class="docstring">
+    <p>Revokes the current token.
+This provides a hook to revoke, the logic for revocation of belongs in a Guardian.Hook.on_revoke</p>
 
   </section>
   
@@ -355,6 +438,10 @@ Where authentication is required.</p>
       
 
       
-    </section>
+      </section> <!--/content -->
+</div><!--/row -->
+
+    <script src="dist/app.js"></script>
   </body>
 </html>
+

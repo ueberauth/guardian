@@ -1,31 +1,82 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html>
   <head>
-    <title>Guardian.Plug</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
-    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
-    <script type="text/javascript" charset="utf-8">
-      relpath = '';
-      if (relpath != '') relpath += '/';
-    </script>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+        <title>Guardian.Plug – guardian v0.5.2</title>
+      
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc">
 
-    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      hljs.initHighlightingOnLoad();
-      hljs.configure({languages: []}); //disable autodetect
-    </script>
+    <link rel="stylesheet" href="dist/app.css">
   </head>
-
   <body>
-    <script type="text/javascript" charset="utf-8">
-      if (window.top.frames.main) document.body.className = 'frames';
-    </script>
 
-    <section id="content">
-      <div class="breadcrumbs">guardian v0.5.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Plug.html">Plug</a></div>
+    
+    <div class="row row-offcanvas row-offcanvas-left">
+<section id="sidebar" class="col-xs-6 col-sm-3 sidebar-offcanvas">
+  <p class="pull-right visible-xs">
+  <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+    <span class="glyphicon glyphicon-search"></span>
+  </button>
+  </p>
+
+  <h1 id="full_list_header">
+    
+      guardian v0.5.2
+    
+  </h1>
+
+  <h2 id="sub_list_header">
+    
+    <a href="overview.html">Overview</a>
+  </h2>
+
+  <div class="nav">
+    
+      <span><a id="modules_list" href="#full_list">Modules</a></span>
+    
+    
+      <span role="presentation" class="disabled">Exceptions</span>
+    
+    
+      <span role="presentation" class="disabled">Protocols</span>
+    
+  </div>
+
+  <div id="search">
+    <div class="col-xs-10">
+      <div class="input-group input-group-sm">
+        <label for="search_field" class="sr-only">Search</label>
+        <input type="text" id="search_field" class="form-control" placeholder="Search" autocomplete="off" autofocus="autofocus" results="0">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search"></span></button>
+        </span>
+      </div><!-- /input-group -->
+    </div><!-- /.col-xs-10 -->
+    <div class="col-xs-2" id="spinning">
+      <span></span>
+    </div><!-- /.col-xs-2 -->
+  </div><!-- /#search .row -->
+
+  <script src="dist/sidebar_items.js" defer></script>
+
+  <ul id="full_list">
+  </ul>
+
+  <div id="no_results"></div>
+</section><!--/.sidebar-offcanvas -->
+<section id="content" class="col-xs-12 col-sm-9">
+
+
+      <div class="breadcrumbs">
+        <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+          <span class="glyphicon glyphicon-menu-hamburger"></span>
+        </button>
+        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Plug.html#content">Plug</a>
+      </div>
+
       <h1>
         Guardian.Plug
         
@@ -33,7 +84,7 @@
 
       <ul class="summary_links">
         
-          <li><a href="#summary">Summary</a></li>
+          <li><a href="#summary_details">Summary</a></li>
         
         
         
@@ -48,7 +99,7 @@
           <p>Guardian.Plug contains functions that assist with interacting with Guardian via Plugs.</p>
 <p>Guardian.Plug is not itself a plug.</p>
 <h2>Example</h2>
-<pre><code class="elixir">Guarian.Plug.sign_in(conn, user)
+<pre><code class="elixir">Guardian.Plug.sign_in(conn, user)
 Guardian.Plug.sign_in(conn, user, :token)
 Guardian.Plug.sign_in(conn, user, :token, %{ claims: &quot;i&quot;, make: true, key: :secret }) # stores this JWT in a different location (keyed by :secret)</code></pre>
 <h2>Example</h2>
@@ -61,66 +112,54 @@ Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session</code>
       
 
       
-        <h2 id="summary">Summary<span class="detail_header_links"><a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a></span></h2>
-        <table class="summary">
-          <tr>
+        <section id="summary_details" class="details_list">
+          <h1>Summary</h1>
+          <table class="summary">
+            <tr>
   <td class="summary_signature"><a href="#claims/2">claims(conn, the_key \\ :default)</a></td>
-  
-    <td class="summary_synopsis"><p>Fetch the currently verified claims from the current request</p>
+  <td class="summary_synopsis"><p>Fetch the currently verified claims from the current request</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#current_resource/2">current_resource(conn, the_key \\ :default)</a></td>
-  
-    <td class="summary_synopsis"><p>Fetch the currently authenticated resource if loaded, optionally located at a location (key)</p>
+  <td class="summary_synopsis"><p>Fetch the currently authenticated resource if loaded, optionally located at a location (key)</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#current_token/2">current_token(conn, the_key \\ :default)</a></td>
-  
-    <td class="summary_synopsis"><p>Fetch the currently verified token from the request. optionally located at a location (key)</p>
+  <td class="summary_synopsis"><p>Fetch the currently verified token from the request. optionally located at a location (key)</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#sign_in/2">sign_in(conn, object)</a></td>
-  
-    <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
+  <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#sign_in/3">sign_in(conn, object, type)</a></td>
-  
-    <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
+  <td class="summary_synopsis"><p>Sign in a resource (that your configured serializer knows about) into the current web session</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#sign_in/4">sign_in(conn, object, type, claims)</a></td>
-  
-    <td class="summary_synopsis"><p>Same as sign_in/3 but also encodes all claims into the JWT</p>
+  <td class="summary_synopsis"><p>Same as sign_in/3 but also encodes all claims into the JWT</p>
 </td>
-  
 </tr>
 <tr>
   <td class="summary_signature"><a href="#sign_out/2">sign_out(conn, the_key \\ :all)</a></td>
-  
-    <td class="summary_synopsis"><p>Sign out of a session</p>
+  <td class="summary_synopsis"><p>Sign out of a session</p>
 </td>
-  
 </tr>
 
-        </table>
+          </table>
+        </section>
       
 
       
 
       
         <section id="functions_details" class="details_list">
-          <h2>Functions</h2>
+          <h1>Functions</h1>
           <section class="detail">
   <div class="detail_header" id="claims/2">
     <span class="signature"><strong>claims(conn, the_key \\ :default)</strong></span>
@@ -268,6 +307,10 @@ location specified is cleared</p>
       
 
       
-    </section>
+      </section> <!--/content -->
+</div><!--/row -->
+
+    <script src="dist/app.js"></script>
   </body>
 </html>
+

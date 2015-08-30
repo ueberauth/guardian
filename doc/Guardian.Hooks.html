@@ -1,31 +1,82 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html>
   <head>
-    <title>Guardian.Hooks</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
-    <link rel="stylesheet" href="css/elixir.css" type="text/css" media="screen" charset="utf-8" />
-    <script type="text/javascript" charset="utf-8">
-      relpath = '';
-      if (relpath != '') relpath += '/';
-    </script>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+        <title>Guardian.Hooks – guardian v0.5.2</title>
+      
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc">
 
-    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/highlight.pack.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      hljs.initHighlightingOnLoad();
-      hljs.configure({languages: []}); //disable autodetect
-    </script>
+    <link rel="stylesheet" href="dist/app.css">
   </head>
-
   <body>
-    <script type="text/javascript" charset="utf-8">
-      if (window.top.frames.main) document.body.className = 'frames';
-    </script>
 
-    <section id="content">
-      <div class="breadcrumbs">guardian v0.5.0 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html">Guardian</a> &rarr; <a href="Guardian.Hooks.html">Hooks</a></div>
+    
+    <div class="row row-offcanvas row-offcanvas-left">
+<section id="sidebar" class="col-xs-6 col-sm-3 sidebar-offcanvas">
+  <p class="pull-right visible-xs">
+  <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+    <span class="glyphicon glyphicon-search"></span>
+  </button>
+  </p>
+
+  <h1 id="full_list_header">
+    
+      guardian v0.5.2
+    
+  </h1>
+
+  <h2 id="sub_list_header">
+    
+    <a href="overview.html">Overview</a>
+  </h2>
+
+  <div class="nav">
+    
+      <span><a id="modules_list" href="#full_list">Modules</a></span>
+    
+    
+      <span role="presentation" class="disabled">Exceptions</span>
+    
+    
+      <span role="presentation" class="disabled">Protocols</span>
+    
+  </div>
+
+  <div id="search">
+    <div class="col-xs-10">
+      <div class="input-group input-group-sm">
+        <label for="search_field" class="sr-only">Search</label>
+        <input type="text" id="search_field" class="form-control" placeholder="Search" autocomplete="off" autofocus="autofocus" results="0">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button"><span class="glyphicon glyphicon-search"></span></button>
+        </span>
+      </div><!-- /input-group -->
+    </div><!-- /.col-xs-10 -->
+    <div class="col-xs-2" id="spinning">
+      <span></span>
+    </div><!-- /.col-xs-2 -->
+  </div><!-- /#search .row -->
+
+  <script src="dist/sidebar_items.js" defer></script>
+
+  <ul id="full_list">
+  </ul>
+
+  <div id="no_results"></div>
+</section><!--/.sidebar-offcanvas -->
+<section id="content" class="col-xs-12 col-sm-9">
+
+
+      <div class="breadcrumbs">
+        <button type="button" class="btn btn-default btn-sm" data-toggle="offcanvas">
+          <span class="glyphicon glyphicon-menu-hamburger"></span>
+        </button>
+        guardian v0.5.2 &rarr; <a href="overview.html">Overview</a> &rarr; <a href="Guardian.html#content">Guardian</a> &rarr; <a href="Guardian.Hooks.html#content">Hooks</a>
+      </div>
+
       <h1>
         Guardian.Hooks
         
@@ -62,8 +113,30 @@
 
       
         <section id="callbacks_details" class="details_list">
-          <h2>Callbacks</h2>
+          <h1>Callbacks</h1>
           <section class="detail">
+  <div class="detail_header" id="c:before_mint/3">
+    <span class="signature"><strong>before_mint/3</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(callback)</span>
+      <a href="#c:before_mint/3" class="detail_link" title="Link to this callback">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>before_mint(resource :: term, type :: atom, claims :: Map) :: term</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
   <div class="detail_header" id="c:after_mint/4">
     <span class="signature"><strong>after_mint/4</strong></span>
     <div class="detail_header_links">
@@ -108,28 +181,6 @@
   
 </section>
 <section class="detail">
-  <div class="detail_header" id="c:before_mint/3">
-    <span class="signature"><strong>before_mint/3</strong></span>
-    <div class="detail_header_links">
-      <span class="detail_type">(callback)</span>
-      <a href="#c:before_mint/3" class="detail_link" title="Link to this callback">#</a>
-      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
-    </div>
-  </div>
-  
-    <p>Specs:</p>
-    <ul class="spec">
-      
-        <li>before_mint(resource :: term, type :: atom, claims :: Map) :: term</li>
-      
-    </ul>
-  
-  <section class="docstring">
-    
-  </section>
-  
-</section>
-<section class="detail">
   <div class="detail_header" id="c:before_sign_out/2">
     <span class="signature"><strong>before_sign_out/2</strong></span>
     <div class="detail_header_links">
@@ -151,9 +202,57 @@
   </section>
   
 </section>
+<section class="detail">
+  <div class="detail_header" id="c:on_verify/2">
+    <span class="signature"><strong>on_verify/2</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(callback)</span>
+      <a href="#c:on_verify/2" class="detail_link" title="Link to this callback">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>on_verify(claims :: Map, jwt :: <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: term</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
+<section class="detail">
+  <div class="detail_header" id="c:on_revoke/2">
+    <span class="signature"><strong>on_revoke/2</strong></span>
+    <div class="detail_header_links">
+      <span class="detail_type">(callback)</span>
+      <a href="#c:on_revoke/2" class="detail_link" title="Link to this callback">#</a>
+      <a class="to_top_link" href="#content" title="To the top of the page">&uarr;</a>
+    </div>
+  </div>
+  
+    <p>Specs:</p>
+    <ul class="spec">
+      
+        <li>on_revoke(claims :: Map, jwt :: <a href="http://elixir-lang.org/docs/stable/elixir/String.html#t:t/0">String.t</a>) :: term</li>
+      
+    </ul>
+  
+  <section class="docstring">
+    
+  </section>
+  
+</section>
 
         </section>
       
-    </section>
+      </section> <!--/content -->
+</div><!--/row -->
+
+    <script src="dist/app.js"></script>
   </body>
 </html>
+
