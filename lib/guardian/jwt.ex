@@ -45,7 +45,7 @@ defmodule Guardian.JWT do
     end
   end
 
-  def validate_claim(key, payload, params), do: :ok
+  def validate_claim(_, _, _), do: :ok
 
   @doc false
   def encode(map), do: JSON.encode!(map)
