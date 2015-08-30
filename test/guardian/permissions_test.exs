@@ -97,6 +97,11 @@ defmodule Guardian.PermissionsTest do
     assert Permissions.all?(val, [:read, :write, :update, :delete]) == false
   end
 
+  test "all? is false if the permission is not set" do
+    val = Permissions.to_value([:read, :write, :update], :new_permission)
+    assert(Permissions.all?(val, [:read, :write, :update], :new_permission) == false)
+  end
+
   test "any? is true if any values are present" do
     val = Permissions.to_value([:read, :write, :update])
 
