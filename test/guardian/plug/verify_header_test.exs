@@ -1,10 +1,10 @@
-defmodule Guardian.Plug.VerifyAuthorizationTest do
+defmodule Guardian.Plug.VerifyHeaderTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
   alias Guardian.Claims
   alias Guardian.Keys
-  alias Guardian.Plug.VerifyAuthorization
+  alias Guardian.Plug.VerifyHeader
   alias Plug.Conn
 
   setup do
@@ -14,27 +14,27 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
   end
 
   test "with no JWT in the session at a default location", context do
-    conn = VerifyAuthorization.call(context.conn, [])
+    conn = VerifyHeader.call(context.conn, [])
     assert conn.assigns[Keys.claims_key] == nil
     assert conn.assigns[Keys.jwt_key] == nil
   end
 
   test "with no JWT in the session at a specified location", context do
-    conn = VerifyAuthorization.call(context.conn, key: :secret)
+    conn = VerifyHeader.call(context.conn, key: :secret)
     assert conn.assigns[Keys.claims_key(:secret)] == nil
     assert conn.assigns[Keys.jwt_key(:secret)] == nil
   end
 
   test "with a valid JWT in the session at the default location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
-    conn = VerifyAuthorization.call(the_conn, [])
+    conn = VerifyHeader.call(the_conn, [])
     assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key] == context.jwt
   end
 
   test "with a valid JWT in the session at a specified location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
-    conn = VerifyAuthorization.call(the_conn, key: :secret)
+    conn = VerifyHeader.call(the_conn, key: :secret)
     assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
   end
@@ -45,7 +45,7 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
     |> Conn.assign(Keys.claims_key, context.claims)
     |> Conn.assign(Keys.jwt_key, context.jwt)
 
-    conn = VerifyAuthorization.call(the_conn, key: :secret)
+    conn = VerifyHeader.call(the_conn, key: :secret)
     assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
   end
@@ -53,9 +53,9 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
   test "with a realm specified", context do
     the_conn = put_req_header(context.conn, "authorization", "Bearer #{context.jwt}")
 
-    opts = VerifyAuthorization.init(realm: "Bearer")
+    opts = VerifyHeader.init(realm: "Bearer")
 
-    conn = VerifyAuthorization.call(the_conn, opts)
+    conn = VerifyHeader.call(the_conn, opts)
     assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key] == context.jwt
   end
@@ -68,9 +68,9 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
     |> put_req_header("authorization", "Bearer #{context.jwt}")
     |> put_req_header("authorization", "Client #{jwt2}")
 
-    opts = VerifyAuthorization.init(realm: "Client")
+    opts = VerifyHeader.init(realm: "Client")
 
-    conn = VerifyAuthorization.call(the_conn, opts)
+    conn = VerifyHeader.call(the_conn, opts)
     assert conn.assigns[Keys.claims_key] == { :ok, claims2 }
     assert conn.assigns[Keys.jwt_key] == jwt2
   end
@@ -82,12 +82,12 @@ defmodule Guardian.Plug.VerifyAuthorizationTest do
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{ context.conn | req_headers: [{"authorization", "Bearer #{context.jwt}"}, {"authorization", "Client #{jwt2}"}] }
 
-    defaultOpts = VerifyAuthorization.init(realm: "Bearer")
-    clientOpts = VerifyAuthorization.init(realm: "Client", key: :client)
+    defaultOpts = VerifyHeader.init(realm: "Bearer")
+    clientOpts = VerifyHeader.init(realm: "Client", key: :client)
 
     conn = the_conn
-    |> VerifyAuthorization.call(defaultOpts)
-    |> VerifyAuthorization.call(clientOpts)
+    |> VerifyHeader.call(defaultOpts)
+    |> VerifyHeader.call(clientOpts)
 
     assert conn.assigns[Keys.claims_key(:client)] == { :ok, claims2 }
     assert conn.assigns[Keys.jwt_key(:client)] == jwt2

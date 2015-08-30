@@ -46,7 +46,7 @@ defmodule Guardian.Channel do
       def handle_guardian_auth_failure(reason), do: { :error, %{ error: reason } }
 
       defp handle_guardian_join(room, jwt, params, socket) do
-        case Guardian.verify(jwt, params) do
+        case Guardian.decode_and_verify(jwt, params) do
           { :ok, claims } ->
             case Guardian.serializer.from_token(Dict.get(claims, "sub")) do
               { :ok, resource } ->

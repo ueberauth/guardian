@@ -77,11 +77,11 @@ defmodule Guardian.Permissions do
 
       Guardian.Plug.sign_in(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })
 
-  ### Minting credentials with permissions
+  ### Encoding credentials with permissions
 
   This will encode the permissions as a map with integer values
 
-      Guardian.mint(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })
+      Guardian.encode_and_sign(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })
 
   """
   use Bitwise

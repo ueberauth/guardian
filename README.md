@@ -75,12 +75,12 @@ Guardian ships with some plugs to help integrate into your application.
 Looks for a token in the session. Useful for browser sessions.
 If one is not found, this does nothing.
 
-### Guardian.Plug.VerifyAuthorization
+### Guardian.Plug.VerifyHeader
 
 Looks for a token in the Authorization header. Useful for apis.
 If one is not found, this does nothing.
 
-### Guardian.Plug.EnsureSession
+### Guardian.Plug.EnsureAuthenticated
 
 Looks for a previously verified token. If one is found, continues, otherwise it
 will call the `:on_failure` function.
@@ -92,7 +92,7 @@ as part of a pipeline or inside a pheonix controller.
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyController, :unauthenticated }
+  plug Guardian.Plug.EnsureAuthenticated, on_failure: { MyApp.MyController, :unauthenticated }
 end
 ```
 
@@ -123,7 +123,7 @@ end
 
 pipeline :api do
   plug :accepts, ["json"]
-  plug Guardian.Plug.VerifyAuthorization
+  plug Guardian.Plug.VerifyHeader
   plug Guardian.Plug.LoadResource
 end
 
@@ -137,13 +137,13 @@ scope "/api", MyApp.Api do
 end
 ```
 
-From here, you can either EnsureSession in your pipeline, or on a per-controller basis.
+From here, you can either EnsureAuthenticated in your pipeline, or on a per-controller basis.
 
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsureSession, on_failure: { MyApp.MyHandler, :unauthenticated }
+  plug Guardian.Plug.EnsureAuthenticated, on_failure: { MyApp.MyHandler, :unauthenticated }
 end
 ```
 
@@ -213,7 +213,7 @@ Guardian.Plug.sign_out(conn, :secret) # Clear the token and associated user from
 ### Current resource, token and claims
 
 Access to the current resource, token and claims is useful. Note, you'll need to
-have run the VerifySession/Authorization for token and claim access, and LoadResource to access the resource.
+have run the VerifySession/Header for token and claim access, and LoadResource to access the resource.
 
 ```elixir
 Guardian.Plug.claims(conn) # Access the claims in the default location
@@ -238,22 +238,22 @@ There are many instances where Plug might not be in use. Channels, and raw
 sockets for e.g. If you need to do things your own way.
 
 ```elixir
-{ :ok, jwt, encoded_claims } = Guardian.mint(resource, <token_type>, claims_map)
+{ :ok, jwt, encoded_claims } = Guardian.encode_and_sign(resource, <token_type>, claims_map)
 ```
 
-This will give you a minted JWT to use with the claims ready to go.
+This will give you a new JWT to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
 used as the _type_ of token.
 
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :token)
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token)
 ```
 
 Add some permissions
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :token, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
 ```
 
 Currently suggested token types are:
@@ -267,13 +267,13 @@ claims = Guardian.Claims.app_claims
          |> Dict.put(:some_claim, some_value)
          |> Guardian.Claims.ttl({3, :days})
 
-{ :ok, jwt, full_claims } = Guardian.mint(resource, :token, claims)
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, claims)
 ```
 
 To verify the token:
 
 ```elixir
-case Guardian.verify(jwt) do
+case Guardian.decode_and_verify(jwt) do
   { :ok, claims } -> do_things_with_claims(claims)
   { :error, reason } -> do_things_with_an_error(reason)
 end
@@ -329,10 +329,10 @@ You can use a plug to ensure permissions are present. See Guardian.Plug.EnsurePe
 
 #### Setting permissions
 
-When you mint (or sign in) a token, you can inject permissions into it.
+When you generate (or sign in) a token, you can inject permissions into it.
 
 ```elixir
-Guardian.mint(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
+Guardian.encode_and_sign(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
 ```
 
 By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.

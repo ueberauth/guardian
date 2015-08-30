@@ -1,9 +1,9 @@
-defmodule Guardian.Plug.EnsureSessionTest do
+defmodule Guardian.Plug.EnsureAuthenticatedTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
   alias Guardian.Keys
-  alias Guardian.Plug.EnsureSession
+  alias Guardian.Plug.EnsureAuthenticated
 
   defmodule TestHandler do
     def unauthenticated(conn, _) do
@@ -16,35 +16,35 @@ defmodule Guardian.Plug.EnsureSessionTest do
 
   test "it requires an on_failure option" do
     assert_raise RuntimeError, fn ->
-      EnsureSession.init([])
+      EnsureAuthenticated.init([])
     end
 
-    assert %{ on_failure: @expected_failure } == EnsureSession.init(@failure)
+    assert %{ on_failure: @expected_failure } == EnsureAuthenticated.init(@failure)
   end
 
   test "it does not call on failure when there is a session at the default location" do
     claims = %{ "aud" => "token", "sub" => "user1" }
     conn = conn(:get, "/foo") |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
-    ensured_conn = EnsureSession.call(conn, @failure)
+    ensured_conn = EnsureAuthenticated.call(conn, @failure)
     assert ensured_conn.assigns[:guardian_spec] == nil
   end
 
   test "it does not call on failure when there is a session at the specific location" do
     claims = %{ "aud" => "token", "sub" => "user1" }
     conn = conn(:get, "/foo") |> Plug.Conn.assign(Keys.claims_key(:secret), { :ok, claims })
-    ensured_conn = EnsureSession.call(conn, @failure ++ [ key: :secret ])
+    ensured_conn = EnsureAuthenticated.call(conn, @failure ++ [ key: :secret ])
     assert ensured_conn.assigns[:guardian_spec] == nil
   end
 
   test "it calls the on_failiure function when there is no session at default" do
     conn = conn(:get, "/foo")
-    ensured_conn = EnsureSession.call(conn, @failure)
+    ensured_conn = EnsureAuthenticated.call(conn, @failure)
     assert ensured_conn.assigns[:guardian_spec] == :unauthenticated
   end
 
   test "it calls the on_failiure function when there is no session at a specific location" do
     conn = conn(:get, "/foo")
-    ensured_conn = EnsureSession.call(conn, @failure ++ [ key: :secret ])
+    ensured_conn = EnsureAuthenticated.call(conn, @failure ++ [ key: :secret ])
     assert ensured_conn.assigns[:guardian_spec] == :unauthenticated
   end
 end

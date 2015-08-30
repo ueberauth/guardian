@@ -1,4 +1,4 @@
-defmodule Guardian.Plug.VerifyAuthorization do
+defmodule Guardian.Plug.VerifyHeader do
   @moduledoc """
   Use this plug to verify a token contained in the header.
 
@@ -8,11 +8,11 @@ defmodule Guardian.Plug.VerifyAuthorization do
 
   ## Example
 
-      plug Guardian.Plug.VerifyAuthorization
+      plug Guardian.Plug.VerifyHeader
 
   ## Example
 
-      plug Guardian.Plug.VerifyAuthorization, key: :secret
+      plug Guardian.Plug.VerifyHeader, key: :secret
 
   Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
 
@@ -20,13 +20,13 @@ defmodule Guardian.Plug.VerifyAuthorization do
 
   A "realm" can be specified when using the plug. Realms are like the name of the token and allow many tokens to be sent with a single request.
 
-      plug Guardian.Plug.VerifyAuthorization, realm: "Bearer"
+      plug Guardian.Plug.VerifyHeader, realm: "Bearer"
 
   When a realm is not specified, the first authorization header found is used, and assumed to be a raw token
 
   #### example
 
-      plug Guardian.Plug.VerifyAuthorization
+      plug Guardian.Plug.VerifyHeader
 
       # will take the first auth header
       # Authorization: <jwt>
@@ -57,7 +57,7 @@ defmodule Guardian.Plug.VerifyAuthorization do
   defp verify_token(conn, "", _), do: conn
 
   defp verify_token(conn, token, key) do
-    case Guardian.verify(token, %{ }) do
+    case Guardian.decode_and_verify(token, %{ }) do
       { :ok, claims } ->
         conn
         |> Plug.Conn.assign(claims_key(key), { :ok, claims })

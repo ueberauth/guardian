@@ -6,7 +6,8 @@ defmodule Guardian.Plug.LoadResource do
 
   The resource becomes available at Guardian.Plug.current_resource(conn) if successful.
 
-  If there is no valid JWT in the request so far (Guardian.Plug.VerifySession / Guardian.Plug.VerifyAuthorization) did not find a valid token
+  If there is no valid JWT in the request so far (Guardian.Plug.VerifySession /
+  Guardian.Plug.VerifyHeader) did not find a valid token
   then nothing will occur, and the Guardian.Plug.current_resource/1 will be nil
   """
 
