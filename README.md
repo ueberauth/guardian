@@ -445,7 +445,7 @@ feedback to get up and running.
 - [x] Integration with Phoenix channels
 - [x] Integrated permission sets
 - [x] Hooks into the authentication cycle
-- [ ] Revoke tokens
+- [x] Revoke tokens
 - [ ] Refresh tokens
 - [ ] Two-factor authentication
 - [ ] Single sign-in
