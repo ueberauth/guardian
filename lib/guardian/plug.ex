@@ -162,8 +162,10 @@ defmodule Guardian.Plug do
 
   defp clear_jwt_assign(conn, key) do
     jwt = current_token(conn, key)
-    claims = claims(conn, key)
-    Guardian.revoke!(jwt, claims)
+    case claims(conn, key) do
+      { :ok, the_claims } -> Guardian.revoke!(jwt, the_claims)
+      _ -> :ok
+    end
     Plug.Conn.assign(conn, jwt_key(key), nil)
   end
 end

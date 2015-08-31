@@ -128,7 +128,7 @@ defmodule Guardian do
         { :ok, claims } ->
           case Guardian.hooks_module.on_verify(claims, jwt) do
             { :ok, { claims, _ } } -> { :ok, claims }
-            { :error, reason } -> reason
+            { :error, reason } -> { :error, reason }
           end
         { :error, "Missing signature" } -> { :error, :missing_signature }
         { :error, "Invalid signature" } -> { :error, :invalid_signature }
