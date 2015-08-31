@@ -359,6 +359,25 @@ defmodule MyApp.GuardianHooks do
 end
 ```
 
+By default, JWTs are not tracked. This means that after 'logout' the token can
+still be used if it is stored outside the system. This is because Guardian does
+not track tokens and only interprates them live. When using Guardian in this
+way, be sure you consider the expiry time as this is one of the few options you
+have to make your tokens invalid.
+
+If you want more control over this you should implement a hook that tracks the
+tokens in some storage. When calling `Guardian.revoke!` (called automatically
+with sign\_out).
+
+To keep track of all tokens and ensure they're revoked on sign out you can use
+[GuardianDb](https://github.com/hassox/guardian_db). This is a simple
+Guardian.Hooks module that implements database integration.
+
+    config :guardian, Guardian,
+           hooks: GuardianDb
+
+    config :guardian_db, GuardianDb, repo: MyRepo
+
 Configure Guardian to know which module to use.
 
 ```elixir
