@@ -68,8 +68,8 @@ defmodule Guardian.Plug do
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
   def sign_in(conn, object, type, claims) do
-    the_key = Dict.get(claims, :key, :default)
-    claims = Dict.delete(claims, :key)
+    the_key = Map.get(claims, :key, :default)
+    claims = Map.delete(claims, :key)
 
     case Guardian.encode_and_sign(object, type, claims) do
       { :ok, jwt, full_claims } ->
@@ -157,7 +157,7 @@ defmodule Guardian.Plug do
   end
 
   defp clear_resource_assign(conn, :all) do
-    Dict.keys(conn.assigns)
+    Map.keys(conn.assigns)
     |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_resource")))
     |> Enum.reduce(conn, fn(key, c) -> clear_resource_assign(c, key_from_other(key)) end)
   end
@@ -165,7 +165,7 @@ defmodule Guardian.Plug do
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
 
   defp clear_claims_assign(conn, :all) do
-    Dict.keys(conn.assigns)
+    Map.keys(conn.assigns)
     |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_claims")))
     |> Enum.reduce(conn, fn(key, c) -> clear_claims_assign(c, key_from_other(key)) end)
   end
@@ -173,7 +173,7 @@ defmodule Guardian.Plug do
   defp clear_claims_assign(conn, key), do: Plug.Conn.assign(conn, claims_key(key), nil)
 
   defp clear_jwt_assign(conn, :all) do
-    Dict.keys(conn.assigns)
+    Map.keys(conn.assigns)
     |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") && String.ends_with?(to_string(&1), "_jwt")))
     |> Enum.reduce(conn, fn(key, c) -> clear_jwt_assign(c, key_from_other(key)) end)
   end

@@ -264,7 +264,7 @@ You can also customize the claims you're asserting.
 
 ```elixir
 claims = Guardian.Claims.app_claims
-         |> Dict.put(:some_claim, some_value)
+         |> Map.put(:some_claim, some_value)
          |> Guardian.Claims.ttl({3, :days})
 
 { :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, claims)
