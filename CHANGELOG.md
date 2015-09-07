@@ -1,6 +1,7 @@
 # v 0.6.2
 
 * Adds Guardian.Plug.authenticated?
+* Adds simple claim checks to EnsureAuthenticated
 
 ### Bugs
 
