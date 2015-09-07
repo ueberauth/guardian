@@ -1,3 +1,11 @@
+# v 0.6.2
+
+* Adds Guardian.Plug.authenticated?
+
+### Bugs
+
+* Fix an issue with permissions strings vs atoms (not encoding correctly)
+
 # v 0.6.0
 Rename
 

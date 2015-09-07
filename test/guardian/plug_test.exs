@@ -8,6 +8,18 @@ defmodule Guardian.PlugTest do
     { :ok, %{ conn: conn(:post, "/") } }
   end
 
+  test "authenticated?", context do
+    assert Guardian.Plug.authenticated?(context.conn) == false
+    new_conn = Guardian.Plug.set_claims(context.conn, { :ok, %{ "some" => "claim" } })
+    assert Guardian.Plug.authenticated?(new_conn) == true
+  end
+
+  test "authenticated? with a location", context do
+    assert Guardian.Plug.authenticated?(context.conn, :secret) == false
+    new_conn = Guardian.Plug.set_claims(context.conn, { :ok, %{ "some" => "claim" } }, :secret)
+    assert Guardian.Plug.authenticated?(new_conn, :secret) == true
+  end
+
   test "set_claims with no key", context do
     claims = %{ "some" => "claim" }
     new_conn = Guardian.Plug.set_claims(context.conn, claims)

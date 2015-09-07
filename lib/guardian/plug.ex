@@ -20,6 +20,24 @@ defmodule Guardian.Plug do
   import Guardian.Keys
 
   @doc """
+  A simple check to see if a request is authenticated
+  """
+  @spec authenticated?(Plug.Conn.t) :: atom # boolean
+  def authenticated?(conn), do: authenticated?(conn, :default)
+
+  @doc """
+  A simple check to see if a request is authenticated
+  """
+  @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
+  def authenticated?(conn, type) do
+    case claims(conn, type) do
+      { :error, _ } -> false
+      nil -> false
+      _ -> true
+    end
+  end
+
+  @doc """
   Sign in a resource (that your configured serializer knows about) into the current web session.
   """
   @spec sign_in(Plug.Conn.t, any) :: Plug.Conn.t
