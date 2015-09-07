@@ -100,22 +100,36 @@ defmodule Guardian.Permissions do
 
   Enum.map(expanded_perms, fn({type, values}) ->
     Enum.map(values, fn({name, val}) ->
+      # atom type
       def to_value([unquote(name) | tail], unquote(type), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
-      def to_value([unquote(to_string(name)) | tail], unquote(type), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
-      #def to_value(num, acc) when is_integer(num) and Bitwise.band(num, unquote(val)) == unquote(val), do: to_value(Bitwise.bxor(num, unquote(val), unquote(type), Bitwise.bor(acc, unquote(val)))
 
+      # atom type string value
+      def to_value([unquote(to_string(name)) | tail], unquote(type), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
+
+      # string type atom value
+      def to_value([unquote(name) | tail], unquote(to_string(type)), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
+
+      # string value with a string type
+      def to_value([unquote(to_string(name)) | tail], unquote(to_string(type)), acc), do: to_value(tail, unquote(type), Bitwise.bor(acc, unquote(val)) )
+
+      # atom type
       def to_list(num, unquote(type), existing_list) when Bitwise.band(unquote(val), num) == unquote(val) do
+        to_list(num ^^^ unquote(val), unquote(type), [ unquote(name) | existing_list])
+      end
+
+      # string type
+      def to_list(num, unquote(to_string(type)), existing_list) when Bitwise.band(unquote(val), num) == unquote(val) do
         to_list(num ^^^ unquote(val), unquote(type), [ unquote(name) | existing_list])
       end
     end)
 
     def from_claims(claims, unquote(type)) do
-      c = Dict.get(claims, :pem, Dict.get(claims, "pem", %{}))
+      c = Dict.get(claims, "pem", %{})
       Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
     end
 
     def from_claims(claims, unquote(to_string(type))) do
-      c = Dict.get(claims, :pem, Dict.get(claims, "pem", %{}))
+      c = Dict.get(claims, "pem", %{})
       Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
     end
   end)

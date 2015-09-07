@@ -16,7 +16,9 @@ defmodule Guardian.Claims do
   """
   def permissions(claims, permissions) do
     perms = Enum.into(%{}, permissions)
-    |> Enum.reduce(%{}, fn({key, list}, acc) -> Dict.put(acc, to_string(key), Guardian.Permissions.to_value(list, key)) end)
+    |> Enum.reduce(%{}, fn({key, list}, acc) ->
+      Dict.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
+    end)
     Dict.put(claims, "pem", perms)
   end
 

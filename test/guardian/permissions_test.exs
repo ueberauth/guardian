@@ -6,7 +6,7 @@ defmodule Guardian.PermissionsTest do
     {
       :ok,
       %{
-        pem: %{
+        "pem" => %{
           "default" => 7,
           "other" => 15
         }
@@ -138,6 +138,44 @@ defmodule Guardian.PermissionsTest do
 
     assert Permissions.any?(val, 0, :other) == false
     assert Permissions.any?(val, [:delete], :other) == false
+  end
+
+  test "integration with generating and decoding permissions" do
+    { :ok, jwt, _ } = Guardian.encode_and_sign("User:1", "token", %{ perms: %{ default: [ :read, :write ], other: [:other_read, :other_write ] } })
+
+    { :ok, claims } = Guardian.decode_and_verify(jwt, %{})
+
+    # Check all the permutations of string vs atoms
+    default_val = Permissions.to_value([:read, :write])
+    other_val = Permissions.to_value([:other_read, :other_write], :other)
+
+    assert default_val == Permissions.from_claims(claims)
+    assert other_val == Permissions.from_claims(claims, :other)
+
+    assert default_val == Permissions.to_value([:read, :write], "default")
+    assert other_val == Permissions.to_value([:other_read, :other_write], "other")
+
+    assert default_val == Permissions.to_value(["read", "write"], "default")
+    assert other_val == Permissions.to_value(["other_read", "other_write"], "other")
+
+    assert default_val == Permissions.to_value(["read", "write"], :default)
+    assert other_val == Permissions.to_value(["other_read", "other_write"], :other)
+
+    assert [:write, :read] == Permissions.to_list(default_val)
+    assert [:write, :read] == Permissions.to_list(default_val, :default)
+    assert [:write, :read] == Permissions.to_list(default_val, "default")
+
+    assert [:write, :read] == Permissions.to_list([:read, :write], :default)
+    assert [:write, :read] == Permissions.to_list([:read, :write], "default")
+    assert [:write, :read] == Permissions.to_list(["read", "write"], :default)
+    assert [:write, :read] == Permissions.to_list(["read", "write"], "default")
+
+    assert [:other_write, :other_read] == Permissions.to_list(other_val, :other)
+    assert [:other_write, :other_read] == Permissions.to_list(other_val, "other")
+    assert [:other_write, :other_read] == Permissions.to_list([:other_read, :other_write], :other)
+    assert [:other_write, :other_read] == Permissions.to_list([:other_read, :other_write], "other")
+    assert [:other_write, :other_read] == Permissions.to_list(["other_read", "other_write"], "other")
+    assert [:other_write, :other_read] == Permissions.to_list(["other_read", "other_write"], :other)
   end
 end
 
