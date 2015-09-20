@@ -52,7 +52,7 @@ The serializer knows how to encode and decode your resource into and out of the
 token. A simple serializer:
 
 ```elixir
-defmodule MyApp do
+defmodule MyApp.GuardianSerializer do
   @behaviour Guardian.Serializer
 
   alias MyApp.Repo
