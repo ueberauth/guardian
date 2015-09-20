@@ -160,7 +160,6 @@ defmodule MyApp.SessionController do
   alias MyApp.UserQuery
 
   plug :scrub_params, "user" when action in [:create]
-  plug :action
 
   def create(conn, params = %{}) do
     conn
