@@ -100,7 +100,7 @@ defmodule Guardian.Plug do
   @doc """
   Fetch the currently verified claims from the current request
   """
-  @spec claims(Plug.Conn.t) :: { :ok, Map } | { :error, atom | String.t }
+  @spec claims(Plug.Conn.t, atom) :: { :ok, Map } | { :error, atom | String.t }
   def claims(conn, the_key \\ :default) do
     case conn.assigns[claims_key(the_key)] do
       { :ok, claims } -> { :ok, claims }
@@ -110,7 +110,7 @@ defmodule Guardian.Plug do
   end
 
   @doc false
-  @spec claims(Plug.Conn.t) :: { :ok, Map } | { :error, atom | String.t }
+  @spec set_claims(Plug.Conn.t, { :ok, Map }, atom) :: Plug.Conn.t
   def set_claims(conn, claims, the_key \\ :default) do
     Plug.Conn.assign(conn, claims_key(the_key), claims)
   end
@@ -118,7 +118,7 @@ defmodule Guardian.Plug do
   @doc """
   Fetch the currently authenticated resource if loaded, optionally located at a location (key)
   """
-  @spec claims(Plug.Conn.t) :: any | nil
+  @spec current_resource(Plug.Conn.t, atom) :: any | nil
   def current_resource(conn, the_key \\ :default) do
     conn.assigns[resource_key(the_key)]
   end
@@ -131,7 +131,7 @@ defmodule Guardian.Plug do
   @doc """
   Fetch the currently verified token from the request. optionally located at a location (key)
   """
-  @spec claims(Plug.Conn.t) :: String.t | nil
+  @spec current_token(Plug.Conn.t, atom) :: String.t | nil
   def current_token(conn, the_key \\ :default) do
     conn.assigns[jwt_key(the_key)]
   end
