@@ -92,10 +92,10 @@ defmodule Guardian.Permissions do
 
   expanded_perms = Enum.reduce(perms, %{}, fn({key, values}, acc) ->
     perms_as_values = Enum.with_index(values) |> Enum.reduce(%{}, fn({ name, idx}, acc) ->
-      Dict.put(acc, name, trunc(:math.pow(2,idx)))
+      Map.put(acc, name, trunc(:math.pow(2,idx)))
     end)
 
-    Dict.put(acc, key, perms_as_values)
+    Map.put(acc, key, perms_as_values)
   end)
 
   Enum.map(expanded_perms, fn({type, values}) ->
@@ -124,13 +124,13 @@ defmodule Guardian.Permissions do
     end)
 
     def from_claims(claims, unquote(type)) do
-      c = Dict.get(claims, "pem", %{})
-      Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
+      c = Map.get(claims, "pem", %{})
+      Map.get(c, unquote(type), Map.get(c, unquote(to_string(type)), 0))
     end
 
     def from_claims(claims, unquote(to_string(type))) do
-      c = Dict.get(claims, "pem", %{})
-      Dict.get(c, unquote(type), Dict.get(c, unquote(to_string(type)), 0))
+      c = Map.get(claims, "pem", %{})
+      Map.get(c, unquote(type), Map.get(c, unquote(to_string(type)), 0))
     end
   end)
 
@@ -140,13 +140,13 @@ defmodule Guardian.Permissions do
   Fetches the list of known permissions for the given type
   """
   @spec available(atom) :: List
-  def available(type), do: Dict.get(@perms, type, [])
+  def available(type), do: Map.get(@perms, type, [])
 
   @doc """
   Fetches the list of known permissions for the default type
   """
   @spec available :: List
-  def available, do: Dict.get(@perms, :default, [])
+  def available, do: Map.get(@perms, :default, [])
 
 
   def all?(value, expected, key \\ :default) do

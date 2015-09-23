@@ -54,7 +54,7 @@ defmodule GuardianTest do
   end
 
   test "fails if the expiry has passed", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
+    { :ok, jwt } = Joken.encode(Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
     assert Guardian.decode_and_verify(jwt) == { :error, :token_expired }
   end
 
@@ -67,7 +67,7 @@ defmodule GuardianTest do
   end
 
   test "verify! with a bad token", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
+    { :ok, jwt } = Joken.encode(Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
 
     assert_raise(RuntimeError, fn() -> Guardian.decode_and_verify!(jwt) end)
   end

@@ -51,8 +51,8 @@ defmodule Guardian do
   @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def encode_and_sign(object, audience, claims) do
     claims = stringify_keys(claims)
-    perms = Dict.get(claims, "perms", %{})
-    claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete("perms")
+    perms = Map.get(claims, "perms", %{})
+    claims = Guardian.Claims.permissions(claims, perms) |> Map.delete("perms")
 
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
@@ -120,7 +120,7 @@ defmodule Guardian do
   @spec decode_and_verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
   def decode_and_verify(jwt, params) do
     params = stringify_keys(params)
-    if verify_issuer?, do: params = Dict.put_new(params, "iss", issuer)
+    if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
     params = stringify_keys(params)
 
     try do
