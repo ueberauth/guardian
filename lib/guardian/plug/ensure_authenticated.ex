@@ -20,7 +20,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     opts = Enum.into(opts, %{})
     case Map.get(opts, :on_failure) do
       { _mod, _meth } ->
-        claims_to_check = opts |> Map.delete(:on_failure) |> Map.delete(:key)
+        claims_to_check = Map.drop(opts, [:on_failure, :key])
         %{
           on_failure: Map.get(opts, :on_failure),
           key: Map.get(opts, :key, :default),
