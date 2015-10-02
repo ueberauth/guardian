@@ -15,7 +15,7 @@ defmodule Guardian.Plug.EnsurePermissions do
     opts = Enum.into(opts, %{})
     on_failure = Dict.get(opts, :on_failure)
     key = Dict.get(opts, :key, :default)
-    perms = Dict.delete(opts, :on_failure) |> Dict.delete(:key)
+    perms = Map.drop(opts, [:on_failure, :key])
 
     case on_failure do
       { _mod, _meth } ->
