@@ -197,5 +197,43 @@ defmodule Guardian.PlugTest do
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"
   end
+
+  test "api_sign_in(object)", context do
+    conn = context.conn
+    |> Guardian.Plug.api_sign_in(%{user: "here"})
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+  end
+
+  test "api_sign_in(object, type)", context do
+    conn = context.conn
+    |> Guardian.Plug.api_sign_in(%{user: "here"})
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+
+    jwt = conn.assigns[Guardian.Keys.jwt_key]
+    { :ok, claims } = Guardian.decode_and_verify(jwt)
+
+    assert claims["sub"]["user"] == "here"
+  end
+
+  test "api_sign_in(object, type, claims)", context do
+    conn = context.conn
+    |> Guardian.Plug.api_sign_in(%{user: "here"}, :token, here: "we are")
+
+    assert conn.assigns[Guardian.Keys.claims_key] != nil
+    assert conn.assigns[Guardian.Keys.resource_key] == %{ user: "here" }
+    assert conn.assigns[Guardian.Keys.jwt_key] != nil
+
+    jwt = conn.assigns[Guardian.Keys.jwt_key]
+    { :ok, claims } = Guardian.decode_and_verify(jwt)
+
+    assert claims["sub"]["user"] == "here"
+    assert claims["here"] == "we are"
+  end
 end
 

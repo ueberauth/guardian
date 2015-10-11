@@ -15,6 +15,16 @@ defmodule Guardian.Plug do
 
       Guardian.Plug.sign_out(conn) # sign out all sessions
       Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session
+
+  To sign in to an api action (i.e. not store the jwt in the session, just in the assigns
+
+  This allows you to use all the Guardian.Plug helpers to look up JWT, claims and resource.
+
+  ## Example
+
+      Guardian.Plug.api_sign_in(conn, user)
+      Guardian.Plug.api_sign_in(conn, user, :token)
+      Guardian.Plug.api_sign_in(conn, user, :token, %{ claims: "i", make: true, key: :secret }) # Store the JWT in the assigns
   """
 
   import Guardian.Keys
@@ -81,6 +91,52 @@ defmodule Guardian.Plug do
         |> Guardian.hooks_module.after_sign_in(the_key)
 
       { :error, reason } -> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
+    end
+  end
+
+  @doc """
+  Sign in a resource for API requests (that your configured serializer knows about). This is not stored in the session but is stored in the assigns only.
+  """
+  @spec api_sign_in(Plug.Conn.t, any) :: Plug.Conn.t
+  def api_sign_in(conn, object), do: api_sign_in(conn, object, nil, %{})
+
+  @doc """
+  Sign in a resource (that your configured serializer knows about) only in the assigns. For use without a web session.
+
+  By specifying the 'type' of the token, you're setting the aud field in the JWT.
+  """
+  @spec api_sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
+  def api_sign_in(conn, object, type), do: api_sign_in(conn, object, type, %{})
+
+  @doc false
+  def api_sign_in(conn, object, type, claims) when is_list(claims), do: api_sign_in(conn, object, type, Enum.into(claims, %{}))
+
+  @doc """
+  Same as api_sign_in/3 but also encodes all claims into the JWT.
+
+  The `:key` key in the claims map is special in that it sets the location of the storage.
+
+  The :perms key will provide the ability to encode permissions into the token. The value at :perms should be a map
+
+  ### Example
+
+      Guaridan.Plug.api_sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
+
+  """
+  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
+  def api_sign_in(conn, object, type, claims) do
+    the_key = Dict.get(claims, :key, :default)
+    claims = Dict.delete(claims, :key)
+
+    case Guardian.encode_and_sign(object, type, claims) do
+      { :ok, jwt, full_claims } ->
+        conn
+        |> set_current_resource(object, the_key)
+        |> set_claims(full_claims, the_key)
+        |> set_current_token(jwt, the_key)
+        |> Guardian.hooks_module.after_sign_in(the_key)
+
+      { :error, reason } -> set_claims(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
     end
   end
 
