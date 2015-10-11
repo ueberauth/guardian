@@ -11,7 +11,7 @@ defmodule Guardian.Mixfile do
       package: package,
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      contributors: ["Daniel Neighman"],
+      maintainers: ["Daniel Neighman"],
       description: "Elixir Authentication framework",
       homepage_url: "https://github.com/hassox/guardian",
       docs: [source_ref: "v#{@version}", main: "overview"],
@@ -34,7 +34,7 @@ defmodule Guardian.Mixfile do
 
   defp package do
     [
-      contributors: ["Daniel Neighman"],
+      maintainers: ["Daniel Neighman"],
       licenses: ["MIT"],
       links: %{github: "https://github.com/hassox/guardian"},
       files: ~w(lib) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
