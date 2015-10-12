@@ -84,13 +84,16 @@ defmodule Guardian.Plug do
     case Guardian.encode_and_sign(object, type, claims) do
       { :ok, jwt, full_claims } ->
         conn
+        |> Plug.Conn.fetch_session
         |> Plug.Conn.put_session(base_key(the_key), jwt)
         |> set_current_resource(object, the_key)
         |> set_claims(full_claims, the_key)
         |> set_current_token(jwt, the_key)
         |> Guardian.hooks_module.after_sign_in(the_key)
-
-      { :error, reason } -> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
+      { :error, reason } ->
+        conn
+        |> Plug.Conn.fetch_session
+        |> Plug.Conn.put_session(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
     end
   end
 
