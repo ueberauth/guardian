@@ -181,6 +181,9 @@ defmodule Guardian.PlugTest do
     { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+
+    { :ok, claims} = Guardian.Plug.claims(conn)
+    assert claims
   end
 
   test "sign_in(object, type, claims)", context do
@@ -230,6 +233,9 @@ defmodule Guardian.PlugTest do
     { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+
+    { :ok, claims} = Guardian.Plug.claims(conn)
+    assert claims
   end
 
   test "api_sign_in(object, type, claims)", context do
