@@ -198,6 +198,17 @@ defmodule Guardian.PlugTest do
     assert claims["here"] == "we are"
   end
 
+  test "api_sign_in(object) error", context do
+    conn = context.conn
+    |> Guardian.Plug.api_sign_in(%{error: :unknown})
+
+    claims = conn.assigns[Guardian.Keys.claims_key]
+
+    assert {:error, _reason} = claims
+    assert conn.assigns[Guardian.Keys.resource_key] == nil
+    assert conn.assigns[Guardian.Keys.jwt_key] == nil
+  end
+
   test "api_sign_in(object)", context do
     conn = context.conn
     |> Guardian.Plug.api_sign_in(%{user: "here"})

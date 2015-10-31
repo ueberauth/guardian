@@ -136,7 +136,7 @@ defmodule Guardian.Plug do
         |> set_current_token(jwt, the_key)
         |> Guardian.hooks_module.after_sign_in(the_key)
 
-      { :error, reason } -> set_claims(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
+      { :error, reason } -> set_claims(conn, { :error, reason }, the_key) # TODO: handle this failure
     end
   end
 
