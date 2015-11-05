@@ -86,7 +86,7 @@ defmodule Guardian.Plug do
         conn
         |> Plug.Conn.put_session(base_key(the_key), jwt)
         |> set_current_resource(object, the_key)
-        |> set_claims(full_claims, the_key)
+        |> set_claims({ :ok, full_claims }, the_key)
         |> set_current_token(jwt, the_key)
         |> Guardian.hooks_module.after_sign_in(the_key)
 
@@ -132,11 +132,11 @@ defmodule Guardian.Plug do
       { :ok, jwt, full_claims } ->
         conn
         |> set_current_resource(object, the_key)
-        |> set_claims(full_claims, the_key)
+        |> set_claims({ :ok, full_claims }, the_key)
         |> set_current_token(jwt, the_key)
         |> Guardian.hooks_module.after_sign_in(the_key)
 
-      { :error, reason } -> set_claims(conn, base_key(the_key), { :error, reason }) # TODO: handle this failure
+      { :error, reason } -> set_claims(conn, { :error, reason }, the_key) # TODO: handle this failure
     end
   end
 

@@ -181,6 +181,9 @@ defmodule Guardian.PlugTest do
     { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+
+    { :ok, claims} = Guardian.Plug.claims(conn)
+    assert claims
   end
 
   test "sign_in(object, type, claims)", context do
@@ -196,6 +199,17 @@ defmodule Guardian.PlugTest do
 
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"
+  end
+
+  test "api_sign_in(object) error", context do
+    conn = context.conn
+    |> Guardian.Plug.api_sign_in(%{error: :unknown})
+
+    claims = conn.assigns[Guardian.Keys.claims_key]
+
+    assert {:error, _reason} = claims
+    assert conn.assigns[Guardian.Keys.resource_key] == nil
+    assert conn.assigns[Guardian.Keys.jwt_key] == nil
   end
 
   test "api_sign_in(object)", context do
@@ -219,6 +233,9 @@ defmodule Guardian.PlugTest do
     { :ok, claims } = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+
+    { :ok, claims} = Guardian.Plug.claims(conn)
+    assert claims
   end
 
   test "api_sign_in(object, type, claims)", context do
