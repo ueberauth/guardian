@@ -301,7 +301,7 @@ config :guardian, Guardian,
 ```
 
 JWTs need to be kept reasonably small so that they can fit into an authorization
-header. For this reason, permissions are encded as bits (an integer) in the
+header. For this reason, permissions are encoded as bits (an integer) in the
 token. You can have up to 64 permissions per set, and as many sets as you like.
 In the example above, we have the `:default` set, and the `:admin` set.
 
