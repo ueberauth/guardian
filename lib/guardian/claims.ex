@@ -7,7 +7,7 @@ defmodule Guardian.Claims do
 
   @doc false
   def app_claims(existing_claims) do
-    Dict.merge(app_claims, Enum.into(existing_claims, %{}))
+    Map.merge(app_claims, Enum.into(existing_claims, %{}))
   end
 
   @doc """
@@ -17,9 +17,9 @@ defmodule Guardian.Claims do
   def permissions(claims, permissions) do
     perms = Enum.into(%{}, permissions)
     |> Enum.reduce(%{}, fn({key, list}, acc) ->
-      Dict.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
+      Map.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
     end)
-    Dict.put(claims, "pem", perms)
+    Map.put(claims, "pem", perms)
   end
 
   @doc false
@@ -27,29 +27,34 @@ defmodule Guardian.Claims do
   @doc false
   def aud(claims, audience) when is_atom(audience), do: aud(claims, to_string(audience))
   @doc false
-  def aud(claims, audience), do: Dict.put(claims, "aud", audience)
+  def aud(claims, audience), do: Map.put(claims, "aud", audience)
 
   @doc false
   def sub(claims, subject) when is_atom(subject), do: sub(claims, to_string(subject))
   @doc false
-  def sub(claims, subject), do: Dict.put(claims, "sub", subject)
+  def sub(claims, subject), do: Map.put(claims, "sub", subject)
 
   @doc false
   def jti(claims), do: jti(claims, UUID.uuid4)
   @doc false
   def jti(claims, id) when is_atom(id), do: sub(claims, to_string(id))
   @doc false
-  def jti(claims, id), do: Dict.put(claims, "jti", id)
+  def jti(claims, id), do: Map.put(claims, "jti", id)
 
   @doc false
-  def iat(claims), do: Dict.put(claims, "iat", timestamp)
+  def nbf(claims), do: Map.put(claims, "nbf", timestamp - 1)
   @doc false
-  def iat(claims, ts), do: Dict.put(claims, "iat", ts)
+  def nbf(claims, ts), do: Map.put(claims, "nbf", ts)
+
+  @doc false
+  def iat(claims), do: Map.put(claims, "iat", timestamp)
+  @doc false
+  def iat(claims, ts), do: Map.put(claims, "iat", ts)
 
   @doc false
   def ttl(claims = %{ ttl: requested_ttl }) do
     claims
-    |> Dict.delete(:ttl)
+    |> Map.delete(:ttl)
     |> ttl(requested_ttl)
   end
 
@@ -59,17 +64,17 @@ defmodule Guardian.Claims do
   @doc false
   def ttl(claims = %{"iat" => iat}, requested_ttl) do
     case { iat, requested_ttl } do
-      { nil, _ } -> Dict.put_new(claims, timestamp + 1_000_000_000)
-      { iat, { seconds, :seconds } } -> Dict.put(claims, "exp", iat + seconds)
-      { iat, { seconds, :second } } -> Dict.put(claims, "exp", iat + seconds)
-      { iat, { millis, :millis } } -> Dict.put(claims, "exp", iat + millis / 1000)
-      { iat, { millis, :milli } } -> Dict.put(claims, "exp", iat + millis / 1000)
-      { iat, { minutes, :minutes } } -> Dict.put(claims, "exp", iat + minutes * 60)
-      { iat, { minutes, :minute } } -> Dict.put(claims, "exp", iat + minutes * 60)
-      { iat, { hours, :hours } } -> Dict.put(claims, "exp", iat + hours * 60 * 60)
-      { iat, { hours, :hour } } -> Dict.put(claims, "exp", iat + hours * 60 * 60)
-      { iat, { days, :days } } -> Dict.put(claims, "exp", iat + days * 24 * 60 * 60)
-      { iat, { days, :day } } -> Dict.put(claims, "exp", iat + days * 24 * 60 * 60)
+      { nil, _ } -> Map.put_new(claims, timestamp + 1_000_000_000)
+      { iat, { seconds, :seconds } } -> Map.put(claims, "exp", iat + seconds)
+      { iat, { seconds, :second } } -> Map.put(claims, "exp", iat + seconds)
+      { iat, { millis, :millis } } -> Map.put(claims, "exp", iat + millis / 1000)
+      { iat, { millis, :milli } } -> Map.put(claims, "exp", iat + millis / 1000)
+      { iat, { minutes, :minutes } } -> Map.put(claims, "exp", iat + minutes * 60)
+      { iat, { minutes, :minute } } -> Map.put(claims, "exp", iat + minutes * 60)
+      { iat, { hours, :hours } } -> Map.put(claims, "exp", iat + hours * 60 * 60)
+      { iat, { hours, :hour } } -> Map.put(claims, "exp", iat + hours * 60 * 60)
+      { iat, { days, :days } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
+      { iat, { days, :day } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
       _ -> claims
     end
   end

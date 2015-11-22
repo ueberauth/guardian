@@ -1,6 +1,7 @@
 # v 0.7.0
 
 * Remove Joken from the dependencies and use JOSE instead.
+* Add a refresh! function
 
 # v 0.6.2
 
