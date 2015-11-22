@@ -9,11 +9,21 @@ defmodule GuardianTest do
       "iss" => "MyApp",
       "sub" => "User:1",
       "something_else" => "foo"}
-    { :ok, jwt} = Joken.encode(claims)
+
+    config = Application.get_env(:guardian, Guardian)
+    algo = hd(Dict.get(config, :allowed_algos))
+    secret = Dict.get(config, :secret_key)
+
+    jose_jws = %{"alg" => algo}
+    jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
+
+    { _, jwt } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
 
     { :ok, %{
         claims: claims,
-        jwt: jwt
+        jwt: jwt,
+        jose_jws: jose_jws,
+        jose_jwk: jose_jwk
       }
     }
   end
@@ -46,15 +56,17 @@ defmodule GuardianTest do
     assert Guardian.decode_and_verify(context.jwt) == { :ok, context.claims }
   end
 
-  test "fails if the issuer is not correct" do
+  test "fails if the issuer is not correct", context do
     claims = %{aud: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "not the issuer", sub: "User:1"}
-    { :ok, jwt} = Joken.encode(claims)
+    { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert Guardian.decode_and_verify(jwt) == { :error, :invalid_issuer }
   end
 
   test "fails if the expiry has passed", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
+    claims = Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
+    { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
+
     assert Guardian.decode_and_verify(jwt) == { :error, :token_expired }
   end
 
@@ -67,7 +79,8 @@ defmodule GuardianTest do
   end
 
   test "verify! with a bad token", context do
-    { :ok, jwt } = Joken.encode(Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10))
+    claims = Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
+    { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert_raise(RuntimeError, fn() -> Guardian.decode_and_verify!(jwt) end)
   end

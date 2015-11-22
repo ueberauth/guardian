@@ -1,3 +1,7 @@
+# v 0.7.0
+
+* Remove Joken from the dependencies and use JOSE instead.
+
 # v 0.6.2
 
 * Adds Guardian.Plug.authenticated?

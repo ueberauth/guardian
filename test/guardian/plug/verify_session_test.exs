@@ -4,10 +4,19 @@ defmodule Guardian.Plug.VerifySessionTest do
   import Guardian.TestHelper
 
   setup do
+    config = Application.get_env(:guardian, Guardian)
+    algo = hd(Dict.get(config, :allowed_algos))
+    secret = Dict.get(config, :secret_key)
+
+    jose_jws = %{"alg" => algo}
+    jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
+
     conn = conn_with_fetched_session(conn(:get, "/"))
     claims = Guardian.Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
-    { :ok, jwt } = Joken.encode(claims)
-    { :ok, conn: conn, jwt: jwt, claims: claims }
+
+    { _, jwt } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+
+    { :ok, conn: conn, jwt: jwt, claims: claims, jose_jwk: jose_jwk, jose_jws: jose_jws }
   end
 
   test "with no JWT in the session at a default location", context do
