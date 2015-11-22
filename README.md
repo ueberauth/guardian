@@ -407,6 +407,36 @@ end
 Once the new token is created, the old one is revoked before returning the new
 token.
 
+### Phoenix Controllers
+
+Guardian provides some helpers for you to use with your controllers.
+
+Provides a simple helper to provide easier access to the current user and their claims.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+  use Guardian.Phoenix.Controller
+
+  def index(conn, params, user, claims) do
+    # do stuff in here
+  end
+end
+```
+
+You can specify the key location of the user if you're using multiple locations to store users.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+  use Guardian.Phoenix.Controller, key: :secret
+
+  def index(conn, params, user, claims) do
+  # do stuff with the secret user
+  end
+end
+```
+
 ### Phoenix Channels
 
 Guardian uses JWTs to make the integration of authentication management as

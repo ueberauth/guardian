@@ -1,3 +1,7 @@
+# v 0.7.1
+
+* Adds basic Phoenix controller helpers
+
 # v 0.7.0
 
 * Remove Joken from the dependencies and use JOSE instead.
