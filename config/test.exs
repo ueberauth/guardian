@@ -1,9 +1,8 @@
 use Mix.Config
 
-config :joken, config_module: Guardian.JWT
-
 config :guardian, Guardian,
       issuer: "MyApp",
+      allowed_algos: ["HS512"],
       ttl: { 1, :days },
       verify_issuer: true,
       secret_key: "woiuerojksldkjoierwoiejrlskjdf",

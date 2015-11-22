@@ -3,7 +3,7 @@ Guardian
 
 An authentication framework for use with Elixir applications.
 
-Guardian is based on similar ideas to Warden and Omniauth but is re-imagined
+Guardian is based on similar ideas to Warden but is re-imagined
 for modern systems where Elixir manages the authentication requirements.
 
 Guardian remains a functional system. It integrates with Plug, but can be used
@@ -16,9 +16,6 @@ authenticated assertions that the issuer wants to include.
 
 ## Installation
 
-Guardian relies on [Joken](https://github.com/bryanjos/joken). You'll need to
-install and configure Joken for your application.
-
 Add Guardian to your application
 
 mix.deps
@@ -27,7 +24,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.6.2"}
+    {:guardian, "~> 0.7.0"}
     # ...
   ]
 end
@@ -36,15 +33,27 @@ end
 config.exs
 
 ```elixir
-config :joken, config_module: Guardian.JWT
-
 config :guardian, Guardian,
+  allowed_algos: ["HS512"], # optional
+  verify_module: Guardian.JWT,  # optional
   issuer: "MyApp",
   ttl: { 30, :days },
-  verify_issuer: true,
+  verify_issuer: true, # optional
   secret_key: <guardian secret key>,
   serializer: MyApp.GuardianSerializer
 ```
+
+The items in the configuration allow you to tailor how the JWT generation behaves.
+
+* `secret_key` - The secret used to sign the key
+* `allowed_algos` - The list of algorithms (must be compatible with JOSE). The first is used as the encoding key. Default is: ["HS512"]
+* `verify_module` - Provides a mechanism to setup your own validations for items
+  in the token. Default is `Guardian.JWT`
+* `issuer` - The entry to put into the token as the issuer. This can be used in congunction with `verify_issuer`
+* `ttl` - The default ttl of a token
+* `verify_issuer` - If set to true, the issuer will be verified to be the same issuer as specified in the `issuer` field
+* `secret_key` - The key to sign the tokens
+* `serializer` The serializer that serializes the 'sub' (Subject) field into and out of the token.
 
 ## Serializer
 
@@ -149,7 +158,7 @@ end
 
 ## Sign in and Sign out
 
-It's up to you how you verify the claims to encode into the token Guardian uses.
+It's up to you how you generate the claims to encode into the token Guardian uses.
 As an example, here's the important parts of a SessionController
 
 ```elixir
@@ -243,7 +252,6 @@ sockets for e.g. If you need to do things your own way.
 This will give you a new JWT to use with the claims ready to go.
 The token type is encoded into the JWT as the 'aud' field and is intended to be
 used as the _type_ of token.
-
 
 ```elixir
 { :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token)

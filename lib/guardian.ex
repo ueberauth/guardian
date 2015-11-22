@@ -10,14 +10,16 @@ defmodule Guardian do
   ## Configuration
 
       config :guardian, Guardian,
+        allowed_algos: ["HS512", "HS384"],
         issuer: "MyApp",
         ttl: { 30, :days },
         serializer: MyApp.GuardianSerializer,
         secret_key: "lksjdlkjsdflkjsdf"
 
-  Guardian uses Joken, so you will also need to configure that.
   """
   import Guardian.Utils
+
+  @default_algos ["HS512"]
 
   if !Application.get_env(:guardian, Guardian), do: raise "Guardian is not configured"
   if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
@@ -63,12 +65,11 @@ defmodule Guardian do
         case Guardian.hooks_module.before_encode_and_sign(object, audience, full_claims) do
           { :error, reason } -> { :error, reason }
           { :ok, { resource, type, hooked_claims } } ->
-            case Joken.encode(hooked_claims) do
+            case encode_claims(hooked_claims) do
               { :ok, jwt } ->
                 Guardian.hooks_module.after_encode_and_sign(resource, type, hooked_claims, jwt)
                 { :ok, jwt, hooked_claims }
-              { :error, "Unsupported algorithm" } -> { :error, :unsupported_algorithm }
-              { :error, "Error encoding to JSON" } -> { :error, :json_encoding_fail }
+              { :error, reason } -> { :error, reason }
             end
         end
       { :error, reason } -> { :error, reason }
@@ -124,24 +125,17 @@ defmodule Guardian do
     params = stringify_keys(params)
 
     try do
-      case Joken.decode(jwt, params) do
-        { :ok, claims } ->
-          case Guardian.hooks_module.on_verify(claims, jwt) do
-            { :ok, { claims, _ } } -> { :ok, claims }
-            { :error, reason } -> { :error, reason }
+      case decode_token(jwt) do
+        {:ok, claims} ->
+          case verify_claims(claims, params) do
+            {:ok, verified_claims} ->
+              case Guardian.hooks_module.on_verify(verified_claims, jwt) do
+                { :ok, { claims, _ } } -> { :ok, claims }
+                { :error, reason } -> { :error, reason }
+              end
+            {:error, reason} -> {:error, reason}
           end
-        { :error, "Missing signature" } -> { :error, :missing_signature }
-        { :error, "Invalid signature" } -> { :error, :invalid_signature }
-        { :error, "Invalid JSON Web Token" } -> { :error, :invalid_jwt }
-        { :error, "Token expired" } -> { :error, :token_expired }
-        { :error, "Token not valid yet" } -> { :error, :token_not_yet_valid }
-        { :error, "Invalid audience" } -> { :error, :invalid_audience }
-        { :error, "Missing audience" } -> { :error, :invalid_audience }
-        { :error, "Invalid issuer" } -> { :error, :invalid_issuer }
-        { :error, "Missing issuer" } -> { :error, :invalid_issuer }
-        { :error, "Invalid subject" } -> { :error, :invalid_subject }
-        { :error, "Missing subject" } -> { :error, :invalid_subject }
-        { :error, reason } -> { :error, reason }
+        {:error, reason} -> {:error, reason}
       end
     rescue
       e ->
@@ -181,4 +175,36 @@ defmodule Guardian do
   def config(key), do: Dict.get(config, key)
   @doc false
   def config(key, default), do: Dict.get(config, key, default)
+
+  defp jose_jws do
+    %{ "alg" => hd(allowed_algos) }
+  end
+  defp jose_jwk, do: %{ "kty" => "oct", "k" => :base64url.encode(config(:secret_key)) }
+
+  defp encode_claims(claims) do
+    { _, token } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+    { :ok, token }
+  end
+
+  defp decode_token(token) do
+    case JOSE.JWT.verify_strict(jose_jwk, allowed_algos, token) do
+      { true, jose_jwt, _ } ->  { :ok, jose_jwt.fields }
+      { false, _, _ } -> { :error, :invalid_token }
+    end
+  end
+
+  defp allowed_algos, do: config(:allowed_algos, @default_algos)
+
+  def verify_claims(claims, params) do
+    verify_claims claims, Map.keys(claims), config(:verify_module, Guardian.JWT), params
+  end
+
+  defp verify_claims(claims, [h | t], module, params) do
+    case apply(module, :validate_claim, [h, claims, params]) do
+      :ok -> verify_claims(claims, t, module, params)
+      { :error, reason } -> { :error, reason }
+    end
+  end
+
+  defp verify_claims(claims, [], _, _), do: { :ok, claims }
 end

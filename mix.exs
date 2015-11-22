@@ -1,13 +1,13 @@
 defmodule Guardian.Mixfile do
   use Mix.Project
 
-  @version "0.6.3"
+  @version "0.7.0"
 
   def project do
     [
       app: :guardian,
       version: @version,
-      elixir: "~> 1.0",
+      elixir: "~> 1.1",
       package: package,
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -20,16 +20,16 @@ defmodule Guardian.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :joken, :poison]]
+    [applications: [:logger, :poison]]
   end
 
   defp deps do
-    [{:joken, "~> 0.15.0"},
+    [{:jose, "~> 1.4"},
      {:poison, "~> 1.5"},
-     {:plug, "~> 1.0", only: :test},
-     {:ex_doc, "~> 0.8", only: :docs},
+     {:plug, "~> 1.0"},
+     {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
-     {:uuid, ">=1.0.1"}]
+     {:uuid, ">=1.1.1"}]
   end
 
   defp package do
