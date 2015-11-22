@@ -86,7 +86,7 @@ defmodule Guardian do
   """
   def revoke!(jwt) do
     case decode_and_verify(jwt) do
-      { :ok, { claims, _ } } -> revoke!(jwt, claims)
+      { :ok, claims } -> revoke!(jwt, claims)
       _ -> :ok
     end
   end
@@ -99,6 +99,55 @@ defmodule Guardian do
     case Guardian.hooks_module.on_revoke(claims, jwt) do
       { :ok, _ } -> :ok
       { :error, reason } -> { :error, reason }
+    end
+  end
+
+  @doc """
+  Refresh the token. The token will be renewed and receive a new:
+
+  * `jti` - JWT id
+  * `iat` - Issued at
+  * `exp` - Expiry time.
+  * `nbf` - Not valid before time
+
+  The current token will be revoked when the new token is successfully created.
+
+  Note: A valid token must be used in order to be refreshed.
+  """
+  @spec refresh!(String.t) :: {:ok, String.t, Map.t} | {:error, any}
+  def refresh!(jwt) do
+    case decode_and_verify(jwt) do
+      {:ok, claims} -> refresh!(jwt, claims)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  As refresh!/1 but allows the claims to be updated. Specifically useful is the ability to set the ttl of the token.
+
+      Guardian.refresh(existing_jwt, existing_claims, %{ttl: { 5, :minutes}})
+
+  Once the new token is created, the old one will be revoked.
+  """
+  @spec refresh!(String.t, Map.t, Map.t) :: {:ok, String.t, Map.t} | {:error, any}
+  def refresh!(_jwt, claims, params \\ %{}) do
+    params = Enum.into(params, %{})
+    new_claims = Map.drop(claims, ["jti", "iat", "exp", "nbf"])
+    |> Map.merge(params)
+    |> Guardian.Claims.jti
+    |> Guardian.Claims.nbf
+    |> Guardian.Claims.iat
+    |> Guardian.Claims.ttl
+
+    aud = Map.get(new_claims, "aud")
+
+    {:ok, resource} = Guardian.serializer.from_token(Map.get(new_claims, "sub"))
+
+    case encode_and_sign(resource, aud, new_claims) do
+      {:ok, jwt, full_claims} ->
+        revoke!(jwt, claims)
+        {:ok, jwt, full_claims}
+      {:error, reason} -> {:error, reason}
     end
   end
 

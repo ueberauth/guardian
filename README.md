@@ -393,6 +393,20 @@ config :guardian, Guardian,
        #…
 ```
 
+### Refreshing Tokens
+
+You can use Guardian to refresh tokens. This keeps most of the information in
+the token intact, but changes the `iat`, `exp`, `jti` and `nbf` fields.
+
+```elixir
+case Guardian.refresh!(existing_jwt, exisiting_claims, %{ttl: {15, :days}}) do
+  {:ok, new_jwt, new_claims} -> do_things(new_jwt)
+  {:error, reason} -> handle_error(reason)
+end
+
+Once the new token is created, the old one is revoked before returning the new
+token.
+
 ### Phoenix Channels
 
 Guardian uses JWTs to make the integration of authentication management as
@@ -453,7 +467,4 @@ feedback to get up and running.
 - [x] Integrated permission sets
 - [x] Hooks into the authentication cycle
 - [x] Revoke tokens
-- [ ] Refresh tokens
-- [ ] Two-factor authentication
-- [ ] Single sign-in
-- [ ] Device specific signing (can be implemented via custom claims atm)
+- [x] Refresh tokens

@@ -100,7 +100,7 @@ defmodule GuardianTest do
     assert claims["iss"] == Guardian.issuer
   end
 
-  test "mint(object, audience)" do
+  test "encode_and_sign(object, audience)" do
     { :ok, jwt, _ } = Guardian.encode_and_sign("thinger", "my_aud")
 
     { :ok, claims } = Guardian.decode_and_verify(jwt)
@@ -111,7 +111,7 @@ defmodule GuardianTest do
     assert claims["iss"] == Guardian.issuer
   end
 
-  test "mint(object, audience, claims)" do
+  test "encode_and_sign(object, audience, claims)" do
     { :ok, jwt, _ } = Guardian.encode_and_sign("thinger", "my_aud", some: "thing")
 
     { :ok, claims } = Guardian.decode_and_verify(jwt)
@@ -121,5 +121,31 @@ defmodule GuardianTest do
     assert claims["exp"] > claims["iat"]
     assert claims["iss"] == Guardian.issuer
     assert claims["some"] == "thing"
+  end
+
+  test "revoke" do
+    {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "my_aud", some: "thing")
+    assert Guardian.revoke!(jwt, claims) == :ok
+  end
+
+  test "refresh" do
+
+    old_claims = Guardian.Claims.app_claims
+    |> Map.put("iat", Guardian.Utils.timestamp - 100)
+    |> Map.put("exp", Guardian.Utils.timestamp + 100)
+
+    {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "my_aud", old_claims)
+    {:ok, new_jwt, new_claims} = Guardian.refresh!(jwt, claims)
+
+    refute jwt == new_jwt
+
+    refute Map.get(new_claims, "jti") == nil
+    refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+
+    refute Map.get(new_claims, "iat") == nil
+    refute Map.get(new_claims, "iat") == Map.get(claims, "iat")
+
+    refute Map.get(new_claims, "exp") == nil
+    refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
   end
 end
