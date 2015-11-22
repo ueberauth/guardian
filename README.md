@@ -331,7 +331,7 @@ You can use a plug to ensure permissions are present. See Guardian.Plug.EnsurePe
 When you generate (or sign in) a token, you can inject permissions into it.
 
 ```elixir
-Guardian.encode_and_sign(resource, :token, perms: %{ admin: [:dashaboard], default: Guardian.Permissions.max}})
+Guardian.encode_and_sign(resource, :token, perms: %{ admin: [:dashboard], default: Guardian.Permissions.max}})
 ```
 
 By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.
