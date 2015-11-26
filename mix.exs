@@ -20,7 +20,7 @@ defmodule Guardian.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :poison]]
+    [applications: [:logger, :poison, :jose, :uuid]]
   end
 
   defp deps do
