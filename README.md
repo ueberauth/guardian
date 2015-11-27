@@ -92,7 +92,7 @@ If one is not found, this does nothing.
 ### Guardian.Plug.EnsureAuthenticated
 
 Looks for a previously verified token. If one is found, continues, otherwise it
-will call the `:on_failure` function.
+will call the `:unauthenticated` function of your handler.
 
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a pheonix controller.
@@ -101,23 +101,39 @@ as part of a pipeline or inside a pheonix controller.
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsureAuthenticated, on_failure: { MyApp.MyController, :unauthenticated }
+  plug Guardian.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler
 end
 ```
 
 The failure function must receive the connection, and the connection params.
 
+The error handler may be defined inline or in the main configuration.
+
+```elixir
+config :guardian, Guardian,
+  handler: MyApp.MyAuthErrorHandler
+  # …
+```
+
 ### Guardian.Plug.EnsurePermissions
 
 Looks for a previously verified token. If one is found, confirms that all listed
-permissions are present in the token. If not, the failure function is called.
+permissions are present in the token. If not, the `:unauthorized` function is called on your handler.
 
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsurePermissions, on_failure: { MyApp.MyController, :forbidden }, default: [:read, :write]
+  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, default: [:read, :write]
 end
+```
+
+The error handler may be defined inline or in the main configuration.
+
+```elixir
+config :guardian, Guardian,
+  handler: MyApp.MyAuthErrorHandler
+  # …
 ```
 
 ### Pipelines
@@ -152,7 +168,7 @@ From here, you can either EnsureAuthenticated in your pipeline, or on a per-cont
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsureAuthenticated, on_failure: { MyApp.MyHandler, :unauthenticated }
+  plug Guardian.Plug.EnsureAuthenticated, handler: MyApp.MyAuthHandler
 end
 ```
 

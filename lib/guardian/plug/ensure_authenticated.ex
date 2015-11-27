@@ -6,29 +6,46 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
   ## Example
 
-      plug Guardian.Plug.EnsureAuthenticated, on_failure: { SomeModule, :some_method } # look in the default location
-      plug Guardian.Plug.EnsureAuthenticated, on_failure: { SomeModule, :some_method }, key: :secret # look in the :secret location
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule # Will call the unauthenticated function on your handler
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret # look in the :secret location.  You can also do simple claim checks:
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, aud: "token"
 
-  You can also do simple claim checks:
-      plug Guardian.Plug.EnsureAuthenticated, on_failure: { SomeModule, :some_method }, aud: "token"
+  The handler option may be passed. By default Guardian.Plug.ErrorHandler is used and the `:unauthenticated` function will be called.
 
-  The on\_failure option must be passed. The corresponding function will be called with the Plug.Conn.t and it's params.
+  The handler will be called on failure. You may specify the handler inline as
+  in the above example or in the global configuration.
+  The `:unauthenticated` function will be called when a failure is detected.
+
+  ```elixir
+  config :guardian, Guardian,
+    handler: MyHandler
+    # …
   """
+  require Logger
   import Plug.Conn
 
   @doc false
   def init(opts) do
     opts = Enum.into(opts, %{})
-    case Map.get(opts, :on_failure) do
-      { _mod, _meth } ->
-        claims_to_check = Map.drop(opts, [:on_failure, :key])
-        %{
-          on_failure: Map.get(opts, :on_failure),
-          key: Map.get(opts, :key, :default),
-          claims: Guardian.Utils.stringify_keys(claims_to_check)
-        }
-      _ -> raise "Requires an on_failure function { Mod, :function_name }"
+    handler = case Map.get(opts, :handler) do
+      mod when mod != nil ->
+        {mod, :unauthenticated}
+      nil ->
+        case Map.get(opts, :on_failure) do
+          {mod, f} ->
+            Logger.log(:warn, "on_failure is deprecated. Use handler instead")
+            {mod, f}
+          _ ->
+            {Guardian.config(:handler, Guardian.Plug.ErrorHandler), :unauthenticated}
+        end
     end
+
+    claims_to_check = Map.drop(opts, [:on_failure, :key, :handler])
+    %{
+      handler: handler,
+      key: Map.get(opts, :key, :default),
+      claims: Guardian.Utils.stringify_keys(claims_to_check)
+    }
   end
 
   @doc false
@@ -46,8 +63,8 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   defp handle_error(conn, reason, opts) do
     the_connection = conn |> assign(:guardian_failure, reason) |> halt
 
-    {mod, meth} = Map.get(opts, :on_failure)
-    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: :unauthenticated })])
+    {mod, meth} = Map.get(opts, :handler)
+    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: reason })])
   end
 
   defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do
