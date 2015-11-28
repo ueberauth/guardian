@@ -14,6 +14,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
   The on\_failure option must be passed. The corresponding function will be called with the Plug.Conn.t and it's params.
   """
+  import Plug.Conn
 
   @doc false
   def init(opts) do
@@ -43,10 +44,10 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
   @doc false
   defp handle_error(conn, reason, opts) do
-    the_connection = conn |> Plug.Conn.assign(:guardian_failure, reason) |> Plug.Conn.halt
+    the_connection = conn |> assign(:guardian_failure, reason) |> halt
 
-    { mod, func } = Map.get(opts, :on_failure)
-    apply(mod, func, [the_connection, the_connection.params])
+    {mod, meth} = Map.get(opts, :on_failure)
+    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: :unauthenticated })])
   end
 
   defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do

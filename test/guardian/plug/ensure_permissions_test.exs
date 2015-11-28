@@ -7,7 +7,9 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
   defmodule TestHandler do
     def forbidden(conn, _) do
-      conn |> Plug.Conn.assign(:guardian_spec, :forbidden)
+      conn
+      |> Plug.Conn.assign(:guardian_spec, :forbidden)
+      |> Plug.Conn.send_resp(401, "Unauthorized")
     end
   end
 
@@ -90,5 +92,20 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == nil
+  end
+
+  test "halts the connection" do
+    opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write], other: [:other_read] ])
+
+    pems = Guardian.Permissions.to_value([:read, :write, :update, :delete], :default)
+    other_pems = Guardian.Permissions.to_value([:other_write], :other)
+    claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
+
+    expected_conn = conn(:get, "/get")
+    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Plug.Conn.fetch_query_params
+    |> EnsurePermissions.call(opts)
+
+    assert expected_conn.halted == true
   end
 end
