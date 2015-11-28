@@ -7,7 +7,9 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
 
   defmodule TestHandler do
     def unauthenticated(conn, _) do
-      conn |> Plug.Conn.assign(:guardian_spec, :unauthenticated)
+      conn
+      |> Plug.Conn.assign(:guardian_spec, :unauthenticated)
+      |> Plug.Conn.send_resp(401, "Unauthenticated")
     end
   end
 
@@ -62,5 +64,11 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     conn = conn(:get, "/foo")
     ensured_conn = EnsureAuthenticated.call(conn, %{ on_failure: @expected_failure, key: :secret })
     assert ensured_conn.assigns[:guardian_spec] == :unauthenticated
+  end
+
+  test "it halts the connection" do
+    conn = conn(:get, "/foo")
+    ensured_conn = EnsureAuthenticated.call(conn, %{ on_failure: @expected_failure, key: :secret })
+    assert ensured_conn.halted == true
   end
 end

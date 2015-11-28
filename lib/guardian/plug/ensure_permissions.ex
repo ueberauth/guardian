@@ -11,6 +11,9 @@ defmodule Guardian.Plug.EnsurePermissions do
 
   On failure will be handed the connection with the conn, and params where reason: :forbidden
   """
+
+  import Plug.Conn
+
   def init(opts) do
     opts = Enum.into(opts, %{})
     on_failure = Dict.get(opts, :on_failure)
@@ -45,7 +48,9 @@ defmodule Guardian.Plug.EnsurePermissions do
   end
 
   defp handle_error(conn, opts) do
-    { mod, meth } = Dict.get(opts, :on_failure)
-    apply(mod, meth, [conn, Dict.merge(conn.params, %{ reason: :forbidden })])
+    the_connection = conn |> assign(:guardian_failure, :forbidden) |> halt
+
+    { mod, meth } = Map.get(opts, :on_failure)
+    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: :forbidden })])
   end
 end
