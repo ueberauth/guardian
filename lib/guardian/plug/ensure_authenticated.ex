@@ -12,14 +12,8 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
   The handler option may be passed. By default Guardian.Plug.ErrorHandler is used and the `:unauthenticated` function will be called.
 
-  The handler will be called on failure. You may specify the handler inline as
-  in the above example or in the global configuration.
+  The handler will be called on failure.
   The `:unauthenticated` function will be called when a failure is detected.
-
-  ```elixir
-  config :guardian, Guardian,
-    handler: MyHandler
-    # …
   """
   require Logger
   import Plug.Conn
@@ -35,8 +29,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
           {mod, f} ->
             Logger.log(:warn, "on_failure is deprecated. Use handler instead")
             {mod, f}
-          _ ->
-            {Guardian.config(:handler, Guardian.Plug.ErrorHandler), :unauthenticated}
+        _ -> raise "Requires a handler module to be passed"
         end
     end
 

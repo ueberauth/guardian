@@ -107,14 +107,6 @@ end
 
 The failure function must receive the connection, and the connection params.
 
-The error handler may be defined inline or in the main configuration.
-
-```elixir
-config :guardian, Guardian,
-  handler: MyApp.MyAuthErrorHandler
-  # …
-```
-
 ### Guardian.Plug.EnsurePermissions
 
 Looks for a previously verified token. If one is found, confirms that all listed
@@ -126,14 +118,6 @@ defmodule MyApp.MyController do
 
   plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, default: [:read, :write]
 end
-```
-
-The error handler may be defined inline or in the main configuration.
-
-```elixir
-config :guardian, Guardian,
-  handler: MyApp.MyAuthErrorHandler
-  # …
 ```
 
 ### Pipelines

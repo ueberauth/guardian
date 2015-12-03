@@ -11,14 +11,8 @@ defmodule Guardian.Plug.EnsurePermissions do
 
   On failure will be handed the connection with the conn, and params where reason: :forbidden
 
-  The handler will be called on failure. You may specify the handler inline as
-  in the above example or in the global configuration.
+  The handler will be called on failure.
   The `:unauthorized` function will be called when a failure is detected.
-
-  ```elixir
-  config :guardian, Guardian,
-    handler: MyHandler
-    # …
   """
 
   require Logger
@@ -38,7 +32,7 @@ defmodule Guardian.Plug.EnsurePermissions do
         {mod, f} ->
           Logger.log(:warn, "on_failure is deprecated. Use handler")
           {mod, f}
-        _ -> {Guardian.config(:handler, Guardian.Plug.ErrorHandler), :unauthorized}
+        _ -> raise "Requires a handler module to be passed"
       end
     end
 
