@@ -6,21 +6,15 @@ defmodule Guardian.Plug.EnsurePermissionTest do
   alias Guardian.Plug.EnsurePermissions
 
   defmodule TestHandler do
-    def forbidden(conn, _) do
+    def unauthorized(conn, _) do
       conn
       |> Plug.Conn.assign(:guardian_spec, :forbidden)
       |> Plug.Conn.send_resp(401, "Unauthorized")
     end
   end
 
-  @expected_failure { TestHandler, :forbidden }
-  @failure [on_failure: @expected_failure]
-
-  test "it requires an on_failure option" do
-    assert_raise RuntimeError, fn ->
-      EnsurePermissions.init([])
-    end
-  end
+  @expected_failure TestHandler
+  @failure [handler: @expected_failure]
 
   test "does not call the on failure when the permissions are present" do
     opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])

@@ -4,32 +4,44 @@ defmodule Guardian.Plug.EnsurePermissions do
 
   ### Example
 
-      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], on_failure: { SomeMod, :some_func } # read and write permissions for the admin set
-      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], default: [:profile], on_failure: { SomeMod, :some_func } # read AND write permissions for the admin set AND :profile for the default set
+      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], handler: SomeMod, # read and write permissions for the admin set
+      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], default: [:profile], handler: SomeMod # read AND write permissions for the admin set AND :profile for the default set
 
-      plug Guardian.Plug.EnsurePermissions, key: :secret, admin: [:read, :write], on_failure: { SomeMod, :some_func } # admin :read AND :write for the claims located in the :secret location
+      plug Guardian.Plug.EnsurePermissions, key: :secret, admin: [:read, :write], handler:SomeMod, # admin :read AND :write for the claims located in the :secret location
 
   On failure will be handed the connection with the conn, and params where reason: :forbidden
+
+  The handler will be called on failure.
+  The `:unauthorized` function will be called when a failure is detected.
   """
 
+  require Logger
   import Plug.Conn
 
   def init(opts) do
     opts = Enum.into(opts, %{})
-    on_failure = Dict.get(opts, :on_failure)
-    key = Dict.get(opts, :key, :default)
-    perms = Map.drop(opts, [:on_failure, :key])
+    on_failure = Map.get(opts, :on_failure)
+    key = Map.get(opts, :key, :default)
+    handler = Map.get(opts, :handler)
+    perms = Map.drop(opts, [:handler, :on_failure, :key])
 
-    case on_failure do
-      { _mod, _meth } ->
-        %{
-          on_failure: on_failure,
-          key: key,
-          perm_keys: Dict.keys(perms),
-          perms: perms,
-        }
-      _ -> raise "Requires an on_failure function { Mod, :function_name }"
+    if handler do
+      handler = {handler, :unauthorized}
+    else
+      handler = case on_failure do
+        {mod, f} ->
+          Logger.log(:warn, "on_failure is deprecated. Use handler")
+          {mod, f}
+        _ -> raise "Requires a handler module to be passed"
+      end
     end
+
+    %{
+      handler: handler,
+      key: key,
+      perm_keys: Dict.keys(perms),
+      perms: perms,
+    }
   end
 
   @doc false
@@ -50,7 +62,7 @@ defmodule Guardian.Plug.EnsurePermissions do
   defp handle_error(conn, opts) do
     the_connection = conn |> assign(:guardian_failure, :forbidden) |> halt
 
-    { mod, meth } = Map.get(opts, :on_failure)
+    { mod, meth } = Map.get(opts, :handler)
     apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: :forbidden })])
   end
 end
