@@ -1,6 +1,6 @@
 defmodule Guardian.JWT do
   @moduledoc false
-  @bahaviour Guardian.ClaimValiation
+  @behaviour Guardian.ClaimValidation
 
   use Guardian.ClaimValidation
 
