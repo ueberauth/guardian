@@ -2,6 +2,8 @@ defmodule Guardian.Mixfile do
   use Mix.Project
 
   @version "0.8.0"
+  @url "https://github.com/ueberauth/guardian"
+  @maintainers ["Daniel Neighman", "Sonny Scroggin", "Sean Callan"]
 
   def project do
     [
@@ -11,9 +13,9 @@ defmodule Guardian.Mixfile do
       package: package,
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      maintainers: ["Daniel Neighman"],
+      maintainers: @maintainers,
       description: "Elixir Authentication framework",
-      homepage_url: "https://github.com/hassox/guardian",
+      homepage_url: @url,
       docs: [source_ref: "v#{@version}", main: "overview"],
       deps: deps
     ]
@@ -34,9 +36,9 @@ defmodule Guardian.Mixfile do
 
   defp package do
     [
-      maintainers: ["Daniel Neighman"],
+      maintainers: @maintainers,
       licenses: ["MIT"],
-      links: %{github: "https://github.com/hassox/guardian"},
+      links: %{github: @url},
       files: ~w(lib) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
     ]
   end
