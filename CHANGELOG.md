@@ -1,3 +1,9 @@
+# v 0.8.1
+
+* Fix a bug with logout where it was not checking the session, only the assigns
+  This meant that if you had not verified the session the token would not be
+  revoked.
+
 # v 0.7.1
 
 * Adds basic Phoenix controller helpers
