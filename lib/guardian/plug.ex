@@ -198,48 +198,54 @@ defmodule Guardian.Plug do
   end
 
   defp sign_out_via_key(conn, :all) do
+    keys = session_locations(conn)
     conn
-    |> Plug.Conn.clear_session
-    |> clear_jwt_assign(:all)
-    |> clear_resource_assign(:all)
-    |> clear_claims_assign(:all)
+      |> revoke_from_session(keys)
+      |> Plug.Conn.clear_session
+      |> clear_jwt_assign(keys)
+      |> clear_resource_assign(keys)
+      |> clear_claims_assign(keys)
   end
 
   defp sign_out_via_key(conn, the_key) do
-    Plug.Conn.delete_session(conn, claims_key(the_key))
-    |> clear_jwt_assign(the_key)
-    |> clear_resource_assign(the_key)
-    |> clear_claims_assign(the_key)
+    conn
+      |> revoke_from_session(the_key)
+      |> Plug.Conn.delete_session(base_key(the_key))
+      |> clear_jwt_assign(the_key)
+      |> clear_resource_assign(the_key)
+      |> clear_claims_assign(the_key)
   end
 
-  defp clear_resource_assign(conn, :all) do
-    Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") and String.ends_with?(to_string(&1), "_resource")))
-    |> Enum.reduce(conn, fn(key, c) -> clear_resource_assign(c, key_from_other(key)) end)
-  end
-
+  defp clear_resource_assign(conn, nil), do: conn
+  defp clear_resource_assign(conn, []), do: conn
+  defp clear_resource_assign(conn, [h|t]), do: clear_resource_assign(conn, h) |> clear_resource_assign(t)
   defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
 
-  defp clear_claims_assign(conn, :all) do
-    Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") and String.ends_with?(to_string(&1), "_claims")))
-    |> Enum.reduce(conn, fn(key, c) -> clear_claims_assign(c, key_from_other(key)) end)
-  end
-
+  defp clear_claims_assign(conn, nil), do: conn
+  defp clear_claims_assign(conn, []), do: conn
+  defp clear_claims_assign(conn, [h|t]), do: clear_claims_assign(conn, h) |> clear_claims_assign(t)
   defp clear_claims_assign(conn, key), do: Plug.Conn.assign(conn, claims_key(key), nil)
 
-  defp clear_jwt_assign(conn, :all) do
-    Dict.keys(conn.assigns)
-    |> Enum.filter(&(String.starts_with?(to_string(&1), "guardian_") and String.ends_with?(to_string(&1), "_jwt")))
-    |> Enum.reduce(conn, fn(key, c) -> clear_jwt_assign(c, key_from_other(key)) end)
+  defp clear_jwt_assign(conn, nil), do: conn
+  defp clear_jwt_assign(conn, []), do: conn
+  defp clear_jwt_assign(conn, [h|t]), do: clear_jwt_assign(conn, h) |> clear_jwt_assign(t)
+  defp clear_jwt_assign(conn, key), do: Plug.Conn.assign(conn, jwt_key(key), nil)
+
+  defp session_locations(conn) do
+    conn.private.plug_session
+    |> Map.keys
+    |> Enum.map(&Guardian.Keys.key_from_other/1)
+    |> Enum.filter(&(&1 != nil))
   end
 
-  defp clear_jwt_assign(conn, key) do
-    jwt = current_token(conn, key)
-    case claims(conn, key) do
-      { :ok, the_claims } -> Guardian.revoke!(jwt, the_claims)
-      _ -> :ok
+  defp revoke_from_session(conn, []), do: conn
+  defp revoke_from_session(conn, [h|t]), do: revoke_from_session(conn, h) |> revoke_from_session(t)
+  defp revoke_from_session(conn, key) do
+    case Plug.Conn.get_session(conn, base_key(key)) do
+      nil -> conn
+      jwt ->
+        Guardian.revoke!(jwt)
+        conn
     end
-    Plug.Conn.assign(conn, jwt_key(key), nil)
   end
 end
