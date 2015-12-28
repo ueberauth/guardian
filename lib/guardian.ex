@@ -22,7 +22,7 @@ defmodule Guardian do
   @default_algos ["HS512"]
 
   if !Application.get_env(:guardian, Guardian), do: raise "Guardian is not configured"
-  if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
+  if !Keyword.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
   @doc """
   Encode and sign a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.
@@ -31,15 +31,15 @@ defmodule Guardian do
   def encode_and_sign(object), do: encode_and_sign(object, nil, %{})
 
   @doc """
-  Like encode_and_sign/1 but also accepts the audience (encoded to the aud key) for the JWT
+  Like encode_and_sign/1 but also accepts the type (encoded to the typ key) for the JWT
 
-  The aud can be anything but suggested is "token".
+  The type can be anything but suggested is "token".
   """
   @spec encode_and_sign(any, atom | String.t) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
-  def encode_and_sign(object, audience), do: encode_and_sign(object, audience, %{})
+  def encode_and_sign(object, type), do: encode_and_sign(object, type, %{})
 
   @doc false
-  def encode_and_sign(object, audience, claims) when is_list(claims), do: encode_and_sign(object, audience, Enum.into(claims, %{}))
+  def encode_and_sign(object, type, claims) when is_list(claims), do: encode_and_sign(object, type, Enum.into(claims, %{}))
 
   @doc """
   Like encode_and_sign/2 but also encode anything found inside the claims map into the JWT.
@@ -51,18 +51,22 @@ defmodule Guardian do
       Guardian.encode_and_sign(user, :token, perms: %{ default: [:read, :write] })
   """
   @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
-  def encode_and_sign(object, audience, claims) do
+  def encode_and_sign(object, type, claims) do
     claims = stringify_keys(claims)
-    perms = Dict.get(claims, "perms", %{})
-    claims = Guardian.Claims.permissions(claims, perms) |> Dict.delete("perms")
+    perms = Map.get(claims, "perms", %{})
+    claims = Guardian.Claims.permissions(claims, perms) |> Map.delete("perms")
 
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
         full_claims = Guardian.Claims.app_claims(claims)
-        |> Guardian.Claims.aud(audience)
+        |> Guardian.Claims.typ(type)
         |> Guardian.Claims.sub(sub)
 
-        case Guardian.hooks_module.before_encode_and_sign(object, audience, full_claims) do
+        if Map.get(full_claims, "aud") == nil do
+          full_claims = Guardian.Claims.aud(full_claims, sub)
+        end
+
+        case Guardian.hooks_module.before_encode_and_sign(object, type, full_claims) do
           { :error, reason } -> { :error, reason }
           { :ok, { resource, type, hooked_claims } } ->
             case encode_claims(hooked_claims) do
@@ -139,11 +143,11 @@ defmodule Guardian do
     |> Guardian.Claims.iat
     |> Guardian.Claims.ttl
 
-    aud = Map.get(new_claims, "aud")
+    type = Map.get(new_claims, "typ")
 
     {:ok, resource} = Guardian.serializer.from_token(Map.get(new_claims, "sub"))
 
-    case encode_and_sign(resource, aud, new_claims) do
+    case encode_and_sign(resource, type, new_claims) do
       {:ok, jwt, full_claims} ->
         revoke!(jwt, claims)
         {:ok, jwt, full_claims}
@@ -170,7 +174,7 @@ defmodule Guardian do
   @spec decode_and_verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
   def decode_and_verify(jwt, params) do
     params = stringify_keys(params)
-    if verify_issuer?, do: params = Dict.put_new(params, "iss", issuer)
+    if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
     params = stringify_keys(params)
 
     try do
@@ -220,9 +224,9 @@ defmodule Guardian do
   @doc false
   def config, do: Application.get_env(:guardian, Guardian)
   @doc false
-  def config(key), do: Dict.get(config, key)
+  def config(key), do: Keyword.get(config, key)
   @doc false
-  def config(key, default), do: Dict.get(config, key, default)
+  def config(key, default), do: Keyword.get(config, key, default)
 
   defp jose_jws do
     %{ "alg" => hd(allowed_algos) }

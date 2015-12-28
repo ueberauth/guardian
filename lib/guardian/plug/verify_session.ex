@@ -23,7 +23,7 @@ defmodule Guardian.Plug.VerifySession do
 
   @doc false
   def call(conn, opts) do
-    key = Dict.get(opts, :key, :default)
+    key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
       { :ok, _ } -> conn

@@ -15,9 +15,24 @@ defmodule Guardian.ClaimsTest do
     assert app_claims["some"] == "foo"
   end
 
+  test "typ with nil" do
+    claims = %{}
+    assert Guardian.Claims.typ(claims, nil) == %{ "typ" => "token" }
+  end
+
+  test "typ with an typ atom" do
+    claims = %{ }
+    assert Guardian.Claims.typ(claims, :thing) == %{ "typ" => "thing" }
+  end
+
+  test "typ with an typ string" do
+    claims = %{ }
+    assert Guardian.Claims.typ(claims, "thing") == %{ "typ" => "thing" }
+  end
+
   test "aud with nil" do
     claims = %{}
-    assert Guardian.Claims.aud(claims, nil) == %{ "aud" => "token" }
+    assert Guardian.Claims.aud(claims, nil) == %{ "aud" => "MyApp" }
   end
 
   test "aud with an aud atom" do

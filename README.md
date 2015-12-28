@@ -24,7 +24,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.8.1"}
+    {:guardian, "~> 0.9.0"}
     # ...
   ]
 end
@@ -250,7 +250,7 @@ sockets for e.g. If you need to do things your own way.
 ```
 
 This will give you a new JWT to use with the claims ready to go.
-The token type is encoded into the JWT as the 'aud' field and is intended to be
+The token type is encoded into the JWT as the 'typ' field and is intended to be
 used as the _type_ of token.
 
 ```elixir
@@ -271,7 +271,7 @@ You can also customize the claims you're asserting.
 
 ```elixir
 claims = Guardian.Claims.app_claims
-         |> Dict.put(:some_claim, some_value)
+         |> Map.put("some_claim", some_value)
          |> Guardian.Claims.ttl({3, :days})
 
 { :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, claims)

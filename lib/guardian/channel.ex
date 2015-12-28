@@ -36,7 +36,7 @@ defmodule Guardian.Channel do
   """
   defmacro __using__(opts) do
     opts = Enum.into(opts, %{})
-    key = Dict.get(opts, :key, :default)
+    key = Map.get(opts, :key, :default)
 
     quote do
       def join(room, auth = %{ "guardian_token" => jwt }, socket) do
@@ -48,7 +48,7 @@ defmodule Guardian.Channel do
       defp handle_guardian_join(room, jwt, params, socket) do
         case Guardian.decode_and_verify(jwt, params) do
           { :ok, claims } ->
-            case Guardian.serializer.from_token(Dict.get(claims, "sub")) do
+            case Guardian.serializer.from_token(Map.get(claims, "sub")) do
               { :ok, resource } ->
                 authed_socket = socket
                 |> assign(Guardian.Keys.claims_key(unquote(key)), claims)
