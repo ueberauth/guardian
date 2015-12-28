@@ -23,7 +23,14 @@ defmodule Guardian.Claims do
   end
 
   @doc false
-  def aud(claims, nil), do: aud(claims, "token")
+  def typ(claims, nil), do: typ(claims, "token")
+  @doc false
+  def typ(claims, type) when is_atom(type), do: typ(claims, to_string(type))
+  @doc false
+  def typ(claims, type), do: Map.put(claims, "typ", type)
+
+  @doc false
+  def aud(claims, nil), do: aud(claims, Guardian.config(:issuer))
   @doc false
   def aud(claims, audience) when is_atom(audience), do: aud(claims, to_string(audience))
   @doc false

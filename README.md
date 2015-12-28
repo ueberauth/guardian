@@ -24,7 +24,7 @@ mix.deps
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.8.1"}
+    {:guardian, "~> 0.9.0"}
     # ...
   ]
 end
@@ -250,7 +250,7 @@ sockets for e.g. If you need to do things your own way.
 ```
 
 This will give you a new JWT to use with the claims ready to go.
-The token type is encoded into the JWT as the 'aud' field and is intended to be
+The token type is encoded into the JWT as the 'typ' field and is intended to be
 used as the _type_ of token.
 
 ```elixir

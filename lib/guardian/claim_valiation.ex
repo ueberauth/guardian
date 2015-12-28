@@ -36,7 +36,17 @@ defmodule Guardian.ClaimValidation do
 
         case Dict.get(payload, "exp") do
           nil -> :ok
-          _ -> if Dict.get(payload, "exp") < Guardian.Utils.timestamp, do: { :error, :token_expired }, else: :ok
+          _ -> if Map.get(payload, "exp") < Guardian.Utils.timestamp, do: { :error, :token_expired }, else: :ok
+        end
+      end
+
+      def validate_claim(:typ, payload, opts), do: validate_claim("typ", payload, opts)
+      def validate_claim("typ", payload, opts) do
+        has_typ_key? = Map.has_key?(opts, "typ")
+        if has_typ_key? and Map.get(opts, "typ") != Map.get(payload, "typ") do
+          { :error, :invalid_type }
+        else
+          :ok
         end
       end
 
