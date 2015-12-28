@@ -1,8 +1,10 @@
 # v 0.9.0
 
+* Remove internal calls to Dict
 * Store the type of the token in the typ field rather than the aud field
-  The aud field should default to the sub or failing that, the issuer.
-  This is to facilitate implementing an OAuth provider
+  The aud field should default to the sub or failing that, the iss.
+  This is to facilitate implementing an OAuth provider or just allowing
+  folks to declare their own audience.
 
 # v 0.8.1
 

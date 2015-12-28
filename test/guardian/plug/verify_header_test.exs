@@ -9,8 +9,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   setup do
     config = Application.get_env(:guardian, Guardian)
-    algo = hd(Dict.get(config, :allowed_algos))
-    secret = Dict.get(config, :secret_key)
+    algo = hd(Keyword.get(config, :allowed_algos))
+    secret = Keyword.get(config, :secret_key)
 
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
@@ -21,27 +21,27 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   end
 
   test "with no JWT in the session at a default location", context do
-    conn = VerifyHeader.call(context.conn, [])
+    conn = VerifyHeader.call(context.conn, %{})
     assert conn.assigns[Keys.claims_key] == nil
     assert conn.assigns[Keys.jwt_key] == nil
   end
 
   test "with no JWT in the session at a specified location", context do
-    conn = VerifyHeader.call(context.conn, key: :secret)
+    conn = VerifyHeader.call(context.conn, %{key: :secret})
     assert conn.assigns[Keys.claims_key(:secret)] == nil
     assert conn.assigns[Keys.jwt_key(:secret)] == nil
   end
 
   test "with a valid JWT in the session at the default location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
-    conn = VerifyHeader.call(the_conn, [])
+    conn = VerifyHeader.call(the_conn, %{})
     assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key] == context.jwt
   end
 
   test "with a valid JWT in the session at a specified location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
-    conn = VerifyHeader.call(the_conn, key: :secret)
+    conn = VerifyHeader.call(the_conn, %{key: :secret})
     assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
   end
@@ -52,7 +52,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     |> Conn.assign(Keys.claims_key, context.claims)
     |> Conn.assign(Keys.jwt_key, context.jwt)
 
-    conn = VerifyHeader.call(the_conn, key: :secret)
+    conn = VerifyHeader.call(the_conn, %{key: :secret})
     assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
     assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
   end

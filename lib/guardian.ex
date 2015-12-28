@@ -22,7 +22,7 @@ defmodule Guardian do
   @default_algos ["HS512"]
 
   if !Application.get_env(:guardian, Guardian), do: raise "Guardian is not configured"
-  if !Dict.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
+  if !Keyword.get(Application.get_env(:guardian, Guardian), :serializer), do: raise "Guardian requires a serializer"
 
   @doc """
   Encode and sign a JWT from a resource. The resource will be run through the configured serializer to obtain a value suitable for storage inside a JWT.
@@ -224,9 +224,9 @@ defmodule Guardian do
   @doc false
   def config, do: Application.get_env(:guardian, Guardian)
   @doc false
-  def config(key), do: Dict.get(config, key)
+  def config(key), do: Keyword.get(config, key)
   @doc false
-  def config(key, default), do: Dict.get(config, key, default)
+  def config(key, default), do: Keyword.get(config, key, default)
 
   defp jose_jws do
     %{ "alg" => hd(allowed_algos) }

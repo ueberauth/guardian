@@ -12,8 +12,8 @@ defmodule GuardianTest do
       "something_else" => "foo"}
 
     config = Application.get_env(:guardian, Guardian)
-    algo = hd(Dict.get(config, :allowed_algos))
-    secret = Dict.get(config, :secret_key)
+    algo = hd(Keyword.get(config, :allowed_algos))
+    secret = Keyword.get(config, :secret_key)
 
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
@@ -65,7 +65,7 @@ defmodule GuardianTest do
   end
 
   test "fails if the expiry has passed", context do
-    claims = Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
+    claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
     { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert Guardian.decode_and_verify(jwt) == { :error, :token_expired }
@@ -80,7 +80,7 @@ defmodule GuardianTest do
   end
 
   test "verify! with a bad token", context do
-    claims = Dict.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
+    claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
     { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert_raise(RuntimeError, fn() -> Guardian.decode_and_verify!(jwt) end)

@@ -78,8 +78,8 @@ defmodule Guardian.Plug do
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
   def sign_in(conn, object, type, claims) do
-    the_key = Dict.get(claims, :key, :default)
-    claims = Dict.delete(claims, :key)
+    the_key = Map.get(claims, :key, :default)
+    claims = Map.delete(claims, :key)
 
     case Guardian.encode_and_sign(object, type, claims) do
       { :ok, jwt, full_claims } ->
@@ -125,8 +125,8 @@ defmodule Guardian.Plug do
   """
   @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
   def api_sign_in(conn, object, type, claims) do
-    the_key = Dict.get(claims, :key, :default)
-    claims = Dict.delete(claims, :key)
+    the_key = Map.get(claims, :key, :default)
+    claims = Map.delete(claims, :key)
 
     case Guardian.encode_and_sign(object, type, claims) do
       { :ok, jwt, full_claims } ->

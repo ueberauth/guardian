@@ -39,20 +39,20 @@ defmodule Guardian.Plug.EnsurePermissions do
     %{
       handler: handler,
       key: key,
-      perm_keys: Dict.keys(perms),
+      perm_keys: Map.keys(perms),
       perms: perms,
     }
   end
 
   @doc false
   def call(conn, opts) do
-    key = Dict.get(opts, :key)
+    key = Map.get(opts, :key)
     case Guardian.Plug.claims(conn, key) do
       { :ok, claims } ->
-        perms = Dict.get(opts, :perms, %{})
-        result = Enum.all?(Dict.get(opts, :perm_keys), fn(perm_key) ->
+        perms = Map.get(opts, :perms, %{})
+        result = Enum.all?(Map.get(opts, :perm_keys), fn(perm_key) ->
           found_perms = Guardian.Permissions.from_claims(claims, perm_key)
-          Guardian.Permissions.all?(found_perms, Dict.get(perms, perm_key), perm_key)
+          Guardian.Permissions.all?(found_perms, Map.get(perms, perm_key), perm_key)
         end)
         if result, do: conn, else: handle_error(conn, opts)
       { :error, _ } -> handle_error(conn, opts)

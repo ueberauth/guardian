@@ -35,16 +35,16 @@ defmodule Guardian.Plug.VerifyHeader do
 
   def init(opts \\ %{}) do
     opts_map = Enum.into(opts, %{})
-    realm = Dict.get(opts_map, :realm)
+    realm = Map.get(opts_map, :realm)
     if realm do
       { :ok, reg } = Regex.compile("#{realm}\:?\s+(.*)$", "i")
-      opts_map = Dict.put(opts_map, :realm_reg, reg)
+      opts_map = Map.put(opts_map, :realm_reg, reg)
     end
     opts_map
   end
 
   def call(conn, opts) do
-    key = Dict.get(opts, :key, :default)
+    key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
       { :ok, _ } -> conn

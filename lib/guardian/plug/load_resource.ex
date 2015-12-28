@@ -16,7 +16,7 @@ defmodule Guardian.Plug.LoadResource do
 
   @doc false
   def call(conn, opts) do
-    key = Dict.get(opts, :key, :default)
+    key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.current_resource(conn, key) do
       { :ok, _ } -> conn
@@ -24,7 +24,7 @@ defmodule Guardian.Plug.LoadResource do
       _ ->
         case Guardian.Plug.claims(conn, key) do
           { :ok, claims } ->
-            case Guardian.serializer.from_token(Dict.get(claims, "sub")) do
+            case Guardian.serializer.from_token(Map.get(claims, "sub")) do
               { :ok, resource } -> Guardian.Plug.set_current_resource(conn, resource, key)
               { :error, _ } -> Guardian.Plug.set_current_resource(conn, nil, key)
             end
