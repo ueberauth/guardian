@@ -493,7 +493,6 @@ feedback to get up and running.
 - [x] Integration with Plug
 - [x] Basic integrations like raw TCP
 - [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
-- [ ] Create a "csrf" token type that ensures that CSRF protection is included
 - [x] Integration with Phoenix channels
 - [x] Integrated permission sets
 - [x] Hooks into the authentication cycle

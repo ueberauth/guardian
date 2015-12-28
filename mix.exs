@@ -7,22 +7,32 @@ defmodule Guardian.Mixfile do
 
   def project do
     [
+      name: "Guardian",
       app: :guardian,
       version: @version,
       elixir: "~> 1.1",
       package: package,
+      source_url: @url,
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       maintainers: @maintainers,
       description: "Elixir Authentication framework",
       homepage_url: @url,
-      docs: [source_ref: "v#{@version}", main: "overview"],
+      docs: docs,
       deps: deps
     ]
   end
 
   def application do
     [applications: [:logger, :poison, :jose, :uuid]]
+  end
+
+  def docs do
+    [
+      extras: ["README.md", "CHANGELOG.md"],
+      source_ref: "v#{@version}",
+      main: "extra-readme"
+    ]
   end
 
   defp deps do
