@@ -3,9 +3,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   use Plug.Test
 
   alias Guardian.Claims
-  alias Guardian.Keys
   alias Guardian.Plug.VerifyHeader
-  alias Plug.Conn
 
   setup do
     config = Application.get_env(:guardian, Guardian)
@@ -22,39 +20,39 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   test "with no JWT in the session at a default location", context do
     conn = VerifyHeader.call(context.conn, %{})
-    assert conn.assigns[Keys.claims_key] == nil
-    assert conn.assigns[Keys.jwt_key] == nil
+    assert Guardian.Plug.claims(conn) == {:error, :no_session}
+    assert Guardian.Plug.current_token(conn) == nil
   end
 
   test "with no JWT in the session at a specified location", context do
     conn = VerifyHeader.call(context.conn, %{key: :secret})
-    assert conn.assigns[Keys.claims_key(:secret)] == nil
-    assert conn.assigns[Keys.jwt_key(:secret)] == nil
+    assert Guardian.Plug.claims(conn, :secret) == {:error,  :no_session}
+    assert Guardian.Plug.current_token(conn, :secret) == nil
   end
 
   test "with a valid JWT in the session at the default location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
     conn = VerifyHeader.call(the_conn, %{})
-    assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
-    assert conn.assigns[Keys.jwt_key] == context.jwt
+    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
   test "with a valid JWT in the session at a specified location", context do
     the_conn = context.conn |> put_req_header("authorization", context.jwt)
     conn = VerifyHeader.call(the_conn, %{key: :secret})
-    assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
-    assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
+    assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }
+    assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end
 
   test "with an existing session in another location", context do
     the_conn = context.conn
     |> put_req_header("authorization", context.jwt)
-    |> Conn.assign(Keys.claims_key, context.claims)
-    |> Conn.assign(Keys.jwt_key, context.jwt)
+    |> Guardian.Plug.set_claims(context.claims)
+    |> Guardian.Plug.set_current_token(context.jwt)
 
     conn = VerifyHeader.call(the_conn, %{key: :secret})
-    assert conn.assigns[Keys.claims_key(:secret)] == { :ok, context.claims }
-    assert conn.assigns[Keys.jwt_key(:secret)] == context.jwt
+    assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }
+    assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end
 
   test "with a realm specified", context do
@@ -63,8 +61,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     opts = VerifyHeader.init(realm: "Bearer")
 
     conn = VerifyHeader.call(the_conn, opts)
-    assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
-    assert conn.assigns[Keys.jwt_key] == context.jwt
+    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
   test "with a realm specified and multiple auth headers", context do
@@ -78,8 +76,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     opts = VerifyHeader.init(realm: "Client")
 
     conn = VerifyHeader.call(the_conn, opts)
-    assert conn.assigns[Keys.claims_key] == { :ok, claims2 }
-    assert conn.assigns[Keys.jwt_key] == jwt2
+    assert Guardian.Plug.claims(conn) == { :ok, claims2 }
+    assert Guardian.Plug.current_token(conn) == jwt2
   end
 
   test "pulls different tokens into different locations", context do
@@ -96,9 +94,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     |> VerifyHeader.call(defaultOpts)
     |> VerifyHeader.call(clientOpts)
 
-    assert conn.assigns[Keys.claims_key(:client)] == { :ok, claims2 }
-    assert conn.assigns[Keys.jwt_key(:client)] == jwt2
-    assert conn.assigns[Keys.claims_key] == { :ok, context.claims }
-    assert conn.assigns[Keys.jwt_key] == context.jwt
+    assert Guardian.Plug.claims(conn, :client) == { :ok, claims2 }
+    assert Guardian.Plug.current_token(conn, :client) == jwt2
+    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.current_token(conn) == context.jwt
   end
 end
