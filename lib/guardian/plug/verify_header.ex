@@ -60,9 +60,9 @@ defmodule Guardian.Plug.VerifyHeader do
     case Guardian.decode_and_verify(token, %{ }) do
       { :ok, claims } ->
         conn
-        |> Plug.Conn.assign(claims_key(key), { :ok, claims })
-        |> Plug.Conn.assign(jwt_key(key), token)
-      { :error, reason } -> Plug.Conn.assign(conn, claims_key(key), { :error, reason })
+        |> Guardian.Plug.set_claims({ :ok, claims }, key)
+        |> Guardian.Plug.set_current_token(token, key)
+      { :error, reason } -> Guardian.Plug.set_claims(conn,{ :error, reason }, key)
     end
   end
 
