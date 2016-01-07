@@ -2,7 +2,6 @@ defmodule Guardian.Plug.EnsurePermissionTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias Guardian.Keys
   alias Guardian.Plug.EnsurePermissions
 
   defmodule TestHandler do
@@ -23,7 +22,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
@@ -37,7 +36,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
@@ -51,7 +50,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
@@ -66,7 +65,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
@@ -81,7 +80,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
@@ -96,7 +95,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
     expected_conn = conn(:get, "/get")
-    |> Plug.Conn.assign(Keys.claims_key, { :ok, claims })
+    |> Guardian.Plug.set_claims({ :ok, claims })
     |> Plug.Conn.fetch_query_params
     |> EnsurePermissions.call(opts)
 
