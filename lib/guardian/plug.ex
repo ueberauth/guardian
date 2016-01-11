@@ -16,15 +16,21 @@ defmodule Guardian.Plug do
       Guardian.Plug.sign_out(conn) # sign out all sessions
       Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session
 
-  To sign in to an api action (i.e. not store the jwt in the session, just in the assigns
-
-  This allows you to use all the Guardian.Plug helpers to look up JWT, claims and resource.
+  To sign in to an api action (i.e. not store the jwt in the session, just on the conn)
 
   ## Example
 
       Guardian.Plug.api_sign_in(conn, user)
       Guardian.Plug.api_sign_in(conn, user, :token)
-      Guardian.Plug.api_sign_in(conn, user, :token, %{ claims: "i", make: true, key: :secret }) # Store the JWT in the assigns
+      Guardian.Plug.api_sign_in(conn, user, :token, %{ claims: "i", make: true, key: :secret }) # Store the JWT on the conn
+
+  Then use the Guardian.Plug helpers to look up current_token, claims and current_resource.
+
+  ## Example
+      Guardian.Plug.current_token(conn)
+      Guardian.Plug.claims(conn)
+      Guardian.Plug.current_resource(conn)
+
   """
 
   import Guardian.Keys
@@ -158,7 +164,7 @@ defmodule Guardian.Plug do
   """
   @spec claims(Plug.Conn.t, atom) :: { :ok, Map } | { :error, atom | String.t }
   def claims(conn, the_key \\ :default) do
-    case conn.assigns[claims_key(the_key)] do
+    case conn.private[claims_key(the_key)] do
       { :ok, claims } -> { :ok, claims }
       { :error, reason } -> { :error, reason }
       _ -> { :error, :no_session }
@@ -168,7 +174,7 @@ defmodule Guardian.Plug do
   @doc false
   @spec set_claims(Plug.Conn.t, { :ok, Map }, atom) :: Plug.Conn.t
   def set_claims(conn, claims, the_key \\ :default) do
-    Plug.Conn.assign(conn, claims_key(the_key), claims)
+    Plug.Conn.put_private(conn, claims_key(the_key), claims)
   end
 
   @doc """
@@ -176,12 +182,12 @@ defmodule Guardian.Plug do
   """
   @spec current_resource(Plug.Conn.t, atom) :: any | nil
   def current_resource(conn, the_key \\ :default) do
-    conn.assigns[resource_key(the_key)]
+    conn.private[resource_key(the_key)]
   end
 
   @doc false
   def set_current_resource(conn, resource, the_key \\ :default) do
-    Plug.Conn.assign(conn, resource_key(the_key), resource)
+    Plug.Conn.put_private(conn, resource_key(the_key), resource)
   end
 
   @doc """
@@ -189,12 +195,12 @@ defmodule Guardian.Plug do
   """
   @spec current_token(Plug.Conn.t, atom) :: String.t | nil
   def current_token(conn, the_key \\ :default) do
-    conn.assigns[jwt_key(the_key)]
+    conn.private[jwt_key(the_key)]
   end
 
   @doc false
   def set_current_token(conn, jwt, the_key \\ :default) do
-    Plug.Conn.assign(conn, jwt_key(the_key), jwt)
+    Plug.Conn.put_private(conn, jwt_key(the_key), jwt)
   end
 
   defp sign_out_via_key(conn, :all) do
@@ -219,17 +225,17 @@ defmodule Guardian.Plug do
   defp clear_resource_assign(conn, nil), do: conn
   defp clear_resource_assign(conn, []), do: conn
   defp clear_resource_assign(conn, [h|t]), do: clear_resource_assign(conn, h) |> clear_resource_assign(t)
-  defp clear_resource_assign(conn, key), do: Plug.Conn.assign(conn, resource_key(key), nil)
+  defp clear_resource_assign(conn, key), do: set_current_resource(conn, nil, key)
 
   defp clear_claims_assign(conn, nil), do: conn
   defp clear_claims_assign(conn, []), do: conn
   defp clear_claims_assign(conn, [h|t]), do: clear_claims_assign(conn, h) |> clear_claims_assign(t)
-  defp clear_claims_assign(conn, key), do: Plug.Conn.assign(conn, claims_key(key), nil)
+  defp clear_claims_assign(conn, key), do: set_claims(conn, nil, key)
 
   defp clear_jwt_assign(conn, nil), do: conn
   defp clear_jwt_assign(conn, []), do: conn
   defp clear_jwt_assign(conn, [h|t]), do: clear_jwt_assign(conn, h) |> clear_jwt_assign(t)
-  defp clear_jwt_assign(conn, key), do: Plug.Conn.assign(conn, jwt_key(key), nil)
+  defp clear_jwt_assign(conn, key), do: set_current_token(conn, nil, key)
 
   defp session_locations(conn) do
     conn.private.plug_session
