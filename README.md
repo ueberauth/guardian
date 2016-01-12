@@ -49,7 +49,7 @@ The items in the configuration allow you to tailor how the JWT generation behave
 * `allowed_algos` - The list of algorithms (must be compatible with JOSE). The first is used as the encoding key. Default is: ["HS512"]
 * `verify_module` - Provides a mechanism to setup your own validations for items
   in the token. Default is `Guardian.JWT`
-* `issuer` - The entry to put into the token as the issuer. This can be used in congunction with `verify_issuer`
+* `issuer` - The entry to put into the token as the issuer. This can be used in conjunction with `verify_issuer`
 * `ttl` - The default ttl of a token
 * `verify_issuer` - If set to true, the issuer will be verified to be the same issuer as specified in the `issuer` field
 * `secret_key` - The key to sign the tokens
@@ -95,7 +95,7 @@ Looks for a previously verified token. If one is found, continues, otherwise it
 will call the `:unauthenticated` function of your handler.
 
 When you ensure a session, you must declare an error handler. This can be done
-as part of a pipeline or inside a pheonix controller.
+as part of a pipeline or inside a phoenix controller.
 
 ```elixir
 defmodule MyApp.MyController do
@@ -159,7 +159,7 @@ end
 ## Sign in and Sign out
 
 It's up to you how you generate the claims to encode into the token Guardian uses.
-As an example, here's the important parts of a SessionController
+As an example, here are the important parts of a SessionController
 
 ```elixir
 defmodule MyApp.SessionController do
@@ -194,7 +194,7 @@ Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
 ```
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to use for the token jwt
+Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to used for the token jwt
 
 Guardian.Plug.sign_in(conn, user, :token, key: :secret)  # create a token in the :secret location
 ```
@@ -368,7 +368,7 @@ end
 
 By default, JWTs are not tracked. This means that after 'logout' the token can
 still be used if it is stored outside the system. This is because Guardian does
-not track tokens and only interprates them live. When using Guardian in this
+not track tokens and only interprets them live. When using Guardian in this
 way, be sure you consider the expiry time as this is one of the few options you
 have to make your tokens invalid.
 
