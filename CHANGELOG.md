@@ -1,3 +1,8 @@
+# v 0.9.1
+
+* Stop compiling permissions. This leads to weird bugs when permissions are
+  changed but not recompiled
+
 # v 0.9.0
 
 * Remove internal calls to Dict
