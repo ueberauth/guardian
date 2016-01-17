@@ -161,21 +161,21 @@ defmodule Guardian.PermissionsTest do
     assert default_val == Permissions.to_value(["read", "write"], :default)
     assert other_val == Permissions.to_value(["other_read", "other_write"], :other)
 
-    assert [:write, :read] == Permissions.to_list(default_val)
-    assert [:write, :read] == Permissions.to_list(default_val, :default)
-    assert [:write, :read] == Permissions.to_list(default_val, "default")
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val))
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val, :default))
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val, "default"))
 
-    assert [:write, :read] == Permissions.to_list([:read, :write], :default)
-    assert [:write, :read] == Permissions.to_list([:read, :write], "default")
-    assert [:write, :read] == Permissions.to_list(["read", "write"], :default)
-    assert [:write, :read] == Permissions.to_list(["read", "write"], "default")
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list([:read, :write], :default))
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list([:read, :write], "default"))
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(["read", "write"], :default))
+    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(["read", "write"], "default"))
 
-    assert [:other_write, :other_read] == Permissions.to_list(other_val, :other)
-    assert [:other_write, :other_read] == Permissions.to_list(other_val, "other")
-    assert [:other_write, :other_read] == Permissions.to_list([:other_read, :other_write], :other)
-    assert [:other_write, :other_read] == Permissions.to_list([:other_read, :other_write], "other")
-    assert [:other_write, :other_read] == Permissions.to_list(["other_read", "other_write"], "other")
-    assert [:other_write, :other_read] == Permissions.to_list(["other_read", "other_write"], :other)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(other_val, :other))
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(other_val, "other"))
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list([:other_read, :other_write], :other))
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list([:other_read, :other_write], "other"))
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(["other_read", "other_write"], "other"))
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(["other_read", "other_write"], :other))
   end
 end
 
