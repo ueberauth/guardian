@@ -127,6 +127,12 @@ defmodule GuardianTest do
     assert claims["some"] == "thing"
   end
 
+  test "encode_and_sign with a serializer error" do
+    { :error, reason } = Guardian.encode_and_sign(%{error: :unknown})
+
+    assert reason
+  end
+
   test "revoke" do
     {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "my_type", some: "thing")
     assert Guardian.revoke!(jwt, claims) == :ok

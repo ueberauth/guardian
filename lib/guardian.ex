@@ -52,29 +52,17 @@ defmodule Guardian do
   """
   @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def encode_and_sign(object, type, claims) do
-    claims = stringify_keys(claims)
-    perms = Map.get(claims, "perms", %{})
-    claims = Guardian.Claims.permissions(claims, perms) |> Map.delete("perms")
-
-    case Guardian.serializer.for_token(object) do
-      { :ok, sub } ->
-        full_claims = Guardian.Claims.app_claims(claims)
-        |> Guardian.Claims.typ(type)
-        |> Guardian.Claims.sub(sub)
-
-        if Map.get(full_claims, "aud") == nil do
-          full_claims = Guardian.Claims.aud(full_claims, sub)
-        end
-
-        case Guardian.hooks_module.before_encode_and_sign(object, type, full_claims) do
-          { :error, reason } -> { :error, reason }
-          { :ok, { resource, type, hooked_claims } } ->
-            case encode_claims(hooked_claims) do
+    case build_claims(object, type, claims) do
+      { :ok, claims_for_token } ->
+        case call_before_encode_and_sign_hook(object, type, claims_for_token) do
+          { :ok, { resource, type, claims_from_hook } } ->
+            case encode_claims(claims_from_hook) do
               { :ok, jwt } ->
-                Guardian.hooks_module.after_encode_and_sign(resource, type, hooked_claims, jwt)
-                { :ok, jwt, hooked_claims }
+                call_after_encode_and_sign_hook(resource, type, claims_from_hook, jwt)
+                { :ok, jwt, claims_from_hook }
               { :error, reason } -> { :error, reason }
             end
+          { :error, reason } -> { :error, reason }
         end
       { :error, reason } -> { :error, reason }
     end
@@ -259,4 +247,40 @@ defmodule Guardian do
   end
 
   defp verify_claims(claims, [], _, _), do: { :ok, claims }
+
+  defp build_claims(object, type, claims) do
+    case Guardian.serializer.for_token(object) do
+      { :ok, sub } ->
+        full_claims = claims
+          |> stringify_keys
+          |> set_permissions
+          |> Guardian.Claims.app_claims
+          |> Guardian.Claims.typ(type)
+          |> Guardian.Claims.sub(sub)
+          |> set_aud_if_nil(sub)
+
+        {:ok, full_claims}
+      {:error, reason} ->  {:error, reason}
+    end
+  end
+
+  defp call_before_encode_and_sign_hook(object, type, claims) do
+    Guardian.hooks_module.before_encode_and_sign(object, type, claims)
+  end
+
+  defp call_after_encode_and_sign_hook(resource, type, claims, jwt) do
+    Guardian.hooks_module.after_encode_and_sign(resource, type, claims, jwt)
+  end
+
+  defp set_permissions(claims) do
+    perms = Map.get(claims, "perms", %{})
+    Guardian.Claims.permissions(claims, perms) |> Map.delete("perms")
+  end
+
+  def set_aud_if_nil(claims, value) do
+    if Map.get(claims, "aud") == nil do
+      claims = Guardian.Claims.aud(claims, value)
+    end
+    claims
+  end
 end
