@@ -1,7 +1,7 @@
 defmodule Guardian.Mixfile do
   use Mix.Project
 
-  @version "0.9.1"
+  @version "0.10.0"
   @url "https://github.com/ueberauth/guardian"
   @maintainers ["Daniel Neighman", "Sonny Scroggin", "Sean Callan"]
 
