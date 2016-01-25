@@ -95,7 +95,7 @@ Looks for a previously verified token. If one is found, continues, otherwise it
 will call the `:unauthenticated` function of your handler.
 
 When you ensure a session, you must declare an error handler. This can be done
-as part of a pipeline or inside a phoenix controller.
+as part of a pipeline or inside a Phoenix controller.
 
 ```elixir
 defmodule MyApp.MyController do
