@@ -52,20 +52,11 @@ defmodule Guardian do
   """
   @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } | { :error, atom } | { :error, String.t }
   def encode_and_sign(object, type, claims) do
-    case build_claims(object, type, claims) do
-      { :ok, claims_for_token } ->
-        case call_before_encode_and_sign_hook(object, type, claims_for_token) do
-          { :ok, { resource, type, claims_from_hook } } ->
-            case encode_claims(claims_from_hook) do
-              { :ok, jwt } ->
-                call_after_encode_and_sign_hook(resource, type, claims_from_hook, jwt)
-                { :ok, jwt, claims_from_hook }
-              { :error, reason } -> { :error, reason }
-            end
-          { :error, reason } -> { :error, reason }
-        end
-      { :error, reason } -> { :error, reason }
-    end
+    with {:ok, claims} <- build_claims(object, type, claims),
+         {:ok, {object, type, claims}} <- call_before_encode_and_sign_hook(object, type, claims),
+         {:ok, jwt} <- encode_claims(claims),
+         call_after_encode_and_sign_hook(object, type, claims, jwt),
+         do: { :ok, jwt, claims }
   end
 
   @doc false
@@ -150,34 +141,30 @@ defmodule Guardian do
   def serializer, do: config(:serializer)
 
   @doc """
-  Verify the given JWT. This will decode_and_verify via decode_and_verify/2
+  Verify the given JWT. This will decode_and_verify via `decode_and_verify/2` with
+  no expected claims
+
+    * `jwt` - JWT to decode
   """
   @spec decode_and_verify(String.t) :: { :ok, Map } | { :error, atom } | { :error, String.t }
   def decode_and_verify(jwt), do: decode_and_verify(jwt, %{})
 
 
   @doc """
-  Verify the given JWT.
+  Decode and verify the given JWT.
+
+    * `jwt` - JWT to decode
+    * `expected_claims` - Claims that are expected to be present
   """
   @spec decode_and_verify(String.t, Map) :: { :ok, Map } | { :error, atom | String.t }
-  def decode_and_verify(jwt, params) do
-    params = stringify_keys(params)
-    if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
-    params = stringify_keys(params)
+  def decode_and_verify(jwt, expected_claims) do
+    expected_claims = build_expected_claims(expected_claims)
 
     try do
-      case decode_token(jwt) do
-        {:ok, claims} ->
-          case verify_claims(claims, params) do
-            {:ok, verified_claims} ->
-              case Guardian.hooks_module.on_verify(verified_claims, jwt) do
-                { :ok, { claims, _ } } -> { :ok, claims }
-                { :error, reason } -> { :error, reason }
-              end
-            {:error, reason} -> {:error, reason}
-          end
-        {:error, reason} -> {:error, reason}
-      end
+      with {:ok, claims} <- decode_token(jwt),
+           {:ok, claims} <- verify_claims(claims, expected_claims),
+           {:ok, {claims, _}} <- Guardian.hooks_module.on_verify(claims, jwt),
+           do: {:ok, claims}
     rescue
       e ->
         { :error, e }
@@ -262,6 +249,16 @@ defmodule Guardian do
         {:ok, full_claims}
       {:error, reason} ->  {:error, reason}
     end
+  end
+
+  defp build_expected_claims(expected_claims) do
+    expected_claims = stringify_keys(expected_claims)
+
+    if verify_issuer? do
+      expected_claims = Map.put_new(expected_claims, "iss", issuer)
+    end
+
+    expected_claims
   end
 
   defp call_before_encode_and_sign_hook(object, type, claims) do
