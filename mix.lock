@@ -1,4 +1,5 @@
 %{"base64url": {:hex, :base64url, "0.0.1"},
+  "dogma": {:hex, :dogma, "0.0.11"},
   "earmark": {:hex, :earmark, "0.1.19"},
   "ex_doc": {:hex, :ex_doc, "0.10.0"},
   "joken": {:hex, :joken, "0.16.1"},
