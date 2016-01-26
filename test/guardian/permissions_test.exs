@@ -178,4 +178,3 @@ defmodule Guardian.PermissionsTest do
     assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(["other_read", "other_write"], :other))
   end
 end
-

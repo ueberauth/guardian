@@ -21,4 +21,3 @@ defmodule Guardian.KeysTest do
     assert Guardian.Keys.jwt_key(:foo) == :guardian_foo_jwt
   end
 end
-

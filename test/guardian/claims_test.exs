@@ -97,4 +97,3 @@ defmodule Guardian.ClaimsTest do
     assert claims == %{ "pem" => %{ "other" => 3 } }
   end
 end
-

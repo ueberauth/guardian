@@ -47,4 +47,3 @@ defmodule Guardian.Plug.VerifySession do
     end
   end
 end
-

@@ -257,4 +257,3 @@ defmodule Guardian.PlugTest do
     assert claims["here"] == "we are"
   end
 end
-

@@ -6,4 +6,3 @@ config :guardian, Guardian,
       verify_issuer: true,
       secret_key: "woiuerojksldkjoierwoiejrlskjdf",
       serializer: Guardian.TestGuardianSerializer
-

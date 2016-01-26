@@ -67,4 +67,3 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
   defp check_claims(conn, _, _), do: conn
 end
-

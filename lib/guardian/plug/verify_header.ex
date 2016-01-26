@@ -83,4 +83,3 @@ defmodule Guardian.Plug.VerifyHeader do
 
   defp fetch_token(_, _, [token|_tail]), do: String.strip(token)
 end
-
