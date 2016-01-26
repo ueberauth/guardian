@@ -82,6 +82,9 @@ defmodule Guardian.Claims do
       { iat, { hours, :hour } } -> Map.put(claims, "exp", iat + hours * 60 * 60)
       { iat, { days, :days } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
       { iat, { days, :day } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
+      { iat, { years, :years } } -> Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
+      { iat, { years, :year } } -> Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
+      { iat, { _, units } } -> raise "Unknown Units: #{units}"
       _ -> claims
     end
   end
