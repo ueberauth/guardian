@@ -15,10 +15,11 @@ defmodule Guardian.Claims do
   as a map of <type> => <value as int>
   """
   def permissions(claims, permissions) do
-    perms = Enum.into(%{}, permissions)
-    |> Enum.reduce(%{}, fn({key, list}, acc) ->
-      Map.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
-    end)
+    perms = %{}
+            |> Enum.into(permissions)
+            |> Enum.reduce(%{}, fn({key, list}, acc) ->
+              Map.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
+            end)
     Map.put(claims, "pem", perms)
   end
 

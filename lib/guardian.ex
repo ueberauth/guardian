@@ -124,12 +124,13 @@ defmodule Guardian do
   @spec refresh!(String.t, Map.t, Map.t) :: {:ok, String.t, Map.t} | {:error, any}
   def refresh!(_jwt, claims, params \\ %{}) do
     params = Enum.into(params, %{})
-    new_claims = Map.drop(claims, ["jti", "iat", "exp", "nbf"])
-    |> Map.merge(params)
-    |> Guardian.Claims.jti
-    |> Guardian.Claims.nbf
-    |> Guardian.Claims.iat
-    |> Guardian.Claims.ttl
+    new_claims = claims
+                 |> Map.drop(["jti", "iat", "exp", "nbf"])
+                 |> Map.merge(params)
+                 |> Guardian.Claims.jti
+                 |> Guardian.Claims.nbf
+                 |> Guardian.Claims.iat
+                 |> Guardian.Claims.ttl
 
     type = Map.get(new_claims, "typ")
 
@@ -222,7 +223,7 @@ defmodule Guardian do
   defp jose_jwk, do: %{ "kty" => "oct", "k" => :base64url.encode(config(:secret_key)) }
 
   defp encode_claims(claims) do
-    { _, token } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+    { _, token } = jose_jwk |> JOSE.JWT.sign(jose_jws, claims) |> JOSE.JWS.compact
     { :ok, token }
   end
 
@@ -252,12 +253,12 @@ defmodule Guardian do
     case Guardian.serializer.for_token(object) do
       { :ok, sub } ->
         full_claims = claims
-          |> stringify_keys
-          |> set_permissions
-          |> Guardian.Claims.app_claims
-          |> Guardian.Claims.typ(type)
-          |> Guardian.Claims.sub(sub)
-          |> set_aud_if_nil(sub)
+                      |> stringify_keys
+                      |> set_permissions
+                      |> Guardian.Claims.app_claims
+                      |> Guardian.Claims.typ(type)
+                      |> Guardian.Claims.sub(sub)
+                      |> set_aud_if_nil(sub)
 
         {:ok, full_claims}
       {:error, reason} ->  {:error, reason}
@@ -274,7 +275,10 @@ defmodule Guardian do
 
   defp set_permissions(claims) do
     perms = Map.get(claims, "perms", %{})
-    Guardian.Claims.permissions(claims, perms) |> Map.delete("perms")
+
+    claims
+    |> Guardian.Claims.permissions(perms)
+    |> Map.delete("perms")
   end
 
   def set_aud_if_nil(claims, value) do

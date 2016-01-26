@@ -14,7 +14,7 @@ defmodule Guardian.Plug.VerifySessionTest do
     conn = conn_with_fetched_session(conn(:get, "/"))
     claims = Guardian.Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
 
-    { _, jwt } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+    { _, jwt } = jose_jwk |> JOSE.JWT.sign(jose_jws, claims) |> JOSE.JWS.compact
 
     { :ok, conn: conn, jwt: jwt, claims: claims, jose_jwk: jose_jwk, jose_jws: jose_jws }
   end
@@ -47,10 +47,10 @@ defmodule Guardian.Plug.VerifySessionTest do
 
   test "with an existing session in another location", context do
     the_conn = context.conn
-    |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
-    |> Guardian.Plug.set_claims(context.claims)
-    |> Guardian.Plug.set_current_token(context.jwt)
-    |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), context.jwt)
+               |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
+               |> Guardian.Plug.set_claims(context.claims)
+               |> Guardian.Plug.set_current_token(context.jwt)
+               |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), context.jwt)
 
     conn = Guardian.Plug.VerifySession.call(the_conn, %{key: :secret})
     assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }

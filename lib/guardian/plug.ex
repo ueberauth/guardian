@@ -224,17 +224,17 @@ defmodule Guardian.Plug do
 
   defp clear_resource_assign(conn, nil), do: conn
   defp clear_resource_assign(conn, []), do: conn
-  defp clear_resource_assign(conn, [h|t]), do: clear_resource_assign(conn, h) |> clear_resource_assign(t)
+  defp clear_resource_assign(conn, [h|t]), do: conn |> clear_resource_assign(h) |> clear_resource_assign(t)
   defp clear_resource_assign(conn, key), do: set_current_resource(conn, nil, key)
 
   defp clear_claims_assign(conn, nil), do: conn
   defp clear_claims_assign(conn, []), do: conn
-  defp clear_claims_assign(conn, [h|t]), do: clear_claims_assign(conn, h) |> clear_claims_assign(t)
+  defp clear_claims_assign(conn, [h|t]), do: conn |> clear_claims_assign(h) |> clear_claims_assign(t)
   defp clear_claims_assign(conn, key), do: set_claims(conn, nil, key)
 
   defp clear_jwt_assign(conn, nil), do: conn
   defp clear_jwt_assign(conn, []), do: conn
-  defp clear_jwt_assign(conn, [h|t]), do: clear_jwt_assign(conn, h) |> clear_jwt_assign(t)
+  defp clear_jwt_assign(conn, [h|t]), do: conn |> clear_jwt_assign(h) |> clear_jwt_assign(t)
   defp clear_jwt_assign(conn, key), do: set_current_token(conn, nil, key)
 
   defp session_locations(conn) do
@@ -245,7 +245,7 @@ defmodule Guardian.Plug do
   end
 
   defp revoke_from_session(conn, []), do: conn
-  defp revoke_from_session(conn, [h|t]), do: revoke_from_session(conn, h) |> revoke_from_session(t)
+  defp revoke_from_session(conn, [h|t]), do: conn |> revoke_from_session(h) |> revoke_from_session(t)
   defp revoke_from_session(conn, key) do
     case Plug.Conn.get_session(conn, base_key(key)) do
       nil -> conn

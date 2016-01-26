@@ -21,10 +21,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     pems = Guardian.Permissions.to_value([:read, :write])
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == nil
   end
@@ -35,10 +36,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     pems = Guardian.Permissions.to_value([:read])
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == :forbidden
   end
@@ -49,10 +51,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     pems = Guardian.Permissions.to_value([:other_read], :other)
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == :forbidden
   end
@@ -64,10 +67,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == :forbidden
   end
@@ -79,10 +83,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     other_pems = Guardian.Permissions.to_value([:other_read, :other_write], :other)
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.assigns[:guardian_spec] == nil
   end
@@ -94,10 +99,11 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
-    expected_conn = conn(:get, "/get")
-    |> Guardian.Plug.set_claims({ :ok, claims })
-    |> Plug.Conn.fetch_query_params
-    |> EnsurePermissions.call(opts)
+    expected_conn = :get
+                    |> conn("/get")
+                    |> Guardian.Plug.set_claims({ :ok, claims })
+                    |> Plug.Conn.fetch_query_params
+                    |> EnsurePermissions.call(opts)
 
     assert expected_conn.halted == true
   end

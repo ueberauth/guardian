@@ -118,21 +118,22 @@ defmodule Guardian.PlugTest do
   end
 
   test "sign_out/1", context do
-    conn = conn_with_fetched_session(context.conn)
-      |> Guardian.Plug.sign_in(%{ user: "here" }, :token)
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.sign_in(%{ user: "here" }, :token)
 
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
 
     cleared_conn = conn
-      |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), "default jwt")
-      |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), "secret jwt")
-      |> Guardian.Plug.set_claims(%{ claims: "yeah" })
-      |> Guardian.Plug.set_claims(%{ claims: "yeah" }, :secret)
-      |> Guardian.Plug.set_current_resource("resource")
-      |> Guardian.Plug.set_current_resource("resource", :secret)
-      |> Guardian.Plug.set_current_token("token")
-      |> Guardian.Plug.set_current_token("token", :secret)
-      |> Guardian.Plug.sign_out
+                   |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), "default jwt")
+                   |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), "secret jwt")
+                   |> Guardian.Plug.set_claims(%{ claims: "yeah" })
+                   |> Guardian.Plug.set_claims(%{ claims: "yeah" }, :secret)
+                   |> Guardian.Plug.set_current_resource("resource")
+                   |> Guardian.Plug.set_current_resource("resource", :secret)
+                   |> Guardian.Plug.set_current_token("token")
+                   |> Guardian.Plug.set_current_token("token", :secret)
+                   |> Guardian.Plug.sign_out
 
     assert Plug.Conn.get_session(cleared_conn, Guardian.Keys.base_key(:default)) == nil
     assert Plug.Conn.get_session(cleared_conn, Guardian.Keys.base_key(:secret)) == nil
@@ -148,13 +149,13 @@ defmodule Guardian.PlugTest do
     conn = conn_with_fetched_session(context.conn)
 
     cleared_conn = conn
-    |> Guardian.Plug.set_claims({:ok, %{ claims: "admin" }}, :secret)
-    |> Guardian.Plug.set_claims({:ok, %{ claims: "default" }})
-    |> Guardian.Plug.set_current_resource("admin_resource", :secret)
-    |> Guardian.Plug.set_current_resource("default_resource")
-    |> Guardian.Plug.set_current_token("admin_token", :secret)
-    |> Guardian.Plug.set_current_token("default_token")
-    |> Guardian.Plug.sign_out(:secret)
+                   |> Guardian.Plug.set_claims({:ok, %{ claims: "admin" }}, :secret)
+                   |> Guardian.Plug.set_claims({:ok, %{ claims: "default" }})
+                   |> Guardian.Plug.set_current_resource("admin_resource", :secret)
+                   |> Guardian.Plug.set_current_resource("default_resource")
+                   |> Guardian.Plug.set_current_token("admin_token", :secret)
+                   |> Guardian.Plug.set_current_token("default_token")
+                   |> Guardian.Plug.sign_out(:secret)
 
     assert Guardian.Plug.claims(cleared_conn, :secret) == {:error, :no_session}
     assert Guardian.Plug.claims(cleared_conn) == {:ok, %{ claims: "default" }}
@@ -165,8 +166,9 @@ defmodule Guardian.PlugTest do
   end
 
   test "sign_in(object)", context do
-    conn = conn_with_fetched_session(context.conn)
-    |> Guardian.Plug.sign_in(%{user: "here"})
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.sign_in(%{user: "here"})
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
@@ -174,8 +176,9 @@ defmodule Guardian.PlugTest do
   end
 
   test "sign_in(object, type)", context do
-    conn = conn_with_fetched_session(context.conn)
-    |> Guardian.Plug.sign_in(%{user: "here"})
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.sign_in(%{user: "here"})
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
@@ -191,8 +194,9 @@ defmodule Guardian.PlugTest do
   end
 
   test "sign_in(object, type, claims)", context do
-    conn = conn_with_fetched_session(context.conn)
-    |> Guardian.Plug.sign_in(%{user: "here"}, :token, here: "we are")
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.sign_in(%{user: "here"}, :token, here: "we are")
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
@@ -207,7 +211,7 @@ defmodule Guardian.PlugTest do
 
   test "api_sign_in(object) error", context do
     conn = context.conn
-    |> Guardian.Plug.api_sign_in(%{error: :unknown})
+           |> Guardian.Plug.api_sign_in(%{error: :unknown})
 
     claims = Guardian.Plug.claims(conn)
 
@@ -218,7 +222,7 @@ defmodule Guardian.PlugTest do
 
   test "api_sign_in(object)", context do
     conn = context.conn
-    |> Guardian.Plug.api_sign_in(%{user: "here"})
+           |> Guardian.Plug.api_sign_in(%{user: "here"})
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
@@ -227,7 +231,7 @@ defmodule Guardian.PlugTest do
 
   test "api_sign_in(object, type)", context do
     conn = context.conn
-    |> Guardian.Plug.api_sign_in(%{user: "here"})
+           |> Guardian.Plug.api_sign_in(%{user: "here"})
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
@@ -244,7 +248,7 @@ defmodule Guardian.PlugTest do
 
   test "api_sign_in(object, type, claims)", context do
     conn = context.conn
-    |> Guardian.Plug.api_sign_in(%{user: "here"}, :token, here: "we are")
+           |> Guardian.Plug.api_sign_in(%{user: "here"}, :token, here: "we are")
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{ user: "here" }

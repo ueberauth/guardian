@@ -14,7 +14,9 @@ defmodule Guardian.Keys do
   def base_key(the_key), do: String.to_atom("guardian_#{the_key}")
 
   def key_from_other(other_key) do
-    String.replace(to_string(other_key), ~r/(_(jwt|resource|claims))?$/, "")
+    other_key
+    |> to_string
+    |> String.replace(~r/(_(jwt|resource|claims))?$/, "")
     |> find_key_from_other
   end
 

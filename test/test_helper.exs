@@ -18,7 +18,8 @@ defmodule Guardian.TestHelper do
   @signing_opts Plug.Session.init(Keyword.put(@default_opts, :encrypt, false))
 
   def conn_with_fetched_session(the_conn) do
-    put_in(the_conn.secret_key_base, @secret)
+    the_conn.secret_key_base
+    |> put_in(@secret)
     |> Plug.Session.call(@signing_opts)
     |> Plug.Conn.fetch_session
   end

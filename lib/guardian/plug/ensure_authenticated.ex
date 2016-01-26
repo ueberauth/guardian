@@ -61,7 +61,9 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   end
 
   defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do
-    claims_match = Map.keys(claims_to_check) |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
+    claims_match = claims_to_check
+                   |> Map.keys
+                   |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
     if claims_match, do: conn, else: handle_error(conn, { :error, :claims_do_not_match }, opts)
   end
 

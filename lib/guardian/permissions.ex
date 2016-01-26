@@ -165,7 +165,8 @@ defmodule Guardian.Permissions do
   # When given a list of things
   def to_list(list, _acc, perms) when is_list(list) do
     string_perms = Enum.map(perms, &to_string/1)
-    Enum.map(list, fn
+    list
+    |> Enum.map(fn
       x when is_atom(x) -> if Enum.member?(perms, x), do: x
       x when is_binary(x) -> if Enum.member?(string_perms, x), do: String.to_existing_atom(x)
       _ -> nil

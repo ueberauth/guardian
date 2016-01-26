@@ -13,7 +13,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
     claims = Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
-    { _, jwt } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+    { _, jwt } = jose_jwk |> JOSE.JWT.sign(jose_jws, claims) |> JOSE.JWS.compact
 
     { :ok, conn: conn(:get, "/"), jwt: jwt, claims: claims, jose_jws: jose_jws, jose_jwk: jose_jwk, secret: secret }
   end
@@ -46,9 +46,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   test "with an existing session in another location", context do
     the_conn = context.conn
-    |> put_req_header("authorization", context.jwt)
-    |> Guardian.Plug.set_claims(context.claims)
-    |> Guardian.Plug.set_current_token(context.jwt)
+               |> put_req_header("authorization", context.jwt)
+               |> Guardian.Plug.set_claims(context.claims)
+               |> Guardian.Plug.set_current_token(context.jwt)
 
     conn = VerifyHeader.call(the_conn, %{key: :secret})
     assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }
@@ -67,11 +67,11 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   test "with a realm specified and multiple auth headers", context do
     claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
-    { _, jwt2 } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims2) |> JOSE.JWS.compact
+    { _, jwt2 } = context.jose_jwk |> JOSE.JWT.sign(context.jose_jws, claims2) |> JOSE.JWS.compact
 
     the_conn = context.conn
-    |> put_req_header("authorization", "Bearer #{context.jwt}")
-    |> put_req_header("authorization", "Client #{jwt2}")
+               |> put_req_header("authorization", "Bearer #{context.jwt}")
+               |> put_req_header("authorization", "Client #{jwt2}")
 
     opts = VerifyHeader.init(realm: "Client")
 
@@ -82,7 +82,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   test "pulls different tokens into different locations", context do
     claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
-    { _, jwt2 } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims2) |> JOSE.JWS.compact
+    { _, jwt2 } =context.jose_jwk |> JOSE.JWT.sign(context.jose_jws, claims2) |> JOSE.JWS.compact
 
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{ context.conn | req_headers: [{"authorization", "Bearer #{context.jwt}"}, {"authorization", "Client #{jwt2}"}] }
@@ -91,8 +91,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     clientOpts = VerifyHeader.init(realm: "Client", key: :client)
 
     conn = the_conn
-    |> VerifyHeader.call(defaultOpts)
-    |> VerifyHeader.call(clientOpts)
+           |> VerifyHeader.call(defaultOpts)
+           |> VerifyHeader.call(clientOpts)
 
     assert Guardian.Plug.claims(conn, :client) == { :ok, claims2 }
     assert Guardian.Plug.current_token(conn, :client) == jwt2
