@@ -65,7 +65,6 @@ defmodule Guardian.ClaimsTest do
     assert Guardian.Claims.iat(claims, 15) == %{ "iat" => 15 }
   end
 
-
   test "ttl with nothing" do
     claims = %{ }
     the_claims = Guardian.Claims.ttl(claims)
@@ -76,6 +75,18 @@ defmodule Guardian.ClaimsTest do
   test "ttl with extisting iat" do
     claims = %{ "iat" => 10 }
     assert Guardian.Claims.ttl(claims) == %{ "iat" => 10, "exp" => 10 + 24 * 60 * 60 }
+  end
+
+  test "ttl with extisting iat & in minutes" do
+    claims = %{ "iat" => 10 }
+    assert Guardian.Claims.ttl(claims, { 10, :minutes }) == %{ "iat" => 10, "exp" => 10 + 10 * 60 }
+  end
+
+  test "ttl with extisting iat & in unknown units" do
+    claims = %{ "iat" => 10 }
+    assert_raise RuntimeError, "Unknown Units: decade", fn ->
+      Guardian.Claims.ttl(claims, { 1, :decade })
+    end
   end
 
   test "encodes permissions into the claims" do
