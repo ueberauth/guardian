@@ -87,12 +87,12 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{ context.conn | req_headers: [{"authorization", "Bearer #{context.jwt}"}, {"authorization", "Client #{jwt2}"}] }
 
-    defaultOpts = VerifyHeader.init(realm: "Bearer")
-    clientOpts = VerifyHeader.init(realm: "Client", key: :client)
+    default_opts = VerifyHeader.init(realm: "Bearer")
+    client_opts = VerifyHeader.init(realm: "Client", key: :client)
 
     conn = the_conn
-           |> VerifyHeader.call(defaultOpts)
-           |> VerifyHeader.call(clientOpts)
+           |> VerifyHeader.call(default_opts)
+           |> VerifyHeader.call(client_opts)
 
     assert Guardian.Plug.claims(conn, :client) == { :ok, claims2 }
     assert Guardian.Plug.current_token(conn, :client) == jwt2
