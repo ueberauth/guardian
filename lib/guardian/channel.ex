@@ -43,7 +43,7 @@ defmodule Guardian.Channel do
     quote do
       import Guardian.Phoenix.Socket
 
-      def join(room, auth = %{ "guardian_token" => jwt }, socket) do
+      def join(room, auth = %{"guardian_token" => jwt}, socket) do
         case sign_in(socket, jwt, params, key: key) do
           {:ok, authed_socket, guardian_params} ->
             join(room, Map.merge(params, guardian_params), authed_socket)
@@ -51,7 +51,7 @@ defmodule Guardian.Channel do
         end
       end
 
-      def handle_guardian_auth_failure(reason), do: {:error, %{ error: reason}}
+      def handle_guardian_auth_failure(reason), do: {:error, %{error: reason}}
 
       defoverridable [handle_guardian_auth_failure: 1]
     end

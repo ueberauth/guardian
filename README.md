@@ -447,7 +447,7 @@ someone joins a topic.
 To authenticate the initial connect there's a couple of options.
 
 1. Automatically authenticate
-2. Autehtnticate with more control manually.
+2. Authenticate with more control manually.
 
 To automatcially authenticate `use` the Guardian.Phoenix.Socket module in your
 socket.
@@ -522,20 +522,20 @@ defmodule MyApp.UsersChannel do
   def join(_room, %{"guardian_token" => token}, socket) do
     case sign_in(socket, token) do
       {:ok, authed_socket, _guardian_params} ->
-        {:ok, %{ message: "Joined" }, authed_socket}
+        {:ok, %{message: "Joined"}, authed_socket}
       {:error, reason} ->
         # handle error
     end
   end
 
   def join(room, _, socket) do
-    { :error,  :authentication_required }
+    {:error,  :authentication_required}
   end
 
   def handle_in("ping", _payload, socket) do
     user = current_resource(socket)
-    broadcast socket, "pong", %{ message: "pong", from: user.email }
-    { :noreply, socket }
+    broadcast(socket, "pong", %{message: "pong", from: user.email})
+    {:noreply, socket}
   end
 end
 ```

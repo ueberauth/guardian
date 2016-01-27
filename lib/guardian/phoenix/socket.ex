@@ -23,13 +23,13 @@ defmodule Guardian.Phoenix.Socket do
   end
   ```
 
-  If you want more control over the authentication of the connection, then you shoule `import Guardian.Phoenix.Socket` and use the `sign_in` function to authenticate.
+  If you want more control over the authentication of the connection, then you should `import Guardian.Phoenix.Socket` and use the `sign_in` function to authenticate.
 
   defmodule MyApp.UserSocket do
     use Phoenix.Socket
     import Guardian.Phoenix.Socket
 
-    def connect(%{"guardian_token" => jwt } = params, socket) do
+    def connect(%{"guardian_token" => jwt} = params, socket) do
       case sign_in(socket, jwt) do
         {:ok, authed_socket, guardian_params} ->
           {:ok, authed_socket}
@@ -47,13 +47,37 @@ defmodule Guardian.Phoenix.Socket do
     quote do
       import Guardian.Phoenix.Socket
 
-      def connect(%{ "guardian_token" => jwt } = params, socket) do
+      def connect(%{"guardian_token" => jwt} = params, socket) do
         case sign_in(socket, jwt, params, key: unquote(key)) do
           {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
           _ -> :error
         end
       end
     end
+  end
+
+  @doc """
+  Set the current token. Used internally and in tests. Not expected to be used
+  inside channels or sockets.
+  """
+  def set_current_token(socket, jwt, key \\ :default) do
+    Phoenix.Socket.assign(socket, Guardian.Keys.jwt_key(key), jwt)
+  end
+
+  @doc """
+  Set the current claims. Used internally and in tests. Not expected to be used
+  inside channels or sockets.
+  """
+  def set_current_claims(socket, claims, key \\ :default) do
+    Phoenix.Socket.assign(socket, Guardian.Keys.claims_key(key), claims)
+  end
+
+  @doc """
+  Set the current resource. Used internally and in tests. Not expected to be used
+  inside channels or sockets.
+  """
+  def set_current_resource(socket, resource, key \\ :default) do
+    Phoenix.Socket.assign(socket, Guardian.Keys.resource_key(key), resource)
   end
 
   def claims(socket, key \\ :default), do: current_claims(socket, key) # deprecated in 1.0
@@ -106,8 +130,8 @@ defmodule Guardian.Phoenix.Socket do
         case Guardian.serializer.from_token(Map.get(claims, "sub")) do
           {:ok, resource} ->
             authed_socket = socket
-            |> Phoenix.Socket.assign(Guardian.Keys.claims_key(key), claims)
-            |> Phoenix.Socket.assign(Guardian.Keys.jwt_key(key), jwt)
+            |> set_current_claims(claims, key)
+            |> set_current_token(jwt, key)
             {:ok, authed_socket, %{claims: claims, resource: resource, jwt: jwt}}
           error -> error
         end
@@ -130,8 +154,8 @@ defmodule Guardian.Phoenix.Socket do
   """
   def sign_out(socket, key \\ :default) do
     socket
-    |> Phoenix.Socket.assign(Guardian.Keys.claims_key(key), nil)
-    |> Phoenix.Socket.assign(Guardian.Keys.resource_key(key), nil)
-    |> Phoenix.Socket.assign(Guardian.Keys.jwt_key(key), nil)
+    |> set_current_claims(nil, key)
+    |> set_current_token(nil, key)
+    |> set_current_resource(nil, key)
   end
 end

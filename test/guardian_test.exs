@@ -85,7 +85,7 @@ defmodule GuardianTest do
   end
 
   test "it is invalid if the typ is incorrect", context do
-    resposne = Guardian.decode_and_verify(
+    response = Guardian.decode_and_verify(
       context.jwt,
       %{typ: "something_else"}
     )
