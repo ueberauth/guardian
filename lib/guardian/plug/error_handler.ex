@@ -40,7 +40,7 @@ defmodule Guardian.Plug.ErrorHandler do
 
   defp accept_type(conn) do
     accept = conn
-    |> get_req_header(:accept)
+    |> get_req_header("accept")
     |> List.wrap
     |> hd
 
