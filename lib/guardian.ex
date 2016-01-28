@@ -76,22 +76,29 @@ defmodule Guardian do
                                                       { :error, String.t }
   def encode_and_sign(object, type, claims) do
     case build_claims(object, type, claims) do
-      { :ok, claims_for_token } ->
-        case call_before_encode_and_sign_hook(object, type, claims_for_token) do
-          { :ok, { resource, type, claims_from_hook } } ->
+      {:ok, claims_for_token} ->
+
+        called_hook = call_before_encode_and_sign_hook(
+          object,
+          type,
+          claims_for_token
+        )
+
+        case called_hook do
+          {:ok, {resource, type, claims_from_hook}} ->
             case encode_claims(claims_from_hook) do
-              { :ok, jwt } ->
+              {:ok, jwt} ->
                 call_after_encode_and_sign_hook(
                   resource,
                   type,
                   claims_from_hook, jwt
                 )
-                { :ok, jwt, claims_from_hook }
-              { :error, reason } -> { :error, reason }
+                {:ok, jwt, claims_from_hook}
+              {:error, reason} -> {:error, reason}
             end
-          { :error, reason } -> { :error, reason }
+          {:error, reason} -> {:error, reason}
         end
-      { :error, reason } -> { :error, reason }
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -105,9 +112,9 @@ defmodule Guardian do
   This function is less efficient that revoke!/2.
   If you have claims, you should use that.
   """
-  def revoke!(jwt) do
-    case decode_and_verify(jwt) do
-      { :ok, claims } -> revoke!(jwt, claims)
+  def revoke!(jwt, params \\ %{}) do
+    case decode_and_verify(jwt, params) do
+      { :ok, claims } -> revoke!(jwt, claims, params)
       _ -> :ok
     end
   end
@@ -117,7 +124,7 @@ defmodule Guardian do
   This provides a hook to revoke.
   The logic for revocation of belongs in a Guardian.Hook.on_revoke
   """
-  def revoke!(jwt, claims) do
+  def revoke!(jwt, claims, _params) do
     case Guardian.hooks_module.on_revoke(claims, jwt) do
       { :ok, _ } -> :ok
       { :error, reason } -> { :error, reason }
@@ -137,12 +144,8 @@ defmodule Guardian do
   Note: A valid token must be used in order to be refreshed.
   """
   @spec refresh!(String.t) :: {:ok, String.t, Map.t} | {:error, any}
-  def refresh!(jwt) do
-    case decode_and_verify(jwt) do
-      {:ok, claims} -> refresh!(jwt, claims)
-      {:error, reason} -> {:error, reason}
-    end
-  end
+  def refresh!(jwt), do: refresh!(jwt, %{}, %{})
+
 
   @doc """
   As refresh!/1 but allows the claims to be updated.
@@ -154,15 +157,23 @@ defmodule Guardian do
   """
   @spec refresh!(String.t, Map.t, Map.t) :: {:ok, String.t, Map.t} |
                                             {:error, any}
-  def refresh!(_jwt, claims, params \\ %{}) do
+  def refresh!(jwt, claims, params \\ %{}) do
+    case decode_and_verify(jwt, params) do
+      {:ok, found_claims} ->
+        do_refresh!(jwt, Map.merge(found_claims, claims), params)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp do_refresh!(_jwt, claims, params) do
     params = Enum.into(params, %{})
     new_claims = claims
-                 |> Map.drop(["jti", "iat", "exp", "nbf"])
-                 |> Map.merge(params)
-                 |> Guardian.Claims.jti
-                 |> Guardian.Claims.nbf
-                 |> Guardian.Claims.iat
-                 |> Guardian.Claims.ttl
+     |> Map.drop(["jti", "iat", "exp", "nbf"])
+     |> Map.merge(params)
+     |> Guardian.Claims.jti
+     |> Guardian.Claims.nbf
+     |> Guardian.Claims.iat
+     |> Guardian.Claims.ttl
 
     type = Map.get(new_claims, "typ")
 
@@ -200,15 +211,16 @@ defmodule Guardian do
     params = stringify_keys(params)
     if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
     params = stringify_keys(params)
+    {secret, params} = strip_value(params, "secret")
 
     try do
-      case decode_token(jwt) do
+      case decode_token(jwt, secret) do
         {:ok, claims} ->
           case verify_claims(claims, params) do
             {:ok, verified_claims} ->
               case Guardian.hooks_module.on_verify(verified_claims, jwt) do
-                { :ok, { claims, _ } } -> { :ok, claims }
-                { :error, reason } -> { :error, reason }
+                {:ok, {claims, _}} -> {:ok, claims}
+                {:error, reason } -> {:error, reason}
               end
             {:error, reason} -> {:error, reason}
           end
@@ -216,7 +228,7 @@ defmodule Guardian do
       end
     rescue
       e ->
-        { :error, e }
+        {:error, e}
     end
   end
 
@@ -254,22 +266,44 @@ defmodule Guardian do
   @doc false
   def config(key, default), do: Keyword.get(config, key, default)
 
-  defp jose_jws do
-    %{ "alg" => hd(allowed_algos) }
+  @doc """
+  Read the header of the token.
+  This is not a verified read, it does not check the signature.
+  """
+  def peek_header(token) do
+    JOSE.JWT.peek_protected(token).fields
   end
-  defp jose_jwk do
-    %{ "kty" => "oct", "k" => :base64url.encode(config(:secret_key)) }
+
+  @doc """
+  Read the claims of the token.
+  This is not a verified read, it does not check the signature.
+  """
+  def peek_claims(token) do
+    JOSE.JWT.peek_payload(token).fields
+  end
+
+  defp jose_jws(headers) do
+    Map.merge(%{"alg" => hd(allowed_algos)}, headers)
+  end
+
+  defp jose_jwk(the_secret) do
+    secret = the_secret || config(:secret_key)
+    %{ "kty" => "oct", "k" => :base64url.encode(secret) }
   end
 
   defp encode_claims(claims) do
-    { _, token } = jose_jwk
-      |> JOSE.JWT.sign(jose_jws, claims)
-      |> JOSE.JWS.compact
-    { :ok, token }
+    {headers, claims} = strip_value(claims, "headers", %{})
+    {secret, claims} = strip_value(claims, "secret")
+    { _, token } = secret
+                   |> jose_jwk()
+                   |> JOSE.JWT.sign(jose_jws(headers), claims)
+                   |> JOSE.JWS.compact
+    {:ok, token}
   end
 
-  defp decode_token(token) do
-    case JOSE.JWT.verify_strict(jose_jwk, allowed_algos, token) do
+  defp decode_token(token, secret) do
+    secret = secret || config(:secret_key)
+    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos, token) do
       { true, jose_jwt, _ } ->  { :ok, jose_jwt.fields }
       { false, _, _ } -> { :error, :invalid_token }
     end
@@ -332,5 +366,10 @@ defmodule Guardian do
       claims = Guardian.Claims.aud(claims, value)
     end
     claims
+  end
+
+  defp strip_value(map, key, default \\ nil) do
+    value = Map.get(map, key, default)
+    {value, Map.drop(map, [key])}
   end
 end

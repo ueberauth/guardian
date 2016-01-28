@@ -85,9 +85,8 @@ defmodule Guardian.Phoenix.Socket do
     Phoenix.Socket.assign(socket, Guardian.Keys.resource_key(key), resource)
   end
 
-  def claims(socket, key \\ :default) do
-    current_claims(socket, key) # deprecated in 1.0
-  end
+  # deprecated in 1.0
+  def claims(socket, key \\ :default), do: current_claims(socket, key)
 
   @doc """
   Fetches the `claims` map that was encoded into the token.
@@ -146,7 +145,6 @@ defmodule Guardian.Phoenix.Socket do
             authed_socket = socket
             |> set_current_claims(claims, key)
             |> set_current_token(jwt, key)
-
             {:ok, authed_socket, %{claims: claims, resource: res, jwt: jwt}}
           error -> error
         end
