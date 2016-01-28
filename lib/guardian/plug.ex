@@ -79,7 +79,7 @@ defmodule Guardian.Plug do
 
   ### Example
 
-      Guaridan.sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
+      Guardian.sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
 
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
@@ -126,7 +126,7 @@ defmodule Guardian.Plug do
 
   ### Example
 
-      Guaridan.Plug.api_sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
+      Guardian.Plug.api_sign_in(conn, user, :token, perms: %{ default: [:read, :write] })
 
   """
   @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
