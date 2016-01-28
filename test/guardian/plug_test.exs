@@ -9,15 +9,15 @@ defmodule Guardian.PlugTest do
   end
 
   test "authenticated?", context do
-    assert Guardian.Plug.authenticated?(context.conn) == false
+    refute Guardian.Plug.authenticated?(context.conn)
     new_conn = Guardian.Plug.set_claims(context.conn, { :ok, %{ "some" => "claim" } })
-    assert Guardian.Plug.authenticated?(new_conn) == true
+    assert Guardian.Plug.authenticated?(new_conn)
   end
 
   test "authenticated? with a location", context do
-    assert Guardian.Plug.authenticated?(context.conn, :secret) == false
+    refute Guardian.Plug.authenticated?(context.conn, :secret)
     new_conn = Guardian.Plug.set_claims(context.conn, { :ok, %{ "some" => "claim" } }, :secret)
-    assert Guardian.Plug.authenticated?(new_conn, :secret) == true
+    assert Guardian.Plug.authenticated?(new_conn, :secret)
   end
 
   test "set_claims with no key", context do

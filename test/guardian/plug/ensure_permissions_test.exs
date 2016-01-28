@@ -105,6 +105,6 @@ defmodule Guardian.Plug.EnsurePermissionTest do
                     |> Plug.Conn.fetch_query_params
                     |> EnsurePermissions.call(opts)
 
-    assert expected_conn.halted == true
+    assert expected_conn.halted
   end
 end

@@ -60,6 +60,6 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   test "it halts the connection" do
     conn = conn(:get, "/foo")
     ensured_conn = EnsureAuthenticated.call(conn, %{ handler: {@expected_failure, :unauthenticated}, key: :secret })
-    assert ensured_conn.halted == true
+    assert ensured_conn.halted
   end
 end

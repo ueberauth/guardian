@@ -88,56 +88,56 @@ defmodule Guardian.PermissionsTest do
   test "all? is true if all values are present" do
     val = Permissions.to_value([:read, :write, :update])
 
-    assert Permissions.all?(val, val) == true
-    assert Permissions.all?(val, [:read, :write, :update]) == true
+    assert Permissions.all?(val, val)
+    assert Permissions.all?(val, [:read, :write, :update])
 
     expected_val = Permissions.to_value([:read, :write, :update, :delete])
 
-    assert Permissions.all?(val, expected_val) == false
-    assert Permissions.all?(val, [:read, :write, :update, :delete]) == false
+    refute Permissions.all?(val, expected_val)
+    refute Permissions.all?(val, [:read, :write, :update, :delete])
   end
 
   test "all? is false if the permission is not set" do
     val = Permissions.to_value([:read, :write, :update], :new_permission)
-    assert(Permissions.all?(val, [:read, :write, :update], :new_permission) == false)
+    refute Permissions.all?(val, [:read, :write, :update], :new_permission)
   end
 
   test "any? is true if any values are present" do
     val = Permissions.to_value([:read, :write, :update])
 
-    assert Permissions.any?(val, val) == true
-    assert Permissions.any?(val, [:read, :write, :update]) == true
+    assert Permissions.any?(val, val)
+    assert Permissions.any?(val, [:read, :write, :update])
 
-    assert Permissions.any?(val, 1) == true
-    assert Permissions.any?(val, [:read]) == true
+    assert Permissions.any?(val, 1)
+    assert Permissions.any?(val, [:read])
 
-    assert Permissions.any?(val, 0) == false
-    assert Permissions.any?(val, [:delete]) == false
+    refute Permissions.any?(val, 0)
+    refute Permissions.any?(val, [:delete])
   end
 
   test "all? is true if all values are present with a non-default set" do
     val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
 
-    assert Permissions.all?(val, val, :other) == true
-    assert Permissions.all?(val, [:other_read, :other_write, :other_update], :other) == true
+    assert Permissions.all?(val, val, :other)
+    assert Permissions.all?(val, [:other_read, :other_write, :other_update], :other)
 
     expected_val = Permissions.to_value([:other_read, :other_write, :other_update, :other_delete], :other)
 
-    assert Permissions.all?(val, expected_val, :other) == false
-    assert Permissions.all?(val, [:other_read, :other_write, :other_update, :other_delete], :other) == false
+    refute Permissions.all?(val, expected_val, :other)
+    refute Permissions.all?(val, [:other_read, :other_write, :other_update, :other_delete], :other)
   end
 
   test "any? is true if any values are present with a non-default set" do
     val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
 
-    assert Permissions.any?(val, val, :other) == true
-    assert Permissions.any?(val, [:other_read, :other_write, :other_update], :other) == true
+    assert Permissions.any?(val, val, :other)
+    assert Permissions.any?(val, [:other_read, :other_write, :other_update], :other)
 
-    assert Permissions.any?(val, 1, :other) == true
-    assert Permissions.any?(val, [:other_read], :other) == true
+    assert Permissions.any?(val, 1, :other)
+    assert Permissions.any?(val, [:other_read], :other)
 
-    assert Permissions.any?(val, 0, :other) == false
-    assert Permissions.any?(val, [:delete], :other) == false
+    refute Permissions.any?(val, 0, :other)
+    refute Permissions.any?(val, [:delete], :other)
   end
 
   test "integration with generating and decoding permissions" do
