@@ -41,6 +41,7 @@ defmodule Guardian.Mixfile do
      {:plug, "~> 1.0"},
      {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
+     {:dogma, ">= 0.0.0", only: [:dev, :test]},
      {:uuid, ">=1.1.1"}]
   end
 

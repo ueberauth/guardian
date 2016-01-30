@@ -11,48 +11,48 @@ defmodule Guardian.ClaimsTest do
   end
 
   test "app_claims with other claims" do
-    app_claims = Guardian.Claims.app_claims(%{ "some" => "foo" })
+    app_claims = Guardian.Claims.app_claims(%{"some" => "foo"})
     assert app_claims["some"] == "foo"
   end
 
   test "typ with nil" do
     claims = %{}
-    assert Guardian.Claims.typ(claims, nil) == %{ "typ" => "token" }
+    assert Guardian.Claims.typ(claims, nil) == %{"typ" => "token"}
   end
 
   test "typ with an typ atom" do
     claims = %{ }
-    assert Guardian.Claims.typ(claims, :thing) == %{ "typ" => "thing" }
+    assert Guardian.Claims.typ(claims, :thing) == %{"typ" => "thing"}
   end
 
   test "typ with an typ string" do
     claims = %{ }
-    assert Guardian.Claims.typ(claims, "thing") == %{ "typ" => "thing" }
+    assert Guardian.Claims.typ(claims, "thing") == %{"typ" => "thing"}
   end
 
   test "aud with nil" do
     claims = %{}
-    assert Guardian.Claims.aud(claims, nil) == %{ "aud" => "MyApp" }
+    assert Guardian.Claims.aud(claims, nil) == %{"aud" => "MyApp"}
   end
 
   test "aud with an aud atom" do
     claims = %{ }
-    assert Guardian.Claims.aud(claims, :thing) == %{ "aud" => "thing" }
+    assert Guardian.Claims.aud(claims, :thing) == %{"aud" => "thing"}
   end
 
   test "aud with an aud string" do
     claims = %{ }
-    assert Guardian.Claims.aud(claims, "thing") == %{ "aud" => "thing" }
+    assert Guardian.Claims.aud(claims, "thing") == %{"aud" => "thing"}
   end
 
   test "sub with a sub atom" do
     claims = %{ }
-    assert Guardian.Claims.sub(claims, :thing) == %{ "sub" => "thing" }
+    assert Guardian.Claims.sub(claims, :thing) == %{"sub" => "thing"}
   end
 
   test "sub with a sub string" do
     claims = %{ }
-    assert Guardian.Claims.sub(claims, "thing") == %{ "sub" => "thing" }
+    assert Guardian.Claims.sub(claims, "thing") == %{"sub" => "thing"}
   end
 
   test "iat with nothing" do
@@ -62,7 +62,7 @@ defmodule Guardian.ClaimsTest do
 
   test "iat with a timestamp" do
     claims = %{ }
-    assert Guardian.Claims.iat(claims, 15) == %{ "iat" => 15 }
+    assert Guardian.Claims.iat(claims, 15) == %{"iat" => 15}
   end
 
   test "ttl with nothing" do
@@ -74,7 +74,8 @@ defmodule Guardian.ClaimsTest do
 
   test "ttl with extisting iat" do
     claims = %{ "iat" => 10 }
-    assert Guardian.Claims.ttl(claims) == %{ "iat" => 10, "exp" => 10 + 24 * 60 * 60 }
+    expected = %{"iat" => 10, "exp" => 10 + 24 * 60 * 60}
+    assert Guardian.Claims.ttl(claims) == expected
   end
 
   test "ttl with extisting iat & in minutes" do
@@ -91,10 +92,12 @@ defmodule Guardian.ClaimsTest do
 
   test "encodes permissions into the claims" do
     claims = Guardian.Claims.permissions(%{}, default: [:read, :write])
-    assert claims == %{ "pem" => %{ "default" => 3 } }
+    assert claims == %{"pem" => %{ "default" => 3}}
 
-    claims = Guardian.Claims.permissions(%{}, other: [:other_read, :other_write])
-    assert claims == %{ "pem" => %{ "other" => 3 } }
+    claims = Guardian.Claims.permissions(
+      %{},
+      other: [:other_read, :other_write]
+    )
+    assert claims == %{"pem" => %{"other" => 3}}
   end
 end
-

@@ -11,4 +11,3 @@ config :guardian, Guardian,
         default: [:read, :write, :update, :delete],
         other: [:other_read, :other_write, :other_update, :other_delete]
       }
-

@@ -27,12 +27,11 @@ defmodule Guardian.Channel do
 
   ## Example
 
-      let socket = new Socket("/ws");
-      socket.connect();
+      let socket = new Socket("/ws")
+      socket.connect()
 
-      let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
-
-      let chan = socket.chan("pings", { guardian_token: guardianToken });
+      let guardianToken = jQuery('meta[name="guardian_token"]').attr('content')
+      let chan = socket.chan("pings", { guardian_token: guardianToken })
   """
   defmacro __using__(opts) do
     opts = Enum.into(opts, %{})
@@ -43,7 +42,9 @@ defmodule Guardian.Channel do
         handle_guardian_join(room, jwt, %{ }, socket)
       end
 
-      def handle_guardian_auth_failure(reason), do: { :error, %{ error: reason } }
+      def handle_guardian_auth_failure(reason) do
+        { :error, %{ error: reason } }
+      end
 
       defp handle_guardian_join(room, jwt, params, socket) do
         case Guardian.decode_and_verify(jwt, params) do
@@ -53,7 +54,11 @@ defmodule Guardian.Channel do
                 authed_socket = socket
                 |> assign(Guardian.Keys.claims_key(unquote(key)), claims)
                 |> assign(Guardian.Keys.resource_key(unquote(key)), resource)
-                join(room, %{ claims: claims, resource: resource }, authed_socket)
+                join(
+                  room,
+                  %{ claims: claims, resource: resource },
+                  authed_socket
+                )
               { :error, reason } -> handle_guardian_auth_failure(reason)
             end
           { :error, reason } -> handle_guardian_auth_failure(reason)
@@ -64,6 +69,11 @@ defmodule Guardian.Channel do
     end
   end
 
-  def claims(socket, key \\ :default), do: socket.assigns[Guardian.Keys.claims_key(key)]
-  def current_resource(socket, key \\ :default), do: socket.assigns[Guardian.Keys.resource_key(key)]
+  def claims(socket, key \\ :default) do
+    socket.assigns[Guardian.Keys.claims_key(key)]
+  end
+
+  def current_resource(socket, key \\ :default) do
+    socket.assigns[Guardian.Keys.resource_key(key)]
+  end
 end

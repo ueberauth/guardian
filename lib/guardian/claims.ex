@@ -11,14 +11,19 @@ defmodule Guardian.Claims do
   end
 
   @doc """
-  Encodes permissions into the claims set. Permissions are stored at the :pem key
-  as a map of <type> => <value as int>
+  Encodes permissions into the claims set.
+  Permissions are stored at the :pem key as a map of <type> => <value as int>
   """
   def permissions(claims, permissions) do
-    perms = Enum.into(%{}, permissions)
-    |> Enum.reduce(%{}, fn({key, list}, acc) ->
-      Map.put(acc, to_string(key), Guardian.Permissions.to_value(list, key))
-    end)
+    perms = %{}
+            |> Enum.into(permissions)
+            |> Enum.reduce(%{}, fn({key, list}, acc) ->
+              Map.put(
+                acc,
+                to_string(key),
+                Guardian.Permissions.to_value(list, key)
+              )
+            end)
     Map.put(claims, "pem", perms)
   end
 
@@ -32,12 +37,18 @@ defmodule Guardian.Claims do
   @doc false
   def aud(claims, nil), do: aud(claims, Guardian.config(:issuer))
   @doc false
-  def aud(claims, audience) when is_atom(audience), do: aud(claims, to_string(audience))
+  def aud(claims, audience) when is_atom(audience) do
+    aud(claims, to_string(audience))
+  end
+
   @doc false
   def aud(claims, audience), do: Map.put(claims, "aud", audience)
 
   @doc false
-  def sub(claims, subject) when is_atom(subject), do: sub(claims, to_string(subject))
+  def sub(claims, subject) when is_atom(subject) do
+    sub(claims, to_string(subject))
+  end
+
   @doc false
   def sub(claims, subject), do: Map.put(claims, "sub", subject)
 
@@ -66,25 +77,40 @@ defmodule Guardian.Claims do
   end
 
   @doc false
-  def ttl(claims), do: ttl(claims, Guardian.config(:ttl, { 1_000_000_000, :seconds }))
+  def ttl(claims) do
+    ttl(claims, Guardian.config(:ttl, { 1_000_000_000, :seconds }))
+  end
 
   @doc false
   def ttl(claims = %{"iat" => iat}, requested_ttl) do
-    case { iat, requested_ttl } do
-      { nil, _ } -> Map.put_new(claims, timestamp + 1_000_000_000)
-      { iat, { seconds, :seconds } } -> Map.put(claims, "exp", iat + seconds)
-      { iat, { seconds, :second } } -> Map.put(claims, "exp", iat + seconds)
-      { iat, { millis, :millis } } -> Map.put(claims, "exp", iat + millis / 1000)
-      { iat, { millis, :milli } } -> Map.put(claims, "exp", iat + millis / 1000)
-      { iat, { minutes, :minutes } } -> Map.put(claims, "exp", iat + minutes * 60)
-      { iat, { minutes, :minute } } -> Map.put(claims, "exp", iat + minutes * 60)
-      { iat, { hours, :hours } } -> Map.put(claims, "exp", iat + hours * 60 * 60)
-      { iat, { hours, :hour } } -> Map.put(claims, "exp", iat + hours * 60 * 60)
-      { iat, { days, :days } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
-      { iat, { days, :day } } -> Map.put(claims, "exp", iat + days * 24 * 60 * 60)
-      { iat, { years, :years } } -> Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
-      { iat, { years, :year } } -> Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
-      { iat, { _, units } } -> raise "Unknown Units: #{units}"
+    tuple = {iat, requested_ttl}
+    case tuple do
+      {nil, _} -> Map.put_new(claims, timestamp + 1_000_000_000)
+      {iat, {seconds, :seconds}} ->
+        Map.put(claims, "exp", iat + seconds)
+      {iat, {seconds, :second}} ->
+        Map.put(claims, "exp", iat + seconds)
+      {iat, {millis, :millis}} ->
+        Map.put(claims, "exp", iat + millis / 1000)
+      {iat, {millis, :milli}} ->
+        Map.put(claims, "exp", iat + millis / 1000)
+      {iat, {minutes, :minutes}} ->
+        Map.put(claims, "exp", iat + minutes * 60)
+      {iat, {minutes, :minute}} ->
+        Map.put(claims, "exp", iat + minutes * 60)
+      {iat, {hours, :hours}} ->
+        Map.put(claims, "exp", iat + hours * 60 * 60)
+      {iat, {hours, :hour}} ->
+        Map.put(claims, "exp", iat + hours * 60 * 60)
+      {iat, {days, :days}} ->
+        Map.put(claims, "exp", iat + days * 24 * 60 * 60)
+      {iat, {days, :day}} ->
+        Map.put(claims, "exp", iat + days * 24 * 60 * 60)
+      {iat, {years, :years}} ->
+        Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
+      {iat, {years, :year}} ->
+        Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
+      {iat, {_, units}} -> raise "Unknown Units: #{units}"
       _ -> claims
     end
   end

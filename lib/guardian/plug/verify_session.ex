@@ -12,7 +12,8 @@ defmodule Guardian.Plug.VerifySession do
 
       plug Guardian.Plug.VerifySession, key: :secret
 
-  Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
+  Verifying the session will update the claims on the request,
+  available with Guardian.Plug.claims/1
 
   In the case of an error, the claims will be set to { :error, reason }
   """
@@ -47,4 +48,3 @@ defmodule Guardian.Plug.VerifySession do
     end
   end
 end
-

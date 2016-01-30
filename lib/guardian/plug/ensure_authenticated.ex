@@ -1,16 +1,24 @@
 defmodule Guardian.Plug.EnsureAuthenticated do
   @moduledoc """
-  This plug ensures that a valid JWT was provided and has been verified on the request.
+  This plug ensures that a valid JWT was provided and has been
+  verified on the request.
 
-  If one is not found, the on\_failure function is invoked with the Plug.Conn.t object and it's params.
+  If one is not found, the on\_failure function is invoked with the
+  `Plug.Conn.t` object and it's params.
 
   ## Example
 
-      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule # Will call the unauthenticated function on your handler
-      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret # look in the :secret location.  You can also do simple claim checks:
+      # Will call the unauthenticated function on your handler
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule
+
+      # look in the :secret location.  You can also do simple claim checks:
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret
+
       plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, aud: "token"
 
-  The handler option may be passed. By default Guardian.Plug.ErrorHandler is used and the `:unauthenticated` function will be called.
+  The handler option may be passed.
+  By default `Guardian.Plug.ErrorHandler` is used
+  and the `:unauthenticated` function will be called.
 
   The handler will be called on failure.
   The `:unauthenticated` function will be called when a failure is detected.
@@ -57,14 +65,23 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     the_connection = conn |> assign(:guardian_failure, reason) |> halt
 
     {mod, meth} = Map.get(opts, :handler)
-    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: reason })])
+    apply(
+      mod,
+      meth,
+      [the_connection, Map.merge(the_connection.params, %{ reason: reason })]
+    )
   end
 
   defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do
-    claims_match = Map.keys(claims_to_check) |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
-    if claims_match, do: conn, else: handle_error(conn, { :error, :claims_do_not_match }, opts)
+    claims_match = claims_to_check
+                   |> Map.keys
+                   |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
+    if claims_match do
+      conn
+    else
+      handle_error(conn, { :error, :claims_do_not_match }, opts)
+    end
   end
 
   defp check_claims(conn, _, _), do: conn
 end
-
