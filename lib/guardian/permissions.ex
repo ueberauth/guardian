@@ -2,7 +2,8 @@ defmodule Guardian.Permissions do
   @moduledoc """
   Functions for dealing with permissions sets.
 
-  Guardian provides facilities for working with many permission sets in parallel.
+  Guardian provides facilities for working with
+  many permission sets in parallel.
   Guardian must be configured with it's permissions at start time.
 
       config :guardian, Guardian,
@@ -23,9 +24,14 @@ defmodule Guardian.Permissions do
               ]
              }
 
-  Guardian.Permissions encodes the permissions for each as bitstrings (integers) so you have 31 permissions per group. (remember javascript is only a 32 bit system)
-  Guardian tokens will remain small, event with a full 31 permissions in a set. You should use less sets and more permissions, rather than more sets with fewer permissions per set.
-  Permissions that are unknown are ignored. This is to support backwards compatibility with previously issued tokens.
+  Guardian.Permissions encodes the permissions for each as integer bitstrings
+  so you have 31 permissions per group.
+  (remember javascript is only a 32 bit system)
+  Guardian tokens will remain small, event with a full 31 permissions in a set.
+  You should use less sets and more permissions,
+  rather than more sets with fewer permissions per set.
+  Permissions that are unknown are ignored.
+  This is to support backwards compatibility with previously issued tokens.
 
   ### Example working with permissions manually
 
@@ -34,20 +40,34 @@ defmodule Guardian.Permissions do
       Guardian.Permissions.to_list(3) # [:read_profile, :write_profile]
 
       # Accessing 'admin' permissions (see config above)
-      Guardian.Permissions.to_value([:financials_read, :financials_write], :admin) # 12
-      Guardian.Permissions.to_list(12, :admin) # [:financials_read, :financials_write]
+      Guardian.Permissions.to_value(
+        [:financials_read, :financials_write], :admin
+      ) # 12
+
+      # [:financials_read, :financials_write]
+      Guardian.Permissions.to_list(12, :admin)
 
       # Checking permissions
-      Guardian.Permissions.all?(3, [:users_read, :users_write], :admin) # true
-      Guardian.Permissions.all?(1, [:users_read, :users_write], :admin) # false
+      # true
+      Guardian.Permissions.all?(3, [:users_read, :users_write], :admin)
 
-      Guardian.Permissions.any?(12, [:users_read, :financial_read], :admin) # true
-      Guardian.Permissions.any?(11, [:read_profile, :read_item]) # true
-      Guardian.Permissions.any?(11, [:delete_item, :write_item]) # false
+      # false
+      Guardian.Permissions.all?(1, [:users_read, :users_write], :admin)
+
+      # true
+      Guardian.Permissions.any?(12, [:users_read, :financial_read], :admin)
+
+      # true
+      Guardian.Permissions.any?(11, [:read_profile, :read_item])
+
+      # false
+      Guardian.Permissions.any?(11, [:delete_item, :write_item])
 
   ### Reading permissions from claims
 
-  Permissions are encoded into claims under the :pem key and are a map of "type": <value as integer>
+  Permissions are encoded into claims under the :pem key
+  and are a map of "type": <value as integer>
+
       claims = %{ pem: %{
         "default" => 3,
         "admin" => 1
@@ -64,7 +84,11 @@ defmodule Guardian.Permissions do
 
   This will encode the permissions as a map with integer values
 
-      Guardian.Claims.permissions(existing_claims, admin: [:users_read], default: [:read_item, :write_item])
+      Guardian.Claims.permissions(
+        existing_claims,
+        admin: [:users_read],
+        default: [:read_item, :write_item]
+      )
 
   Assign all permissions (and all future ones)
 
@@ -75,13 +99,25 @@ defmodule Guardian.Permissions do
 
   This will encode the permissions as a map with integer values
 
-      Guardian.Plug.sign_in(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })
+      Guardian.Plug.sign_in(
+        user,
+        :token_type,
+        perms: %{ admin: [:users_read],
+        default: [:read_item, :write_item] }
+      )
 
   ### Encoding credentials with permissions
 
   This will encode the permissions as a map with integer values
 
-      Guardian.encode_and_sign(user, :token_type, perms: %{ admin: [:users_read], default: [:read_item, :write_item] })
+      Guardian.encode_and_sign(
+        user,
+        :token_type,
+        perms: %{
+          admin: [:users_read],
+          default: [:read_item, :write_item]
+        }
+      )
 
   """
   use Bitwise
@@ -109,7 +145,11 @@ defmodule Guardian.Permissions do
 
   def all?(value, expected, key \\ :default) do
     expected_value = to_value(expected, key)
-    if expected_value == 0, do: false, else: (to_value(value, key) &&& expected_value) == expected_value
+    if expected_value == 0 do
+      false
+    else
+      (to_value(value, key) &&& expected_value) == expected_value
+    end
   end
 
   def any?(value, expected, key \\ :default) do
@@ -118,8 +158,8 @@ defmodule Guardian.Permissions do
   end
 
   @doc """
-  Fetches the permissions from the claims. Permissions live in the :pem key and are a map
-  of
+  Fetches the permissions from the claims.
+  Permissions live in the :pem key and are a map of
     "<type>": <value of permissions as integer>
   """
   @spec from_claims(Map) :: Lsit
@@ -136,13 +176,16 @@ defmodule Guardian.Permissions do
   def to_value(val), do: to_value(val, :default)
 
   @doc """
-  Fetches the value as a bitstring (integer) of the list of permissions in the `type` list
+  Fetches the value as a bitstring (integer)
+  of the list of permissions in the `type` list
   """
   @spec to_value(Integer, atom) :: Integer
   def to_value(num, _) when is_integer(num), do: num
 
   @doc false
-  def to_value(list, type) when is_list(list), do: to_value(list, 0, available(type))
+  def to_value(list, type) when is_list(list) do
+    to_value(list, 0, available(type))
+  end
 
   def to_value(_, acc, []), do: acc
 
@@ -167,8 +210,10 @@ defmodule Guardian.Permissions do
     string_perms = Enum.map(perms, &to_string/1)
     list
     |> Enum.map(fn
-      x when is_atom(x) -> if Enum.member?(perms, x), do: x
-      x when is_binary(x) -> if Enum.member?(string_perms, x), do: String.to_existing_atom(x)
+      x when is_atom(x) ->
+        if Enum.member?(perms, x), do: x
+      x when is_binary(x) ->
+        if Enum.member?(string_perms, x), do: String.to_existing_atom(x)
       _ -> nil
     end)
     |> Enum.filter(&(&1 != nil))
@@ -176,6 +221,10 @@ defmodule Guardian.Permissions do
 
   # When given a number
   def to_list(num, _acc, perms) when is_integer(num) do
-    for i <- (0..(length(perms) - 1)), Bitwise.band(num, trunc(:math.pow(2,i))) != 0, do: Enum.at(perms, i)
+    for i <- (0..(length(perms) - 1)),
+             Bitwise.band(num, trunc(:math.pow(2,i))) != 0
+    do
+     Enum.at(perms, i)
+    end
   end
 end

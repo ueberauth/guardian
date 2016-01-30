@@ -15,8 +15,10 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "fetches available permissions" do
-    assert Permissions.available(:default) == [:read, :write, :update, :delete]
-    assert Permissions.available(:other) == [:other_read, :other_write, :other_update, :other_delete]
+    expected_default = [:read, :write, :update, :delete]
+    expected_other = [:other_read, :other_write, :other_update, :other_delete]
+    assert Permissions.available(:default) == expected_default
+    assert Permissions.available(:other) == expected_other
     assert Permissions.available(:not_there) == []
   end
 
@@ -25,12 +27,15 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "fetches the value of an explicit set of permissions" do
-    assert Permissions.to_value([:other_read, :other_write, :other_update], :other) == 7
+    perms = [:other_read, :other_write, :other_update]
+    assert Permissions.to_value(perms, :other) == 7
   end
 
   test "fetches the value and ignores other values" do
-    assert Permissions.to_value([:read, :write, :update, :not_here]) == 7
-    assert Permissions.to_value([:other_read, :other_write, :other_update, :not_here], :other) == 7
+    default_perms = [:read, :write, :update, :not_here]
+    other_perms = [:other_read, :other_write, :other_update, :not_here]
+    assert Permissions.to_value(default_perms) == 7
+    assert Permissions.to_value(other_perms, :other) == 7
   end
 
   test "fetches the values from an integer" do
@@ -38,8 +43,14 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "when using max permissions all permissions are available" do
-    assert Enum.sort(Permissions.to_list(Permissions.max)) == [:delete, :read, :update, :write]
-    assert Enum.sort(Permissions.to_list(Permissions.max, :other)) == [:other_delete, :other_read, :other_update, :other_write]
+    epxected_default = [:delete, :read, :update, :write]
+    expected_other = [:other_delete, :other_read, :other_update, :other_write]
+
+    found_default = Permissions.to_list(Permissions.max)
+    found_other = Permissions.to_list(Permissions.max, :other)
+
+    assert Enum.sort(found_default) == expected_default
+    assert Enum.sort(found_other) == expected_other
   end
 
   test "fetches the values from an integer with a type" do
@@ -55,15 +66,18 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "fetches a list from a value" do
-    assert Enum.sort(Permissions.to_list(7)) == Enum.sort([:read, :write, :update])
-    assert Enum.sort(Permissions.to_list(7, :other)) == Enum.sort([:other_read, :other_write, :other_update])
+    ex_default = [:read, :write, :update]
+    ex_other = [:other_read, :other_write, :other_update]
+    assert Enum.sort(Permissions.to_list(7)) == Enum.sort(ex_deafult)
+    assert Enum.sort(Permissions.to_list(7, :other)) == Enum.sort(ex_other)
   end
 
   test "ignores other values when fetching a list" do
-    assert Enum.sort(Permissions.to_list(270)) == Enum.sort([:write, :update, :delete])
+    expected = [:write, :update, :delete]
+    assert Enum.sort(Permissions.to_list(270)) == Enum.sort(expected)
   end
 
-  test "fetches a restricted list of only permissions that the system knows about" do
+  test "fetches a restricted list of only perms that the system knows about" do
     assert Enum.sort(Permissions.to_list([:read, :other])) == [:read]
   end
 
@@ -116,22 +130,43 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "all? is true if all values are present with a non-default set" do
-    val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
+    val = Permissions.to_value(
+      [:other_read, :other_write, :other_update],
+      :other
+    )
 
     assert Permissions.all?(val, val, :other)
-    assert Permissions.all?(val, [:other_read, :other_write, :other_update], :other)
+    assert Permissions.all?(
+      val,
+      [:other_read, :other_write, :other_update],
+      :other
+    )
 
-    expected_val = Permissions.to_value([:other_read, :other_write, :other_update, :other_delete], :other)
+    expected_val = Permissions.to_value(
+      [:other_read, :other_write, :other_update, :other_delete],
+      :other
+    )
 
     refute Permissions.all?(val, expected_val, :other)
-    refute Permissions.all?(val, [:other_read, :other_write, :other_update, :other_delete], :other)
+    refute Permissions.all?(
+      val,
+      [:other_read, :other_write, :other_update, :other_delete],
+      :other
+    )
   end
 
   test "any? is true if any values are present with a non-default set" do
-    val = Permissions.to_value([:other_read, :other_write, :other_update], :other)
+    val = Permissions.to_value(
+      [:other_read, :other_write, :other_update],
+      :other
+    )
 
     assert Permissions.any?(val, val, :other)
-    assert Permissions.any?(val, [:other_read, :other_write, :other_update], :other)
+    assert Permissions.any?(
+      val,
+      [:other_read, :other_write, :other_update],
+      :other
+    )
 
     assert Permissions.any?(val, 1, :other)
     assert Permissions.any?(val, [:other_read], :other)
@@ -141,7 +176,11 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "integration with generating and decoding permissions" do
-    { :ok, jwt, _ } = Guardian.encode_and_sign("User:1", "token", %{ perms: %{ default: [ :read, :write ], other: [:other_read, :other_write ] } })
+    { :ok, jwt, _ } = Guardian.encode_and_sign(
+      "User:1",
+      "token",
+      %{perms: %{default: [:read, :write], other: [:other_read, :other_write]}}
+    )
 
     { :ok, claims } = Guardian.decode_and_verify(jwt, %{})
 
@@ -153,28 +192,53 @@ defmodule Guardian.PermissionsTest do
     assert other_val == Permissions.from_claims(claims, :other)
 
     assert default_val == Permissions.to_value([:read, :write], "default")
-    assert other_val == Permissions.to_value([:other_read, :other_write], "other")
+    assert other_val == Permissions.to_value(
+      [:other_read, :other_write],
+      "other"
+    )
 
     assert default_val == Permissions.to_value(["read", "write"], "default")
-    assert other_val == Permissions.to_value(["other_read", "other_write"], "other")
+    assert other_val == Permissions.to_value(
+      ["other_read", "other_write"],
+      "other"
+    )
 
     assert default_val == Permissions.to_value(["read", "write"], :default)
-    assert other_val == Permissions.to_value(["other_read", "other_write"], :other)
+    assert other_val == Permissions.to_value(
+      ["other_read", "other_write"],
+      :other
+    )
 
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val))
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val, :default))
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(default_val, "default"))
+    exp1 = Permissions.to_list(default_val)
+    exp2 = Permissions.to_list(default_val, :default)
+    exp3 = Permissions.to_list(default_val, "default")
 
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list([:read, :write], :default))
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list([:read, :write], "default"))
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(["read", "write"], :default))
-    assert Enum.sort([:write, :read]) == Enum.sort(Permissions.to_list(["read", "write"], "default"))
+    assert Enum.sort([:write, :read]) == Enum.sort(exp1)
+    assert Enum.sort([:write, :read]) == Enum.sort(exp2)
+    assert Enum.sort([:write, :read]) == Enum.sort(exp3)
 
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(other_val, :other))
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(other_val, "other"))
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list([:other_read, :other_write], :other))
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list([:other_read, :other_write], "other"))
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(["other_read", "other_write"], "other"))
-    assert Enum.sort([:other_write, :other_read]) == Enum.sort(Permissions.to_list(["other_read", "other_write"], :other))
+    exp1 = Permissions.to_list([:read, :write], :default)
+    exp2 = Permissions.to_list([:read, :write], "default")
+    exp3 = Permissions.to_list(["read", "write"], :default)
+    exp4 = Permissions.to_list(["read", "write"], "default")
+
+    assert Enum.sort([:write, :read]) == Enum.sort(exp1)
+    assert Enum.sort([:write, :read]) == Enum.sort(exp2)
+    assert Enum.sort([:write, :read]) == Enum.sort(exp3)
+    assert Enum.sort([:write, :read]) == Enum.sort(exp4)
+
+    exp1 = Permissions.to_list(other_val, :other)
+    exp2 = Permissions.to_list(other_val, "other")
+    exp3 = Permissions.to_list([:other_read, :other_write], :other)
+    exp4 = Permissions.to_list([:other_read, :other_write], "other")
+    exp5 = Permissions.to_list(["other_read", "other_write"], "other")
+    exp6 = Permissions.to_list(["other_read", "other_write"], :other)
+
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp1)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp2)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp3)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp4)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp5)
+    assert Enum.sort([:other_write, :other_read]) == Enum.sort(exp6)
   end
 end

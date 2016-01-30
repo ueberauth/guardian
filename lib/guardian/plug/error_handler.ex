@@ -1,4 +1,8 @@
 defmodule Guardian.Plug.ErrorHandler do
+  @moduledoc """
+  A default error handler that can be used for failed authentication
+  """
+
   @callback unauthenticated(Plug.t, Map.t) :: Plug.t
   @callback unauthorized(Plug.t, Map.t) :: Plug.t
 

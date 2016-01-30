@@ -1,6 +1,7 @@
 defmodule Guardian.Phoenix.Controller do
   @moduledoc """
-  Provides a simple helper to provide easier access to the current user and their claims.
+  Provides a simple helper to provide easier access to
+  the current user and their claims.
 
       defmodule MyApp.MyController do
         use MyApp.Web, :controller
@@ -11,7 +12,8 @@ defmodule Guardian.Phoenix.Controller do
         end
       end
 
-  You can specify the key location of the user if you're using multiple locations to store users.
+  You can specify the key location of the user
+  if you're using multiple locations to store users.
 
       defmodule MyApp.MyController do
         use MyApp.Web, :controller
@@ -22,7 +24,8 @@ defmodule Guardian.Phoenix.Controller do
         end
       end
 
-  By including these helpers they will not prevent your application from handling requests when there is no logged in user.
+  By including these helpers they will not prevent your application
+  from handling requests when there is no logged in user.
   You will simply get a nil for the user.
   """
   defmacro __using__(opts \\ []) do

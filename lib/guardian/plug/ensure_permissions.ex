@@ -1,15 +1,28 @@
 defmodule Guardian.Plug.EnsurePermissions do
   @moduledoc """
-  Use this plug to ensure that there are the correct permissions set in the claims found on the connection.
+  Use this plug to ensure that there are the
+  correct permissions set in the claims found on the connection.
 
   ### Example
 
-      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], handler: SomeMod, # read and write permissions for the admin set
-      plug Guardian.Plug.EnsurePermissions, admin: [:read, :write], default: [:profile], handler: SomeMod # read AND write permissions for the admin set AND :profile for the default set
+      alias Guardian.Plug.EnsurePermissions
 
-      plug Guardian.Plug.EnsurePermissions, key: :secret, admin: [:read, :write], handler:SomeMod, # admin :read AND :write for the claims located in the :secret location
+      # read and write permissions for the admin set
+      plug EnsurePermissions, admin: [:read, :write], handler: SomeMod,
 
-  On failure will be handed the connection with the conn, and params where reason: :forbidden
+      # read AND write permissions for the admin set
+      # AND :profile for the default set
+      plug EnsurePermissions, admin: [:read, :write],
+                              default: [:profile],
+                              handler: SomeMod
+
+      # admin :read AND :write for the claims located in the :secret location
+      plug EnsurePermissions, key: :secret,
+                              admin: [:read, :write],
+                              handler:SomeMod
+
+  On failure will be handed the connection with the conn,
+  and params where reason: `:forbidden`
 
   The handler will be called on failure.
   The `:unauthorized` function will be called when a failure is detected.
@@ -52,7 +65,11 @@ defmodule Guardian.Plug.EnsurePermissions do
         perms = Map.get(opts, :perms, %{})
         result = Enum.all?(Map.get(opts, :perm_keys), fn(perm_key) ->
           found_perms = Guardian.Permissions.from_claims(claims, perm_key)
-          Guardian.Permissions.all?(found_perms, Map.get(perms, perm_key), perm_key)
+          Guardian.Permissions.all?(
+            found_perms,
+            Map.get(perms, perm_key),
+            perm_key
+          )
         end)
         if result, do: conn, else: handle_error(conn, opts)
       { :error, _ } -> handle_error(conn, opts)
@@ -63,6 +80,13 @@ defmodule Guardian.Plug.EnsurePermissions do
     the_connection = conn |> assign(:guardian_failure, :forbidden) |> halt
 
     { mod, meth } = Map.get(opts, :handler)
-    apply(mod, meth, [the_connection, Map.merge(the_connection.params, %{ reason: :forbidden })])
+    apply(
+      mod,
+      meth,
+      [
+        the_connection,
+        Map.merge(the_connection.params, %{ reason: :forbidden })
+      ]
+    )
   end
 end

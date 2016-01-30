@@ -14,15 +14,19 @@ defmodule Guardian.Plug.VerifyHeader do
 
       plug Guardian.Plug.VerifyHeader, key: :secret
 
-  Verifying the session will update the claims on the request, available with Guardian.Plug.claims/1
+  Verifying the session will update the claims on the request,
+  available with Guardian.Plug.claims/1
 
   In the case of an error, the claims will be set to { :error, reason }
 
-  A "realm" can be specified when using the plug. Realms are like the name of the token and allow many tokens to be sent with a single request.
+  A "realm" can be specified when using the plug.
+  Realms are like the name of the token and allow many tokens
+  to be sent with a single request.
 
       plug Guardian.Plug.VerifyHeader, realm: "Bearer"
 
-  When a realm is not specified, the first authorization header found is used, and assumed to be a raw token
+  When a realm is not specified,
+  the first authorization header found is used, and assumed to be a raw token
 
   #### example
 
@@ -48,7 +52,8 @@ defmodule Guardian.Plug.VerifyHeader do
 
     case Guardian.Plug.claims(conn, key) do
       { :ok, _ } -> conn
-      { :error, :no_session } -> verify_token(conn, fetch_token(conn, opts), key)
+      { :error, :no_session } ->
+        verify_token(conn, fetch_token(conn, opts), key)
       _ -> conn
     end
   end
@@ -62,7 +67,8 @@ defmodule Guardian.Plug.VerifyHeader do
         conn
         |> Guardian.Plug.set_claims({ :ok, claims }, key)
         |> Guardian.Plug.set_current_token(token, key)
-      { :error, reason } -> Guardian.Plug.set_claims(conn,{ :error, reason }, key)
+      { :error, reason } ->
+        Guardian.Plug.set_claims(conn,{ :error, reason }, key)
     end
   end
 
