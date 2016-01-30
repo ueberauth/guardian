@@ -10,7 +10,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: "~> 1.1",
+      elixir: "~> 1.2",
       package: package,
       source_url: @url,
       build_embedded: Mix.env == :prod,

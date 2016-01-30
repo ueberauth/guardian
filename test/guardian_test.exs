@@ -49,29 +49,33 @@ defmodule GuardianTest do
     assert Guardian.issuer == "MyApp"
   end
 
-  test "it verifies the jwt", context do
+  test "decode_and_verify/1 verifies the jwt", context do
     assert Guardian.decode_and_verify(context.jwt) == { :ok, context.claims }
   end
 
-  test "verifies the issuer", context do
+  test "decode_and_verify/1 verifies the issuer", context do
     assert Guardian.decode_and_verify(context.jwt) == { :ok, context.claims }
   end
 
-  test "fails if the issuer is not correct", context do
+  test "decode_and_verify/1 fails if the issuer is not correct", context do
     claims = %{typ: "token", exp: Guardian.Utils.timestamp + 100_00, iat: Guardian.Utils.timestamp, iss: "not the issuer", sub: "User:1"}
     { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert Guardian.decode_and_verify(jwt) == { :error, :invalid_issuer }
   end
 
-  test "fails if the expiry has passed", context do
+  test "decode_and_verify/1 fails if the expiry has passed", context do
     claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
     { _, jwt } = JOSE.JWT.sign(context.jose_jwk, context.jose_jws, claims) |> JOSE.JWS.compact
 
     assert Guardian.decode_and_verify(jwt) == { :error, :token_expired }
   end
 
-  test "it is invalid if the typ is incorrect", context do
+  test "decode_and_verify/2 verifies if the expected_claims are correct", context do
+    assert Guardian.decode_and_verify(context.jwt, %{ typ: context.claims["typ"]})== { :ok, context.claims }
+  end
+
+  test "decode_and_verify/2 fails if the expected claims are not matched", context do
     assert Guardian.decode_and_verify(context.jwt, %{ typ: "something_else"}) == { :error, :invalid_type }
   end
 
