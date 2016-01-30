@@ -9,11 +9,11 @@ defmodule Guardian.Plug.ErrorHandler do
   import Plug.Conn
 
   def unauthenticated(conn, _params) do
-    respond(conn, accept_type(conn), 401, "Unauthenticated")
+    respond(conn, response_type(conn), 401, "Unauthenticated")
   end
 
   def unauthorized(conn, _params) do
-    respond(conn, accept_type(conn), 403, "Unauthorized")
+    respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
   defp respond(conn, :json, status, msg) do
@@ -42,15 +42,19 @@ defmodule Guardian.Plug.ErrorHandler do
     end
   end
 
-  defp accept_type(conn) do
-    accept = conn
-    |> get_req_header("accept")
-    |> List.wrap
-    |> hd
-
+  defp response_type(conn) do
+    accept = accept_header(conn)
     cond do
       Regex.match?(~r/json/, accept) -> :json
       true -> :html
     end
+  end
+
+  defp accept_header(conn)  do
+    value = conn
+      |> get_req_header("accept")
+      |> List.first
+
+    value || ""
   end
 end
