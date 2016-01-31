@@ -170,9 +170,6 @@ defmodule Guardian.Permissions do
     Map.get(c, type, Map.get(c, to_string(type), 0))
   end
 
-  @doc false
-  def from_claims(_, _), do: 0
-
   def to_value(val), do: to_value(val, :default)
 
   @doc """

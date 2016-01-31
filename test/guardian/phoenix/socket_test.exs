@@ -24,9 +24,9 @@ defmodule Guardian.Phoenix.SocketTest do
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
 
-    { _, jwt } = JOSE.JWT.sign(jose_jwk, jose_jws, claims) |> JOSE.JWS.compact
+    {_, jwt} = jose_jwk |> JOSE.JWT.sign(jose_jws, claims) |> JOSE.JWS.compact
 
-    { :ok, %{
+    {:ok, %{
         socket: %TestSocket{},
         claims: claims,
         jwt: jwt,
@@ -38,62 +38,66 @@ defmodule Guardian.Phoenix.SocketTest do
 
   test "current_claims from socket", %{socket: socket} do
     key = Guardian.Keys.claims_key
-    assigns = %{key => %{"the" => "claims"}}
+    assigns = %{} |> Map.put(key, %{"the" => "claims"})
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_claims(socket) == %{"the" => "claims"}
   end
 
   test "current_claims from socket in secret location", %{socket: socket} do
     key = Guardian.Keys.claims_key(:secret)
-    assigns = %{key => %{"the" => "claims"}}
+    assigns = %{} |> Map.put(key, %{"the" => "claim"})
     socket = Map.put(socket, :assigns, assigns)
-    assert GuardianSocket.current_claims(socket, :secret) == %{"the" => "claims"}
+
+    assert GuardianSocket.current_claims(socket, :secret) == %{"the" => "claim"}
   end
 
   test "current_token from socket", %{socket: socket} do
     key = Guardian.Keys.jwt_key
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_token(socket) == "THE JWT"
   end
 
   test "current_token from socket secret location", %{socket: socket} do
     key = Guardian.Keys.jwt_key(:secret)
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_token(socket, :secret) == "THE JWT"
   end
 
-  test "fetches the serialized sub from the token for current_resource", %{socket: socket, claims: claims} do
+  test "fetch serialized sub for current_resource", %{socket: s, claims: c} do
     key = Guardian.Keys.claims_key
-    assigns = %{key => claims}
-    socket = Map.put(socket, :assigns, assigns)
+    assigns = %{} |> Map.put(key, c)
+    socket = Map.put(s, :assigns, assigns)
 
-    assert GuardianSocket.current_resource(socket) == claims["sub"]
+    assert GuardianSocket.current_resource(socket) == c["sub"]
   end
 
-  test "does not have a current resource when there is no one logged in", %{socket: socket} do
-    assert GuardianSocket.current_resource(socket) == nil
+  test "does not have a current resource with no one logged in", %{socket: s} do
+    assert GuardianSocket.current_resource(s) == nil
   end
 
   test "is authenticated if there is a token present", %{socket: socket} do
-    assert GuardianSocket.authenticated?(socket) == false
+    refute GuardianSocket.authenticated?(socket)
 
     key = Guardian.Keys.jwt_key
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
 
-    assert GuardianSocket.authenticated?(socket) == true
+    assert GuardianSocket.authenticated?(socket)
   end
 
-  test "is authenticated if there is a token present in the secret location", %{socket: socket} do
-    assert GuardianSocket.authenticated?(socket, :secret) == false
+  test "authenticated if token present in the secret location", %{socket: s} do
+    refute GuardianSocket.authenticated?(s, :secret)
 
     key = Guardian.Keys.jwt_key(:secret)
-    assigns = %{key => "THE JWT"}
-    socket = Map.put(socket, :assigns, assigns)
+    assigns = %{} |> Map.put(key, "THE JWT")
+    socket = Map.put(s, :assigns, assigns)
 
-    assert GuardianSocket.authenticated?(socket, :secret) == true
+    assert GuardianSocket.authenticated?(socket, :secret)
   end
 
   test "sign in with a nil JWT", %{socket: socket} do

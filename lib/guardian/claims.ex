@@ -110,7 +110,7 @@ defmodule Guardian.Claims do
         Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
       {iat, {years, :year}} ->
         Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
-      {iat, {_, units}} -> raise "Unknown Units: #{units}"
+      {_iat, {_, units}} -> raise "Unknown Units: #{units}"
       _ -> claims
     end
   end

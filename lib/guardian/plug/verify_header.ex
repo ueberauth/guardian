@@ -35,7 +35,6 @@ defmodule Guardian.Plug.VerifyHeader do
       # will take the first auth header
       # Authorization: <jwt>
   """
-  import Guardian.Keys
 
   def init(opts \\ %{}) do
     opts_map = Enum.into(opts, %{})
