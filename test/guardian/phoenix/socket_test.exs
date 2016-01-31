@@ -38,36 +38,39 @@ defmodule Guardian.Phoenix.SocketTest do
 
   test "current_claims from socket", %{socket: socket} do
     key = Guardian.Keys.claims_key
-    assigns = Map.new([{Guardian.Keys.claims_key, %{"the" => "claims"}}])
-
+    assigns = %{} |> Map.put(key, %{"the" => "claims"})
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_claims(socket) == %{"the" => "claims"}
   end
 
   test "current_claims from socket in secret location", %{socket: socket} do
     key = Guardian.Keys.claims_key(:secret)
-    assigns = %{key => %{"the" => "claim"}}
+    assigns = %{} |> Map.put(key, %{"the" => "claim"})
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_claims(socket, :secret) == %{"the" => "claim"}
   end
 
   test "current_token from socket", %{socket: socket} do
     key = Guardian.Keys.jwt_key
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_token(socket) == "THE JWT"
   end
 
   test "current_token from socket secret location", %{socket: socket} do
     key = Guardian.Keys.jwt_key(:secret)
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
+
     assert GuardianSocket.current_token(socket, :secret) == "THE JWT"
   end
 
   test "fetch serialized sub for current_resource", %{socket: s, claims: c} do
     key = Guardian.Keys.claims_key
-    assigns = %{key => c}
+    assigns = %{} |> Map.put(key, c)
     socket = Map.put(s, :assigns, assigns)
 
     assert GuardianSocket.current_resource(socket) == c["sub"]
@@ -81,7 +84,7 @@ defmodule Guardian.Phoenix.SocketTest do
     refute GuardianSocket.authenticated?(socket)
 
     key = Guardian.Keys.jwt_key
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(socket, :assigns, assigns)
 
     assert GuardianSocket.authenticated?(socket)
@@ -91,7 +94,7 @@ defmodule Guardian.Phoenix.SocketTest do
     refute GuardianSocket.authenticated?(s, :secret)
 
     key = Guardian.Keys.jwt_key(:secret)
-    assigns = %{key => "THE JWT"}
+    assigns = %{} |> Map.put(key, "THE JWT")
     socket = Map.put(s, :assigns, assigns)
 
     assert GuardianSocket.authenticated?(socket, :secret)
