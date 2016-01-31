@@ -36,7 +36,7 @@ defmodule Guardian.Mixfile do
   end
 
   defp deps do
-    [{:jose, "~> 1.4"},
+    [{:jose, "~> 1.6"},
      {:poison, "~> 1.5"},
      {:plug, "~> 1.0"},
      {:ex_doc, "~> 0.10", only: :docs},
