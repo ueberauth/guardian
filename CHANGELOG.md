@@ -1,6 +1,10 @@
 # v 0.10.0
 
 * Add a Guardian.Phoenix.Socket module and refactor Guardian.Channel
+* Update JOSE to Version 1.6.0. Version 1.6.0 of erlang-jose
+adds the ability of using libsodium and SHA-3 (keccack) algorithms.
+This improves speed a lot.
+* Adds travis
 
 # v 0.9.1
 
