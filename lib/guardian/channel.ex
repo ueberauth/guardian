@@ -37,14 +37,13 @@ defmodule Guardian.Channel do
   directly and authenticating the connection rather than the channel.
   """
   defmacro __using__(opts) do
-    opts = Enum.into(opts, %{})
-    key = Map.get(opts, :key, :default)
+    key = Keyword.get(opts, :key, :default)
 
     quote do
       import Guardian.Phoenix.Socket
 
       def join(room, auth = %{"guardian_token" => jwt}, socket) do
-        case sign_in(socket, jwt, params, key: key) do
+        case sign_in(socket, jwt, params, key: unquote(key)) do
           {:ok, authed_socket, guardian_params} ->
             join(room, Map.merge(params, guardian_params), authed_socket)
           {:error, reason} -> handle_guardian_auth_failure(reason)
