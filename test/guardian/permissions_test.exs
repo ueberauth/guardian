@@ -43,7 +43,7 @@ defmodule Guardian.PermissionsTest do
   end
 
   test "when using max permissions all permissions are available" do
-    epxected_default = [:delete, :read, :update, :write]
+    expected_default = [:delete, :read, :update, :write]
     expected_other = [:other_delete, :other_read, :other_update, :other_write]
 
     found_default = Permissions.to_list(Permissions.max)
@@ -68,7 +68,7 @@ defmodule Guardian.PermissionsTest do
   test "fetches a list from a value" do
     ex_default = [:read, :write, :update]
     ex_other = [:other_read, :other_write, :other_update]
-    assert Enum.sort(Permissions.to_list(7)) == Enum.sort(ex_deafult)
+    assert Enum.sort(Permissions.to_list(7)) == Enum.sort(ex_default)
     assert Enum.sort(Permissions.to_list(7, :other)) == Enum.sort(ex_other)
   end
 

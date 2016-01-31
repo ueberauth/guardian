@@ -1,3 +1,7 @@
+# v 0.10.0
+
+* Add a Guardian.Phoenix.Socket module and refactor Guardian.Channel
+
 # v 0.9.1
 
 * Stop compiling permissions. This leads to weird bugs when permissions are

@@ -438,28 +438,104 @@ defmodule MyApp.MyController do
 end
 ```
 
+### Phoenix Sockets
+
+Guardian provides integration into the Phoenix channels API to provide
+authentication. You can choose to authenticate either on `connect` or every time
+someone joins a topic.
+
+To authenticate the initial connect there's a couple of options.
+
+1. Automatically authenticate
+2. Authenticate with more control manually.
+
+To automatcially authenticate `use` the Guardian.Phoenix.Socket module in your
+socket.
+
+```elixir
+defmodule MyApp.UsersSocket do
+  use Phoenix.Socket
+  use Guardian.Phoenix.Socket
+
+  def connect(_params, socket) do
+    # if we get here, we did not authenticate
+    :error
+  end
+end
+```
+
+Connection authentication requires a `guardian_token` parameter to be provided
+which is the JWT. If this is present, Guardian.Phoenix.Socket will authenticate
+the connection and carry on or return an `:error` and not allow the connection.
+
+On the javascript side provide your token when you connect.
+
+```javascript
+let socket = new Socket("/ws");
+socket.connect({guardian_token: jwt});
+```
+
+This works fine when all connections should be authenticated. In the case where
+you want some of them to be, you can manually sign in.
+
+```elixir
+defmodule MyApp.UsersSocket do
+  use Phoenix.Socket
+  import Guardian.Phoenix.Socket
+
+  def connect(%{"guardian_token" => jwt} = params, socket) do
+    case sign_in(socket, jwt) do
+      {:ok, authed_socket, guardian_params} ->
+        {:ok, authed_socket}
+      _ ->
+        #unauthenticated socket
+        {:ok, socket}
+    end
+  end
+
+  def connect(_params, socket) do
+    # handle unauthenticated connection
+  end
+end
+```
+
+Once you have an authenticated socket you can get the information from it:
+
+```elixir
+claims = Guardian.Phoenix.Socket.current_claims(socket)
+jwt = Guardian.Phoenix.Socket.current_token(socket)
+user = Guardian.Phoenix.Socket.current_resource(socket)
+```
+
+If you need even more control, you can use the helpers provided by
+Phoenix.Guardian.Socket inside your Channel.
+
 ### Phoenix Channels
 
-Guardian uses JWTs to make the integration of authentication management as
-seamless as possible. Channel integration is part of that.
+We can use the Guardian.Phoenix.Socket module to help authenticate channels.
 
 ```elixir
 defmodule MyApp.UsersChannel do
   use Phoenix.Channel
-  use Guardian.Channel
+  import Guardian.Phoenix.Socket
 
-  def join(_room, %{ claims: claims, resource: resource }, socket) do
-    { :ok, %{ message: "Joined" }, socket }
+  def join(_room, %{"guardian_token" => token}, socket) do
+    case sign_in(socket, token) do
+      {:ok, authed_socket, _guardian_params} ->
+        {:ok, %{message: "Joined"}, authed_socket}
+      {:error, reason} ->
+        # handle error
+    end
   end
 
   def join(room, _, socket) do
-    { :error,  :authentication_required }
+    {:error,  :authentication_required}
   end
 
   def handle_in("ping", _payload, socket) do
-    user = Guardian.Channel.current_resource(socket)
-    broadcast socket, "pong", %{ message: "pong", from: user.email }
-    { :noreply, socket }
+    user = current_resource(socket)
+    broadcast(socket, "pong", %{message: "pong", from: user.email})
+    {:noreply, socket}
   end
 end
 ```
