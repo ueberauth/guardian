@@ -21,12 +21,12 @@ defmodule Guardian.ClaimsTest do
   end
 
   test "typ with an typ atom" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.typ(claims, :thing) == %{"typ" => "thing"}
   end
 
   test "typ with an typ string" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.typ(claims, "thing") == %{"typ" => "thing"}
   end
 
@@ -36,63 +36,64 @@ defmodule Guardian.ClaimsTest do
   end
 
   test "aud with an aud atom" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.aud(claims, :thing) == %{"aud" => "thing"}
   end
 
   test "aud with an aud string" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.aud(claims, "thing") == %{"aud" => "thing"}
   end
 
   test "sub with a sub atom" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.sub(claims, :thing) == %{"sub" => "thing"}
   end
 
   test "sub with a sub string" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.sub(claims, "thing") == %{"sub" => "thing"}
   end
 
   test "iat with nothing" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.iat(claims)["iat"]
   end
 
   test "iat with a timestamp" do
-    claims = %{ }
+    claims = %{}
     assert Guardian.Claims.iat(claims, 15) == %{"iat" => 15}
   end
 
   test "ttl with nothing" do
-    claims = %{ }
+    claims = %{}
     the_claims = Guardian.Claims.ttl(claims)
     assert the_claims["iat"]
     assert the_claims["exp"] == the_claims["iat"] + 24 * 60 * 60
   end
 
   test "ttl with extisting iat" do
-    claims = %{ "iat" => 10 }
+    claims = %{"iat" => 10}
     expected = %{"iat" => 10, "exp" => 10 + 24 * 60 * 60}
     assert Guardian.Claims.ttl(claims) == expected
   end
 
   test "ttl with extisting iat & in minutes" do
-    claims = %{ "iat" => 10 }
-    assert Guardian.Claims.ttl(claims, { 10, :minutes }) == %{ "iat" => 10, "exp" => 10 + 10 * 60 }
+    claims = %{"iat" => 10}
+    expected = %{"iat" => 10, "exp" => 10 + 10 * 60}
+    assert Guardian.Claims.ttl(claims, {10, :minutes}) == expected
   end
 
   test "ttl with extisting iat & in unknown units" do
-    claims = %{ "iat" => 10 }
+    claims = %{"iat" => 10}
     assert_raise RuntimeError, "Unknown Units: decade", fn ->
-      Guardian.Claims.ttl(claims, { 1, :decade })
+      Guardian.Claims.ttl(claims, {1, :decade})
     end
   end
 
   test "encodes permissions into the claims" do
     claims = Guardian.Claims.permissions(%{}, default: [:read, :write])
-    assert claims == %{"pem" => %{ "default" => 3}}
+    assert claims == %{"pem" => %{"default" => 3}}
 
     claims = Guardian.Claims.permissions(
       %{},
