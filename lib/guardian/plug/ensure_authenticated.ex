@@ -3,12 +3,12 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   This plug ensures that a valid JWT was provided and has been
   verified on the request.
 
-  If one is not found, the on\_failure function is invoked with the
-  `Plug.Conn.t` object and it's params.
+  If one is not found, the `unauthenticated/2` function is invoked with the
+  `Plug.Conn.t` object and its params.
 
   ## Example
 
-      # Will call the unauthenticated function on your handler
+      # Will call the unauthenticated/2 function on your handler
       plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule
 
       # look in the :secret location.  You can also do simple claim checks:
@@ -16,12 +16,8 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
       plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, aud: "token"
 
-  The handler option may be passed.
-  By default `Guardian.Plug.ErrorHandler` is used
-  and the `:unauthenticated` function will be called.
-
-  The handler will be called on failure.
-  The `:unauthenticated` function will be called when a failure is detected.
+  If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
+  the default behavior.
   """
   require Logger
   import Plug.Conn
@@ -29,17 +25,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   @doc false
   def init(opts) do
     opts = Enum.into(opts, %{})
-    handler = case Map.get(opts, :handler) do
-      mod when mod != nil ->
-        {mod, :unauthenticated}
-      nil ->
-        case Map.get(opts, :on_failure) do
-          {mod, f} ->
-            Logger.log(:warn, "on_failure is deprecated. Use handler instead")
-            {mod, f}
-        _ -> raise "Requires a handler module to be passed"
-        end
-    end
+    handler = build_handler_tuple(opts)
 
     claims_to_check = Map.drop(opts, [:on_failure, :key, :handler])
     %{
@@ -83,5 +69,17 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     end
   end
 
-  defp check_claims(conn, _, _), do: conn
+  defp build_handler_tuple(%{handler: mod}) do
+    {mod, :unauthenticated}
+  end
+  defp build_handler_tuple(%{on_failure: {mod, func}}) do
+    Logger.log(
+      :warn,
+      ":on_failure is deprecated. Use the :handler option instead"
+    )
+    {mod, func}
+  end
+  defp build_handler_tuple(_) do
+    {Guardian.Plug.ErrorHandler, :unauthenticated}
+  end
 end
