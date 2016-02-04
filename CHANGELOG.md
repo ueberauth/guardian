@@ -5,6 +5,8 @@
 adds the ability of using libsodium and SHA-3 (keccack) algorithms.
 This improves speed a lot.
 * Adds travis
+* Adds ability to use custom secrets
+* Allows peeking at the contents of the token
 
 # v 0.9.1
 
