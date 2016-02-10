@@ -1,3 +1,7 @@
+# Master (Unreleased)
+
+* Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
+
 # v 0.10.0
 
 * Add a Guardian.Phoenix.Socket module and refactor Guardian.Channel
