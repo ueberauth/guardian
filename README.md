@@ -45,7 +45,6 @@ config :guardian, Guardian,
 
 The items in the configuration allow you to tailor how the JWT generation behaves.
 
-* `secret_key` - The secret used to sign the key
 * `allowed_algos` - The list of algorithms (must be compatible with JOSE). The first is used as the encoding key. Default is: ["HS512"]
 * `verify_module` - Provides a mechanism to setup your own validations for items
   in the token. Default is `Guardian.JWT`
