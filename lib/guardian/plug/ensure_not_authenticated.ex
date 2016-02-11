@@ -1,6 +1,6 @@
 defmodule Guardian.Plug.EnsureNotAuthenticated do
   @moduledoc """
-  This plug ensures that a valid JWT was provided and has been
+  This plug ensures that a invalid JWT was provided and has been
   verified on the request.
 
   If one is not found, the `authenticated/2` function is invoked with the
@@ -32,7 +32,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
       handler: handler,
       key: Map.get(opts, :key, :default),
       claims: Guardian.Utils.stringify_keys(claims_to_check)
-    }
+  }
   end
 
   @doc false
@@ -40,8 +40,8 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
-      { :ok, claims } -> conn |> check_claims(opts, claims)
-      { :error, reason } -> conn
+      {:ok, claims} -> conn |> check_claims(opts, claims)
+      {:error, reason} -> conn
       _ -> conn
     end
   end
@@ -54,16 +54,16 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
     apply(
       mod,
       meth,
-      [the_connection, Map.merge(the_connection.params, %{ reason: reason })]
+      [the_connection, Map.merge(the_connection.params, %{reason: reason})]
     )
   end
 
-  defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do
+  defp check_claims(conn, opts = %{claims: claims_to_check}, claims) do
     claims_match = claims_to_check
                    |> Map.keys
                    |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
     if claims_match do
-      handle_error(conn, { :error, :claims_match }, opts)
+      handle_error(conn, {:error, :claims_match}, opts)
     else
       conn
     end
