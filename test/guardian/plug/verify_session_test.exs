@@ -3,6 +3,8 @@ defmodule Guardian.Plug.VerifySessionTest do
   use Plug.Test
   import Guardian.TestHelper
 
+  alias Guardian.Plug.VerifySession
+
   setup do
     config = Application.get_env(:guardian, Guardian)
     algo = hd(Keyword.get(config, :allowed_algos))
@@ -29,42 +31,46 @@ defmodule Guardian.Plug.VerifySessionTest do
   end
 
   test "with no JWT in the session at a default location", context do
-    conn = Guardian.Plug.VerifySession.call(context.conn, %{})
+    conn = run_plug(context.conn, VerifySession)
     assert Guardian.Plug.claims(conn) == {:error, :no_session}
     assert Guardian.Plug.current_token(conn) == nil
   end
 
   test "with no JWT in the session at a specified location", context do
-    conn = Guardian.Plug.VerifySession.call(context.conn, %{key: :secret})
+    conn = run_plug(context.conn, VerifySession, %{key: :secret})
     assert Guardian.Plug.claims(conn, :secret) == {:error, :no_session}
     assert Guardian.Plug.current_token(conn, :secret) == nil
   end
 
   test "with a valid JWT in the session at the default location", context do
-    the_conn = context.conn
+    conn =
+      context.conn
       |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
+      |> run_plug(VerifySession)
 
-    conn = Guardian.Plug.VerifySession.call(the_conn, %{})
     assert Guardian.Plug.claims(conn) == { :ok, context.claims }
     assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
   test "with a valid JWT in the session at a specified location", context do
-    the_conn = context.conn
+    conn =
+      context.conn
       |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), context.jwt)
-    conn = Guardian.Plug.VerifySession.call(the_conn, %{key: :secret})
+      |> run_plug(VerifySession, %{key: :secret})
+
     assert Guardian.Plug.claims(conn, :secret) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end
 
   test "with an existing session in another location", context do
-    the_conn = context.conn
-     |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
-     |> Guardian.Plug.set_claims(context.claims)
-     |> Guardian.Plug.set_current_token(context.jwt)
-     |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), context.jwt)
+    conn =
+      context.conn
+      |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
+      |> Guardian.Plug.set_claims(context.claims)
+      |> Guardian.Plug.set_current_token(context.jwt)
+      |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), context.jwt)
+      |> run_plug(VerifySession, %{key: :secret})
 
-    conn = Guardian.Plug.VerifySession.call(the_conn, %{key: :secret})
     assert Guardian.Plug.claims(conn, :secret) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end

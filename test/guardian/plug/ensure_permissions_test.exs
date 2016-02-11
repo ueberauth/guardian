@@ -1,6 +1,7 @@
 defmodule Guardian.Plug.EnsurePermissionTest do
   use ExUnit.Case, async: true
   use Plug.Test
+  import Guardian.TestHelper
 
   alias Guardian.Plug.EnsurePermissions
 
@@ -12,59 +13,54 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     end
   end
 
-  @expected_failure TestHandler
-  @failure [handler: @expected_failure]
+  setup do
+    conn = conn(:get, "/foo")
+    {:ok, %{conn: conn}}
+  end
 
-  test "does not call the on failure when the permissions are present" do
-    opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
-
+  test "doesnt call unauthorized when permissions are present", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:read, :write])
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write])
 
-    assert expected_conn.assigns[:guardian_spec] == nil
+    refute unauthorized?(expected_conn)
   end
 
-  test "is invalid when all permissions requested are not there" do
-    opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
-
+  test "is invalid when missing a requested permission", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:read])
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write])
 
-    assert expected_conn.assigns[:guardian_spec] == :forbidden
+    assert unauthorized?(expected_conn)
   end
 
-  test "is invalid when the claims do not include the required perm key" do
-    opts = EnsurePermissions.init(@failure ++ [ default: [:read, :write] ])
-
+  test "is invalid when claims don't include the pem key", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:other_read], :other)
     claims = %{ "pem" => %{ "default" => pems } }
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write])
 
-    assert expected_conn.assigns[:guardian_spec] == :forbidden
+    assert unauthorized?(expected_conn)
   end
 
-  test "is invalid when all permissions are not present" do
-    opts = EnsurePermissions.init(
-      @failure ++ [ default: [:read, :write], other: [:other_read] ]
-    )
-
+  test "is invalid when all permissions are not present", %{conn: conn} do
     pems = Guardian.Permissions.to_value(
       [:read, :write, :update, :delete],
       :default
@@ -72,20 +68,17 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write], other: [:other_read])
 
-    assert expected_conn.assigns[:guardian_spec] == :forbidden
+    assert unauthorized?(expected_conn)
   end
 
-  test "is valid when all permissions are present" do
-    opts = EnsurePermissions.init(
-      @failure ++ [default: [:read, :write], other: [:other_read]]
-    )
-
+  test "is valid when all permissions are present", %{conn: conn} do
     pems = Guardian.Permissions.to_value(
       [:read, :write, :update, :delete],
       :default
@@ -98,20 +91,17 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
     claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write], other: [:other_read])
 
-    assert expected_conn.assigns[:guardian_spec] == nil
+    refute unauthorized?(expected_conn)
   end
 
-  test "halts the connection" do
-    opts = EnsurePermissions.init(
-      @failure ++ [default: [:read, :write], other: [:other_read]]
-    )
-
+  test "halts the connection", %{conn: conn} do
     pems = Guardian.Permissions.to_value(
       [:read, :write, :update, :delete],
       :default
@@ -120,12 +110,17 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
     claims = %{"pem" => %{"default" => pems, "other" => other_pems}}
 
-    expected_conn = :get
-                    |> conn("/get")
-                    |> Guardian.Plug.set_claims({ :ok, claims })
-                    |> Plug.Conn.fetch_query_params
-                    |> EnsurePermissions.call(opts)
+    expected_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> Plug.Conn.fetch_query_params
+      |> run_plug(EnsurePermissions, handler: TestHandler,
+                  default: [:read, :write], other: [:other_read])
 
     assert expected_conn.halted
+  end
+
+  def unauthorized?(conn) do
+    conn.assigns[:guardian_spec] == :forbidden
   end
 end
