@@ -41,7 +41,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
 
     case Guardian.Plug.claims(conn, key) do
       {:ok, claims} -> conn |> check_claims(opts, claims)
-      {:error, reason} -> conn
+      {:error, _reason} -> conn
       _ -> conn
     end
   end
