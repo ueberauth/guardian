@@ -3,7 +3,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
   This plug ensures that a invalid JWT was provided and has been
   verified on the request.
 
-  If one is not found, the `authenticated/2` function is invoked with the
+  If one is found, the `authenticated/2` function is invoked with the
   `Plug.Conn.t` object and its params.
 
   ## Example

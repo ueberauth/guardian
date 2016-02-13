@@ -39,7 +39,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
     opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert must_authenticate?(ensured_conn)
+    refute already_authenticated?(ensured_conn)
   end
 
   test "it validates claims and fails if the claims do not match" do
@@ -47,7 +47,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
     opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute must_authenticate?(ensured_conn)
+    assert already_authenticated?(ensured_conn)
   end
 
   test "doesn't call unauthenticated when there's a session with default key" do
@@ -55,7 +55,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
     opts = EnsureNotAuthenticated.init(handler: TestHandler)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert must_authenticate?(ensured_conn)
+    refute already_authenticated?(ensured_conn)
   end
 
   test "doesn't call unauthenticated when theres a session with specific key" do
@@ -65,21 +65,21 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
             |> Guardian.Plug.set_claims({:ok, claims}, :secret)
     opts = EnsureNotAuthenticated.init(handler: TestHandler, key: :secret)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert must_authenticate?(ensured_conn)
+    refute already_authenticated?(ensured_conn)
   end
 
   test "calls handler's unauthenticated/2 with no session for default key" do
     conn = conn(:get, "/foo")
     opts = EnsureNotAuthenticated.init(handler: TestHandler)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute must_authenticate?(ensured_conn)
+    assert already_authenticated?(ensured_conn)
   end
 
   test "calls handler's unauthenticated/2 with no session for specific key" do
     conn = conn(:get, "/foo")
     opts = EnsureNotAuthenticated.init(handler: TestHandler, key: :secret)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute must_authenticate?(ensured_conn)
+    assert already_authenticated?(ensured_conn)
   end
 
   test "it halts the connection" do
@@ -89,7 +89,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     refute ensured_conn.halted
   end
 
-  defp must_authenticate?(conn) do
-    conn.assigns[:guardian_spec] == :authenticated
+  defp already_authenticated?(conn) do
+    conn.assigns[:guardian_spec] != :authenticated
   end
 end
