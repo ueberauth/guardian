@@ -12,9 +12,11 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
       plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule
 
       # look in the :secret location.  You can also do simple claim checks:
-      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule, key: :secret
+      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule,
+                                                 key: :secret
 
-      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule, aud: "token"
+      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule,
+                                                 aud: "token"
 
   If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
   the default behavior.
