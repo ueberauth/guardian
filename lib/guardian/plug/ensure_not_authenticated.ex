@@ -27,12 +27,12 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
     opts = Enum.into(opts, %{})
     handler = build_handler_tuple(opts)
 
-    claims_to_check = Map.drop(opts, [:on_failure, :key, :handler])
+    claims_to_check = Map.drop(opts, [:key, :handler])
     %{
       handler: handler,
       key: Map.get(opts, :key, :default),
       claims: Guardian.Utils.stringify_keys(claims_to_check)
-  }
+    }
   end
 
   @doc false
@@ -72,13 +72,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
   defp build_handler_tuple(%{handler: mod}) do
     {mod, :authenticated}
   end
-  defp build_handler_tuple(%{on_failure: {mod, func}}) do
-    Logger.log(
-      :warn,
-      ":on_failure is deprecated. Use the :handler option instead"
-    )
-    {mod, func}
-  end
+
   defp build_handler_tuple(_) do
     {Guardian.Plug.ErrorHandler, :authenticated}
   end

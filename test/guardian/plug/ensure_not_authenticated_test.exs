@@ -18,14 +18,6 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     assert handler_opts == {TestHandler, :authenticated}
   end
 
-  test "init/1 sets the handler option to the value of on_failure" do
-    %{handler: handler_opts} = EnsureNotAuthenticated.init(
-      on_failure: {TestHandler, :custom_failure_method}
-    )
-
-    assert handler_opts == {TestHandler, :custom_failure_method}
-  end
-
   test "init/1 defaults the handler option to Guardian.Plug.ErrorHandler" do
     %{handler: handler_opts} = EnsureNotAuthenticated.init %{}
 
@@ -40,18 +32,6 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
       handler: {Guardian.Plug.ErrorHandler, :authenticated},
       key: :default
     }
-  end
-
-  test "init/1 uses all opts as claims except :on_failure, :key and :handler" do
-    %{claims: claims} = EnsureNotAuthenticated.init(
-      on_failure: {TestHandler, :some_method},
-      key: :super_secret,
-      handler: TestHandler,
-      foo: "bar",
-      another: "option"
-    )
-
-    assert claims == %{"foo" => "bar", "another" => "option"}
   end
 
   test "it validates claims and calls through if the claims are ok" do
