@@ -16,6 +16,10 @@ defmodule Guardian.Plug.ErrorHandler do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
+  def already_authenticated(conn, _params) do
+    conn |> halt
+  end
+
   defp respond(conn, :json, status, msg) do
     try do
       conn
