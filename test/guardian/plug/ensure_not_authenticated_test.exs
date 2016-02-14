@@ -5,7 +5,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   alias Guardian.Plug.EnsureNotAuthenticated
 
   defmodule TestHandler do
-    def authenticated(conn, _) do
+    def already_authenticated(conn, _) do
       conn
       |> Plug.Conn.assign(:guardian_spec, :authenticated)
       |> Plug.Conn.send_resp(401, "Authenticated")
@@ -15,13 +15,13 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   test "init/1 sets the handler option to the module that's passed in" do
     %{handler: handler_opts} = EnsureNotAuthenticated.init(handler: TestHandler)
 
-    assert handler_opts == {TestHandler, :authenticated}
+    assert handler_opts == {TestHandler, :already_authenticated}
   end
 
   test "init/1 defaults the handler option to Guardian.Plug.ErrorHandler" do
     %{handler: handler_opts} = EnsureNotAuthenticated.init %{}
 
-    assert handler_opts == {Guardian.Plug.ErrorHandler, :authenticated}
+    assert handler_opts == {Guardian.Plug.ErrorHandler, :already_authenticated}
   end
 
   test "init/1 with default options" do
@@ -29,7 +29,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
 
     assert options == %{
       claims: %{},
-      handler: {Guardian.Plug.ErrorHandler, :authenticated},
+      handler: {Guardian.Plug.ErrorHandler, :already_authenticated},
       key: :default
     }
   end

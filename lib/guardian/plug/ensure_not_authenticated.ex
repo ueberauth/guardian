@@ -3,12 +3,12 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
   This plug ensures that a invalid JWT was provided and has been
   verified on the request.
 
-  If one is found, the `authenticated/2` function is invoked with the
+  If one is found, the `already_authenticated/2` function is invoked with the
   `Plug.Conn.t` object and its params.
 
   ## Example
 
-      # Will call the authenticated/2 function on your handler
+      # Will call the already_authenticated/2 function on your handler
       plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule
 
       # look in the :secret location.  You can also do simple claim checks:
@@ -72,10 +72,10 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
   end
 
   defp build_handler_tuple(%{handler: mod}) do
-    {mod, :authenticated}
+    {mod, :already_authenticated}
   end
 
   defp build_handler_tuple(_) do
-    {Guardian.Plug.ErrorHandler, :authenticated}
+    {Guardian.Plug.ErrorHandler, :already_authenticated}
   end
 end
