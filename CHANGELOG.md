@@ -2,6 +2,7 @@
 
 * Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
 * Adding Guardian.Plug.EnsureNotAuthenticated to validates that user isn't logged
+* Fix bug where TTL was not able to be set when generating tokens
 
 # v 0.10.0
 
