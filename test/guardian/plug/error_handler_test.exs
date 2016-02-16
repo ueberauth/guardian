@@ -83,6 +83,12 @@ defmodule Guardian.Plug.ErrorHandlerTest do
     assert body == "Unauthorized"
   end
 
+  test "already_authenticated/2 halt the conn", %{conn: conn} do
+    conn = conn
+           |> ErrorHandler.already_authenticated(%{})
+    assert conn.halted
+  end
+
   defp content_type(headers) do
     {:ok, type, subtype, _params} =
       headers
