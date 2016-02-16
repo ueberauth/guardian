@@ -1,6 +1,7 @@
 defmodule Guardian.Plug.EnsureAuthenticatedTest do
   use ExUnit.Case, async: true
   use Plug.Test
+  import Guardian.TestHelper
 
   alias Guardian.Plug.EnsureAuthenticated
 
@@ -10,6 +11,11 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
       |> Plug.Conn.assign(:guardian_spec, :unauthenticated)
       |> Plug.Conn.send_resp(401, "Unauthenticated")
     end
+  end
+
+  setup do
+    conn = conn(:get, "/foo")
+    {:ok, %{conn: conn}}
   end
 
   test "init/1 sets the handler option to the module that's passed in" do
@@ -54,58 +60,67 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     assert claims == %{"foo" => "bar", "another" => "option"}
   end
 
-  test "it validates claims and calls through if the claims are ok" do
+  test "validates claims and calls through if claims are ok", %{conn: conn} do
     claims = %{ "aud" => "token", "sub" => "user1" }
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
-    opts = EnsureAuthenticated.init(handler: TestHandler, aud: "token")
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+
+    ensured_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> run_plug(EnsureAuthenticated, handler: TestHandler, aud: "token")
+
     refute must_authenticate?(ensured_conn)
   end
 
-  test "it validates claims and fails if the claims do not match" do
+  test "it validates claims and fails if claims don't match", %{conn: conn} do
     claims = %{ "aud" => "oauth", "sub" => "user1" }
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureAuthenticated.init(handler: TestHandler, aud: "token")
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+
+    ensured_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> run_plug(EnsureAuthenticated, handler: TestHandler, aud: "token")
+
     assert must_authenticate?(ensured_conn)
   end
 
-  test "doesn't call unauthenticated when there's a session with default key" do
+  test "doesn't call unauth when session for default key", %{conn: conn} do
     claims = %{ "aud" => "token", "sub" => "user1" }
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
-    opts = EnsureAuthenticated.init(handler: TestHandler)
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+
+    ensured_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims})
+      |> run_plug(EnsureAuthenticated, handler: TestHandler)
+
     refute must_authenticate?(ensured_conn)
   end
 
-  test "doesn't call unauthenticated when theres a session with specific key" do
+  test "doesn't call unauthenticated when session for key", %{conn: conn} do
     claims = %{ "aud" => "token", "sub" => "user1" }
-    conn = :get
-            |> conn("/foo")
-            |> Guardian.Plug.set_claims({:ok, claims}, :secret)
-    opts = EnsureAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+
+    ensured_conn =
+      conn
+      |> Guardian.Plug.set_claims({:ok, claims}, :secret)
+      |> run_plug(EnsureAuthenticated, handler: TestHandler, key: :secret)
+
     refute must_authenticate?(ensured_conn)
   end
 
-  test "calls handler's unauthenticated/2 with no session for default key" do
-    conn = conn(:get, "/foo")
-    opts = EnsureAuthenticated.init(handler: TestHandler)
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+  test "calls unauthenticated with no session for default key", %{conn: conn} do
+    ensured_conn = run_plug(conn, EnsureAuthenticated, handler: TestHandler)
+
     assert must_authenticate?(ensured_conn)
   end
 
-  test "calls handler's unauthenticated/2 with no session for specific key" do
-    conn = conn(:get, "/foo")
-    opts = EnsureAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+  test "calls unauthenticated when no session for key", %{conn: conn} do
+    ensured_conn = run_plug(conn, EnsureAuthenticated, handler: TestHandler,
+      key: :secret)
+
     assert must_authenticate?(ensured_conn)
   end
 
-  test "it halts the connection" do
-    conn = conn(:get, "/foo")
-    opts = EnsureAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureAuthenticated.call(conn, opts)
+  test "it halts the connection", %{conn: conn} do
+    ensured_conn = run_plug(conn, EnsureAuthenticated, handler: TestHandler,
+      key: :secret)
+
     assert ensured_conn.halted
   end
 
