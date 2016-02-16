@@ -70,9 +70,9 @@ defmodule Guardian.Claims do
   def iat(claims, ts), do: Map.put(claims, "iat", ts)
 
   @doc false
-  def ttl(claims = %{ ttl: requested_ttl }) do
+  def ttl(claims = %{"ttl" => requested_ttl}) do
     claims
-    |> Map.delete(:ttl)
+    |> Map.delete("ttl")
     |> ttl(requested_ttl)
   end
 

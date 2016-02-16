@@ -151,6 +151,17 @@ defmodule GuardianTest do
     assert claims["some"] == "thing"
   end
 
+  test "encode_and_sign(object, aud) with ttl" do
+    {:ok, jwt, _} = Guardian.encode_and_sign(
+      "thinger",
+      "my_type",
+      ttl: {5, :days}
+    )
+
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
+    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
+  end
+
   test "encode_and_sign with a serializer error" do
     {:error, reason} = Guardian.encode_and_sign(%{error: :unknown})
     assert reason

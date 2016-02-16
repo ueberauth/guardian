@@ -338,6 +338,7 @@ defmodule Guardian do
                       |> Guardian.Claims.app_claims
                       |> Guardian.Claims.typ(type)
                       |> Guardian.Claims.sub(sub)
+                      |> set_ttl
                       |> set_aud_if_nil(sub)
 
         {:ok, full_claims}
@@ -359,6 +360,12 @@ defmodule Guardian do
     claims
     |> Guardian.Claims.permissions(perms)
     |> Map.delete("perms")
+  end
+
+  defp set_ttl(claims) do
+    claims
+    |> Guardian.Claims.ttl
+    |> Map.delete("ttl")
   end
 
   def set_aud_if_nil(claims, value) do
