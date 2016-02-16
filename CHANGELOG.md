@@ -1,6 +1,7 @@
 # Master (Unreleased)
 
 * Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
+* Adding Guardian.Plug.EnsureNotAuthenticated to validates that user isn't logged
 
 # v 0.10.0
 
