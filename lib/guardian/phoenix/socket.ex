@@ -73,8 +73,8 @@ defmodule Guardian.Phoenix.Socket do
   Set the current claims. Used internally and in tests. Not expected to be
   used inside channels or sockets.
   """
-  def set_current_claims(socket, claims, key \\ :default) do
-    Phoenix.Socket.assign(socket, Guardian.Keys.claims_key(key), claims)
+  def set_current_claims(socket, new_claims, key \\ :default) do
+    Phoenix.Socket.assign(socket, Guardian.Keys.claims_key(key), new_claims)
   end
 
   @doc """
@@ -111,8 +111,8 @@ defmodule Guardian.Phoenix.Socket do
   def current_resource(socket, key \\ :default) do
     case current_claims(socket, key) do
       nil -> nil
-      claims ->
-        case Guardian.serializer.from_token(claims["sub"]) do
+      the_claims ->
+        case Guardian.serializer.from_token(the_claims["sub"]) do
           {:ok, resource} -> resource
           _ -> nil
         end
@@ -139,13 +139,21 @@ defmodule Guardian.Phoenix.Socket do
     key = Keyword.get(opts, :key, :default)
 
     case Guardian.decode_and_verify(jwt, params) do
-      {:ok, claims} ->
-        case Guardian.serializer.from_token(Map.get(claims, "sub")) do
+      {:ok, decoded_claims} ->
+        case Guardian.serializer.from_token(Map.get(decoded_claims, "sub")) do
           {:ok, res} ->
             authed_socket = socket
-            |> set_current_claims(claims, key)
+            |> set_current_claims(decoded_claims, key)
             |> set_current_token(jwt, key)
-            {:ok, authed_socket, %{claims: claims, resource: res, jwt: jwt}}
+            {
+              :ok,
+              authed_socket,
+              %{
+                claims: decoded_claims,
+                resource: res,
+                jwt: jwt
+              }
+          }
           error -> error
         end
       error -> error
@@ -158,8 +166,8 @@ defmodule Guardian.Phoenix.Socket do
   """
   def sign_out!(socket, key \\ :default) do
     jwt = current_token(socket)
-    claims = current_claims(socket)
-    Guardian.revoke!(jwt, claims)
+    the_claims = current_claims(socket)
+    Guardian.revoke!(jwt, the_claims)
     sign_out(socket, key)
   end
 

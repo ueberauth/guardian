@@ -48,9 +48,10 @@ defmodule Guardian.Plug.ErrorHandler do
 
   defp response_type(conn) do
     accept = accept_header(conn)
-    cond do
-      Regex.match?(~r/json/, accept) -> :json
-      true -> :html
+    if Regex.match?(~r/json/, accept) do
+      :json
+    else
+      :html
     end
   end
 

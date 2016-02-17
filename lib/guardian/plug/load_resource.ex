@@ -21,20 +21,24 @@ defmodule Guardian.Plug.LoadResource do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.current_resource(conn, key) do
-      { :ok, _ } -> conn
-      { :error, _ } -> conn
+      {:ok, _} -> conn
+      {:error, _} -> conn
       _ ->
         case Guardian.Plug.claims(conn, key) do
-          { :ok, claims } ->
-            case Guardian.serializer.from_token(Map.get(claims, "sub")) do
-              { :ok, resource } ->
-                Guardian.Plug.set_current_resource(conn, resource, key)
-              { :error, _ } ->
-                Guardian.Plug.set_current_resource(conn, nil, key)
-            end
-          { :error, _ } -> Guardian.Plug.set_current_resource(conn, nil, key)
+          {:ok, claims} ->
+            result = Guardian.serializer.from_token(Map.get(claims, "sub"))
+            set_current_resource_from_serializer(conn, key, result)
+          {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
           _ -> Guardian.Plug.set_current_resource(conn, nil, key)
         end
     end
+  end
+
+  defp set_current_resource_from_serializer(conn, key, {:ok, resource}) do
+    Guardian.Plug.set_current_resource(conn, resource, key)
+  end
+
+  defp set_current_resource_from_serializer(conn, key, {:error, _}) do
+    Guardian.Plug.set_current_resource(conn, nil, key)
   end
 end

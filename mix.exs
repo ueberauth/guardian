@@ -42,11 +42,11 @@ defmodule Guardian.Mixfile do
 
   defp deps do
     [{:jose, "~> 1.6"},
-     {:poison, "~> 1.5"},
+     {:poison, "~> 2.1"},
      {:plug, "~> 1.0"},
      {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
-     {:dogma, ">= 0.0.0", only: [:dev, :test]},
+     {:credo, "~> 0.3", only: [:dev, :test]},
      {:uuid, ">=1.1.1"}]
   end
 

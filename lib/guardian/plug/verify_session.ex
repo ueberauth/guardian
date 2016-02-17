@@ -27,20 +27,20 @@ defmodule Guardian.Plug.VerifySession do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
-      { :ok, _ } -> conn
-      { :error, :no_session } ->
+      {:ok, _} -> conn
+      {:error, :no_session} ->
         jwt = Plug.Conn.get_session(conn, base_key(key))
 
         if jwt do
-          case Guardian.decode_and_verify(jwt, %{ }) do
-            { :ok, claims } ->
+          case Guardian.decode_and_verify(jwt, %{}) do
+            {:ok, claims} ->
               conn
-              |> Guardian.Plug.set_claims({ :ok, claims }, key)
+              |> Guardian.Plug.set_claims({:ok, claims}, key)
               |> Guardian.Plug.set_current_token(jwt, key)
-            { :error, reason } ->
+            {:error, reason} ->
               conn
               |> Plug.Conn.delete_session(base_key(key))
-              |> Guardian.Plug.set_claims({ :error, reason }, key)
+              |> Guardian.Plug.set_claims({:error, reason}, key)
           end
         else
           conn

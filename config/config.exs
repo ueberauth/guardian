@@ -27,5 +27,3 @@ if Mix.env == :test ||
     Mix.env == :dev ||
     Mix.env == :docs, do: import_config "#{Mix.env}.exs"
 
-config :dogma,
-  rule_set: Dogma.RuleSet.All

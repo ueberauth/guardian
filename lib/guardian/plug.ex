@@ -68,7 +68,7 @@ defmodule Guardian.Plug do
   @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
   def authenticated?(conn, type) do
     case claims(conn, type) do
-      { :error, _ } -> false
+      {:error, _} -> false
       nil -> false
       _ -> true
     end
@@ -92,8 +92,8 @@ defmodule Guardian.Plug do
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
 
   @doc false
-  def sign_in(conn, object, type, claims) when is_list(claims) do
-    sign_in(conn, object, type, Enum.into(claims, %{}))
+  def sign_in(conn, object, type, new_claims) when is_list(new_claims) do
+    sign_in(conn, object, type, Enum.into(new_claims, %{}))
   end
 
   @doc """
@@ -111,21 +111,20 @@ defmodule Guardian.Plug do
 
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
-  def sign_in(conn, object, type, claims) do
-    the_key = Map.get(claims, :key, :default)
-    claims = Map.delete(claims, :key)
+  def sign_in(conn, object, type, new_claims) do
+    the_key = Map.get(new_claims, :key, :default)
+    new_claims = Map.delete(new_claims, :key)
 
-    case Guardian.encode_and_sign(object, type, claims) do
-      { :ok, jwt, full_claims } ->
+    case Guardian.encode_and_sign(object, type, new_claims) do
+      {:ok, jwt, full_claims} ->
         conn
         |> Plug.Conn.put_session(base_key(the_key), jwt)
         |> set_current_resource(object, the_key)
-        |> set_claims({ :ok, full_claims }, the_key)
+        |> set_claims({:ok, full_claims}, the_key)
         |> set_current_token(jwt, the_key)
         |> Guardian.hooks_module.after_sign_in(the_key)
 
-      { :error, reason } ->
-        # TODO: handle this failure
+      {:error, reason} ->
         Plug.Conn.put_session(conn, base_key(the_key), {:error, reason})
     end
   end
@@ -150,8 +149,8 @@ defmodule Guardian.Plug do
   def api_sign_in(conn, object, type), do: api_sign_in(conn, object, type, %{})
 
   @doc false
-  def api_sign_in(conn, object, type, claims) when is_list(claims) do
-    api_sign_in(conn, object, type, Enum.into(claims, %{}))
+  def api_sign_in(conn, object, type, new_claims) when is_list(new_claims) do
+    api_sign_in(conn, object, type, Enum.into(new_claims, %{}))
   end
 
   @doc """
@@ -173,11 +172,11 @@ defmodule Guardian.Plug do
       )
   """
   @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
-  def api_sign_in(conn, object, type, claims) do
-    the_key = Map.get(claims, :key, :default)
-    claims = Map.delete(claims, :key)
+  def api_sign_in(conn, object, type, new_claims) do
+    the_key = Map.get(new_claims, :key, :default)
+    new_claims = Map.delete(new_claims, :key)
 
-    case Guardian.encode_and_sign(object, type, claims) do
+    case Guardian.encode_and_sign(object, type, new_claims) do
       {:ok, jwt, full_claims} ->
         conn
         |> set_current_resource(object, the_key)
@@ -186,7 +185,6 @@ defmodule Guardian.Plug do
         |> Guardian.hooks_module.after_sign_in(the_key)
 
       {:error, reason} ->
-       # TODO: handle this failure
         set_claims(conn, {:error, reason}, the_key)
     end
   end
@@ -207,20 +205,20 @@ defmodule Guardian.Plug do
   @doc """
   Fetch the currently verified claims from the current request
   """
-  @spec claims(Plug.Conn.t, atom) :: { :ok, Map } |
-                                     { :error, atom | String.t }
+  @spec claims(Plug.Conn.t, atom) :: {:ok, Map} |
+                                     {:error, atom | String.t}
   def claims(conn, the_key \\ :default) do
     case conn.private[claims_key(the_key)] do
-      { :ok, claims } -> { :ok, claims }
-      { :error, reason } -> { :error, reason }
-      _ -> { :error, :no_session }
+      {:ok, the_claims} -> {:ok, the_claims}
+      {:error, reason} -> {:error, reason}
+      _ -> {:error, :no_session}
     end
   end
 
   @doc false
-  @spec set_claims(Plug.Conn.t, { :ok, Map }, atom) :: Plug.Conn.t
-  def set_claims(conn, claims, the_key \\ :default) do
-    Plug.Conn.put_private(conn, claims_key(the_key), claims)
+  @spec set_claims(Plug.Conn.t, {:ok, Map}, atom) :: Plug.Conn.t
+  def set_claims(conn, new_claims, the_key \\ :default) do
+    Plug.Conn.put_private(conn, claims_key(the_key), new_claims)
   end
 
   @doc """

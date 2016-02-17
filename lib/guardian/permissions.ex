@@ -122,9 +122,8 @@ defmodule Guardian.Permissions do
   """
   use Bitwise
 
-  @max -1
 
-  def max, do: @max
+  def max, do: -1
 
   @doc """
   Fetches the list of known permissions for the given type
@@ -191,7 +190,8 @@ defmodule Guardian.Permissions do
 
   # match two lists against each other
   def to_value([h|t], acc, perms) do
-    if idx = Enum.find_index(perms, &(&1 == h or to_string(&1) == h)) do
+    idx = Enum.find_index(perms, &(&1 == h or to_string(&1) == h))
+    if idx do
       to_value(t, Bitwise.bor(acc, trunc(:math.pow(2,idx))), perms)
     else
       to_value(t, acc, perms)

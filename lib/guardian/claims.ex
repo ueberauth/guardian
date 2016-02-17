@@ -3,7 +3,7 @@ defmodule Guardian.Claims do
   import Guardian.Utils
 
   @doc false
-  def app_claims, do: %{ "iss" => Guardian.issuer } |> iat |> ttl |> jti
+  def app_claims, do: %{"iss" => Guardian.issuer} |> iat |> ttl |> jti
 
   @doc false
   def app_claims(existing_claims) do
@@ -14,16 +14,16 @@ defmodule Guardian.Claims do
   Encodes permissions into the claims set.
   Permissions are stored at the :pem key as a map of <type> => <value as int>
   """
-  def permissions(claims, permissions) do
+  def permissions(claims, perm_list) do
     perms = %{}
-            |> Enum.into(permissions)
-            |> Enum.reduce(%{}, fn({key, list}, acc) ->
-              Map.put(
-                acc,
-                to_string(key),
-                Guardian.Permissions.to_value(list, key)
-              )
-            end)
+    |> Enum.into(perm_list)
+    |> Enum.reduce(%{}, fn({key, list}, acc) ->
+      Map.put(
+        acc,
+        to_string(key),
+        Guardian.Permissions.to_value(list, key)
+      )
+    end)
     Map.put(claims, "pem", perms)
   end
 
@@ -78,43 +78,59 @@ defmodule Guardian.Claims do
 
   @doc false
   def ttl(claims) do
-    ttl(claims, Guardian.config(:ttl, { 1_000_000_000, :seconds }))
+    ttl(claims, Guardian.config(:ttl, {1_000_000_000, :seconds}))
   end
 
   @doc false
-  def ttl(claims = %{"iat" => iat}, requested_ttl) do
-    tuple = {iat, requested_ttl}
-    case tuple do
-      {nil, _} -> Map.put_new(claims, timestamp + 1_000_000_000)
-      {iat, {seconds, :seconds}} ->
-        Map.put(claims, "exp", iat + seconds)
-      {iat, {seconds, :second}} ->
-        Map.put(claims, "exp", iat + seconds)
-      {iat, {millis, :millis}} ->
-        Map.put(claims, "exp", iat + millis / 1000)
-      {iat, {millis, :milli}} ->
-        Map.put(claims, "exp", iat + millis / 1000)
-      {iat, {minutes, :minutes}} ->
-        Map.put(claims, "exp", iat + minutes * 60)
-      {iat, {minutes, :minute}} ->
-        Map.put(claims, "exp", iat + minutes * 60)
-      {iat, {hours, :hours}} ->
-        Map.put(claims, "exp", iat + hours * 60 * 60)
-      {iat, {hours, :hour}} ->
-        Map.put(claims, "exp", iat + hours * 60 * 60)
-      {iat, {days, :days}} ->
-        Map.put(claims, "exp", iat + days * 24 * 60 * 60)
-      {iat, {days, :day}} ->
-        Map.put(claims, "exp", iat + days * 24 * 60 * 60)
-      {iat, {years, :years}} ->
-        Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
-      {iat, {years, :year}} ->
-        Map.put(claims, "exp", iat + years * 365 * 24 * 60 * 60)
-      {_iat, {_, units}} -> raise "Unknown Units: #{units}"
-      _ -> claims
-    end
+  def ttl(%{"iat" => iat_v} = the_claims, requested_ttl) do
+    assign_exp_from_ttl(the_claims, {iat_v, requested_ttl})
   end
 
   @doc false
-  def ttl(claims, requested_ttl), do: claims |> iat |> ttl(requested_ttl)
+  def ttl(the_claims, requested_ttl) do
+    the_claims
+    |> iat
+    |> ttl(requested_ttl)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {nil, _}) do
+    Map.put_new(the_claims, timestamp + 1_000_000_000)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {millis, unit}})
+  when unit in [:milli, :millis] do
+    Map.put(the_claims, "exp", iat_v + millis / 1000)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}})
+  when unit in [:second, :seconds] do
+    Map.put(the_claims, "exp", iat_v + seconds)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {minutes, unit}})
+  when unit in [:minute, :minutes] do
+    Map.put(the_claims, "exp", iat_v + minutes * 60)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {hours, unit}})
+  when unit in [:hour, :hours] do
+    Map.put(the_claims, "exp", iat_v + hours * 60 * 60)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {days, unit}})
+  when unit in [:day, :days] do
+    Map.put(the_claims, "exp", iat_v + days * 24 * 60 * 60)
+  end
+
+  defp assign_exp_from_ttl(the_claims, {iat_v, {years, unit}})
+  when unit in [:year, :years] do
+    Map.put(the_claims, "exp", iat_v + years * 365 * 24 * 60 * 60)
+  end
+
+  defp assign_exp_from_ttl(_, {_iat_v, {_, units}}) do
+    raise "Unknown Units: #{units}"
+  end
+
+  defp assign_exp_from_ttl(the_claims, _), do: the_claims
+
 end
