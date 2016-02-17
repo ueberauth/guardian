@@ -1,4 +1,5 @@
 defmodule Guardian.Plug.EnsurePermissionTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
   import Guardian.TestHelper
@@ -6,6 +7,8 @@ defmodule Guardian.Plug.EnsurePermissionTest do
   alias Guardian.Plug.EnsurePermissions
 
   defmodule TestHandler do
+    @moduledoc false
+
     def unauthorized(conn, _) do
       conn
       |> Plug.Conn.assign(:guardian_spec, :forbidden)
@@ -20,7 +23,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
   test "doesnt call unauthorized when permissions are present", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:read, :write])
-    claims = %{ "pem" => %{ "default" => pems } }
+    claims = %{"pem" => %{"default" => pems}}
 
     expected_conn =
       conn
@@ -34,7 +37,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
   test "is invalid when missing a requested permission", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:read])
-    claims = %{ "pem" => %{ "default" => pems } }
+    claims = %{"pem" => %{"default" => pems}}
 
     expected_conn =
       conn
@@ -48,7 +51,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
 
   test "is invalid when claims don't include the pem key", %{conn: conn} do
     pems = Guardian.Permissions.to_value([:other_read], :other)
-    claims = %{ "pem" => %{ "default" => pems } }
+    claims = %{"pem" => %{"default" => pems}}
 
     expected_conn =
       conn
@@ -66,7 +69,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
       :default
     )
     other_pems = Guardian.Permissions.to_value([:other_write], :other)
-    claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
+    claims = %{"pem" => %{"default" => pems, "other" => other_pems}}
 
     expected_conn =
       conn
@@ -89,7 +92,7 @@ defmodule Guardian.Plug.EnsurePermissionTest do
       :other
     )
 
-    claims = %{ "pem" => %{ "default" => pems, "other" => other_pems } }
+    claims = %{"pem" => %{"default" => pems, "other" => other_pems}}
 
     expected_conn =
       conn

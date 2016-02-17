@@ -61,7 +61,7 @@ defmodule Guardian.Plug.EnsurePermissions do
   def call(conn, opts) do
     key = Map.get(opts, :key)
     case Guardian.Plug.claims(conn, key) do
-      { :ok, claims } ->
+      {:ok, claims} ->
         perms = Map.get(opts, :perms, %{})
         result = Enum.all?(Map.get(opts, :perm_keys), fn(perm_key) ->
           found_perms = Guardian.Permissions.from_claims(claims, perm_key)
@@ -72,20 +72,20 @@ defmodule Guardian.Plug.EnsurePermissions do
           )
         end)
         if result, do: conn, else: handle_error(conn, opts)
-      { :error, _ } -> handle_error(conn, opts)
+      {:error, _} -> handle_error(conn, opts)
     end
   end
 
   defp handle_error(conn, opts) do
     the_connection = conn |> assign(:guardian_failure, :forbidden) |> halt
 
-    { mod, meth } = Map.get(opts, :handler)
+    {mod, meth} = Map.get(opts, :handler)
     apply(
       mod,
       meth,
       [
         the_connection,
-        Map.merge(the_connection.params, %{ reason: :forbidden })
+        Map.merge(the_connection.params, %{reason: :forbidden})
       ]
     )
   end

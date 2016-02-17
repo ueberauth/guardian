@@ -1,9 +1,12 @@
 defmodule Guardian.Phoenix.SocketTest do
+  @moduledoc false
   use ExUnit.Case, async: true
 
   alias Guardian.Phoenix.Socket, as: GuardianSocket
 
   defmodule TestSocket do
+    @moduledoc false
+
     defstruct assigns: %{}
   end
 

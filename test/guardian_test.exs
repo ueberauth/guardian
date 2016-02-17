@@ -1,4 +1,6 @@
 defmodule GuardianTest do
+  @moduledoc false
+
   use ExUnit.Case, async: true
 
   setup do
@@ -9,7 +11,8 @@ defmodule GuardianTest do
       "iat" => Guardian.Utils.timestamp,
       "iss" => "MyApp",
       "sub" => "User:1",
-      "something_else" => "foo"}
+      "something_else" => "foo"
+    }
 
     config = Application.get_env(:guardian, Guardian)
     algo = hd(Keyword.get(config, :allowed_algos))
@@ -18,11 +21,13 @@ defmodule GuardianTest do
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
 
-    { _, jwt } = jose_jwk
+    {_, jwt} = jose_jwk
                   |> JOSE.JWT.sign(jose_jws, claims)
                   |> JOSE.JWS.compact
 
-    { :ok, %{
+    {
+      :ok,
+      %{
         claims: claims,
         jwt: jwt,
         jose_jws: jose_jws,
@@ -52,11 +57,11 @@ defmodule GuardianTest do
   end
 
   test "it verifies the jwt", context do
-    assert Guardian.decode_and_verify(context.jwt) == { :ok, context.claims }
+    assert Guardian.decode_and_verify(context.jwt) == {:ok, context.claims}
   end
 
   test "verifies the issuer", context do
-    assert Guardian.decode_and_verify(context.jwt) == { :ok, context.claims }
+    assert Guardian.decode_and_verify(context.jwt) == {:ok, context.claims}
   end
 
   test "fails if the issuer is not correct", context do
@@ -68,7 +73,7 @@ defmodule GuardianTest do
       sub: "User:1"
     }
 
-    { _, jwt } = context.jose_jwk
+    {_, jwt} = context.jose_jwk
                   |> JOSE.JWT.sign(context.jose_jws, claims)
                   |> JOSE.JWS.compact
 
@@ -77,11 +82,11 @@ defmodule GuardianTest do
 
   test "fails if the expiry has passed", context do
     claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
-    { _, jwt } = context.jose_jwk
+    {_, jwt} = context.jose_jwk
                   |> JOSE.JWT.sign(context.jose_jws, claims)
                   |> JOSE.JWS.compact
 
-    assert Guardian.decode_and_verify(jwt) == { :error, :token_expired }
+    assert Guardian.decode_and_verify(jwt) == {:error, :token_expired}
   end
 
   test "it is invalid if the typ is incorrect", context do
@@ -90,7 +95,7 @@ defmodule GuardianTest do
       %{typ: "something_else"}
     )
 
-    assert response == { :error, :invalid_type }
+    assert response == {:error, :invalid_type}
   end
 
   test "verify! with a jwt", context do
@@ -99,7 +104,7 @@ defmodule GuardianTest do
 
   test "verify! with a bad token", context do
     claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
-    { _, jwt } = context.jose_jwk
+    {_, jwt} = context.jose_jwk
                   |> JOSE.JWT.sign(context.jose_jws, claims)
                   |> JOSE.JWS.compact
 
@@ -111,9 +116,9 @@ defmodule GuardianTest do
   end
 
   test "encode_and_sign(object)" do
-    { :ok, jwt, _ } = Guardian.encode_and_sign("thinger")
+    {:ok, jwt, _} = Guardian.encode_and_sign("thinger")
 
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
     assert claims["typ"] == "token"
     assert claims["aud"] == "thinger"
     assert claims["sub"] == "thinger"
@@ -123,9 +128,9 @@ defmodule GuardianTest do
   end
 
   test "encode_and_sign(object, audience)" do
-    { :ok, jwt, _ } = Guardian.encode_and_sign("thinger", "my_type")
+    {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type")
 
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
     assert claims["typ"] == "my_type"
     assert claims["aud"] == "thinger"
     assert claims["sub"] == "thinger"
@@ -135,13 +140,13 @@ defmodule GuardianTest do
   end
 
   test "encode_and_sign(object, type, claims)" do
-    { :ok, jwt, _ } = Guardian.encode_and_sign(
+    {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
       some: "thing"
     )
 
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
     assert claims["typ"] == "my_type"
     assert claims["aud"] == "thinger"
     assert claims["sub"] == "thinger"
@@ -169,7 +174,7 @@ defmodule GuardianTest do
 
   test "encode_and_sign with custom secret" do
     secret = "ABCDEF"
-    { :ok, jwt, _ } = Guardian.encode_and_sign(
+    {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
       some: "thing",
@@ -182,7 +187,7 @@ defmodule GuardianTest do
 
   test "peeking at the headers" do
     secret = "ABCDEF"
-    { :ok, jwt, _ } = Guardian.encode_and_sign(
+    {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
       some: "thing",
@@ -196,7 +201,7 @@ defmodule GuardianTest do
 
   test "peeking at the payload" do
     secret = "ABCDEF"
-    { :ok, jwt, _ } = Guardian.encode_and_sign(
+    {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
       some: "thing",

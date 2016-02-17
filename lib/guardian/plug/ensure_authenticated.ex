@@ -40,9 +40,9 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
-      { :ok, claims } -> conn |> check_claims(opts, claims)
-      { :error, reason } -> handle_error(conn, { :error, reason }, opts)
-      _ -> handle_error(conn, { :error, :no_session }, opts)
+      {:ok, claims} -> conn |> check_claims(opts, claims)
+      {:error, reason} -> handle_error(conn, {:error, reason}, opts)
+      _ -> handle_error(conn, {:error, :no_session}, opts)
     end
   end
 
@@ -54,18 +54,18 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     apply(
       mod,
       meth,
-      [the_connection, Map.merge(the_connection.params, %{ reason: reason })]
+      [the_connection, Map.merge(the_connection.params, %{reason: reason})]
     )
   end
 
-  defp check_claims(conn, opts = %{ claims: claims_to_check }, claims) do
+  defp check_claims(conn, opts = %{claims: claims_to_check}, claims) do
     claims_match = claims_to_check
                    |> Map.keys
                    |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
     if claims_match do
       conn
     else
-      handle_error(conn, { :error, :claims_do_not_match }, opts)
+      handle_error(conn, {:error, :claims_do_not_match}, opts)
     end
   end
 

@@ -35,9 +35,9 @@ defmodule Guardian do
   The resource will be run through the configured serializer
   to obtain a value suitable for storage inside a JWT.
   """
-  @spec encode_and_sign(any) :: { :ok, String.t, Map } |
-                                { :error, atom } |
-                                { :error, String.t }
+  @spec encode_and_sign(any) :: {:ok, String.t, Map} |
+                                {:error, atom} |
+                                {:error, String.t}
   def encode_and_sign(object), do: encode_and_sign(object, nil, %{})
 
   @doc """
@@ -46,9 +46,9 @@ defmodule Guardian do
 
   The type can be anything but suggested is "token".
   """
-  @spec encode_and_sign(any, atom | String.t) :: { :ok, String.t, Map } |
-                                                 { :error, atom } |
-                                                 { :error, String.t }
+  @spec encode_and_sign(any, atom | String.t) :: {:ok, String.t, Map} |
+                                                 {:error, atom} |
+                                                 {:error, String.t}
   def encode_and_sign(object, type), do: encode_and_sign(object, type, %{})
 
   @doc false
@@ -71,9 +71,9 @@ defmodule Guardian do
         perms: %{ default: [:read, :write] }
       )
   """
-  @spec encode_and_sign(any, atom | String.t, Map) :: { :ok, String.t, Map } |
-                                                      { :error, atom } |
-                                                      { :error, String.t }
+  @spec encode_and_sign(any, atom | String.t, Map) :: {:ok, String.t, Map} |
+                                                      {:error, atom} |
+                                                      {:error, String.t}
   def encode_and_sign(object, type, claims) do
     case build_claims(object, type, claims) do
       {:ok, claims_for_token} ->
@@ -84,23 +84,26 @@ defmodule Guardian do
           claims_for_token
         )
 
-        case called_hook do
-          {:ok, {resource, type, claims_from_hook}} ->
-            case encode_claims(claims_from_hook) do
-              {:ok, jwt} ->
-                call_after_encode_and_sign_hook(
-                  resource,
-                  type,
-                  claims_from_hook, jwt
-                )
-                {:ok, jwt, claims_from_hook}
-              {:error, reason} -> {:error, reason}
-            end
-          {:error, reason} -> {:error, reason}
-        end
+        encode_from_hooked(called_hook)
+
       {:error, reason} -> {:error, reason}
     end
   end
+
+  defp encode_from_hooked({:ok, {resource, type, claims_from_hook}}) do
+    case encode_claims(claims_from_hook) do
+      {:ok, jwt} ->
+        call_after_encode_and_sign_hook(
+          resource,
+          type,
+          claims_from_hook, jwt
+        )
+        {:ok, jwt, claims_from_hook}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp encode_from_hooked({:error, _reason} = error), do: error
 
   @doc false
   def hooks_module, do: config(:hooks, Guardian.Hooks.Default)
@@ -114,7 +117,7 @@ defmodule Guardian do
   """
   def revoke!(jwt, params \\ %{}) do
     case decode_and_verify(jwt, params) do
-      { :ok, claims } -> revoke!(jwt, claims, params)
+      {:ok, claims} -> revoke!(jwt, claims, params)
       _ -> :ok
     end
   end
@@ -126,8 +129,8 @@ defmodule Guardian do
   """
   def revoke!(jwt, claims, _params) do
     case Guardian.hooks_module.on_revoke(claims, jwt) do
-      { :ok, _ } -> :ok
-      { :error, reason } -> { :error, reason }
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -196,17 +199,17 @@ defmodule Guardian do
   @doc """
   Verify the given JWT. This will decode_and_verify via decode_and_verify/2
   """
-  @spec decode_and_verify(String.t) :: { :ok, Map } |
-                                       { :error, atom } |
-                                       { :error, String.t }
+  @spec decode_and_verify(String.t) :: {:ok, Map} |
+                                       {:error, atom} |
+                                       {:error, String.t}
   def decode_and_verify(jwt), do: decode_and_verify(jwt, %{})
 
 
   @doc """
   Verify the given JWT.
   """
-  @spec decode_and_verify(String.t, Map) :: { :ok, Map } |
-                                            { :error, atom | String.t }
+  @spec decode_and_verify(String.t, Map) :: {:ok, Map} |
+                                            {:error, atom | String.t}
   def decode_and_verify(jwt, params) do
     params = stringify_keys(params)
     if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
@@ -220,7 +223,7 @@ defmodule Guardian do
             {:ok, verified_claims} ->
               case Guardian.hooks_module.on_verify(verified_claims, jwt) do
                 {:ok, {claims, _}} -> {:ok, claims}
-                {:error, reason } -> {:error, reason}
+                {:error, reason} -> {:error, reason}
               end
             {:error, reason} -> {:error, reason}
           end
@@ -246,8 +249,8 @@ defmodule Guardian do
   @spec decode_and_verify!(String.t, Map) :: Map
   def decode_and_verify!(jwt, params) do
     case decode_and_verify(jwt, params) do
-      { :ok, claims } -> claims
-      { :error, reason } -> raise to_string(reason)
+      {:ok, claims} -> claims
+      {:error, reason} -> raise to_string(reason)
     end
   end
 
@@ -288,13 +291,13 @@ defmodule Guardian do
 
   defp jose_jwk(the_secret) do
     secret = the_secret || config(:secret_key)
-    %{ "kty" => "oct", "k" => :base64url.encode(secret) }
+    %{"kty" => "oct", "k" => :base64url.encode(secret)}
   end
 
   defp encode_claims(claims) do
     {headers, claims} = strip_value(claims, "headers", %{})
     {secret, claims} = strip_value(claims, "secret")
-    { _, token } = secret
+    {_, token} = secret
                    |> jose_jwk()
                    |> JOSE.JWT.sign(jose_jws(headers), claims)
                    |> JOSE.JWS.compact
@@ -304,8 +307,8 @@ defmodule Guardian do
   defp decode_token(token, secret) do
     secret = secret || config(:secret_key)
     case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos, token) do
-      { true, jose_jwt, _ } ->  { :ok, jose_jwt.fields }
-      { false, _, _ } -> { :error, :invalid_token }
+      {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
+      {false, _, _} -> {:error, :invalid_token}
     end
   end
 
@@ -323,15 +326,15 @@ defmodule Guardian do
   defp verify_claims(claims, [h | t], module, params) do
     case apply(module, :validate_claim, [h, claims, params]) do
       :ok -> verify_claims(claims, t, module, params)
-      { :error, reason } -> { :error, reason }
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  defp verify_claims(claims, [], _, _), do: { :ok, claims }
+  defp verify_claims(claims, [], _, _), do: {:ok, claims}
 
   defp build_claims(object, type, claims) do
     case Guardian.serializer.for_token(object) do
-      { :ok, sub } ->
+      {:ok, sub} ->
         full_claims = claims
                       |> stringify_keys
                       |> set_permissions

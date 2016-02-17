@@ -9,13 +9,13 @@ defmodule Guardian.Hooks do
       @behaviour Guardian.Hooks
 
       def before_encode_and_sign(resource, type, claims) do
-        { :ok, { resource, type, claims } }
+        {:ok, {resource, type, claims}}
       end
       def after_encode_and_sign(_, _, _, _), do: :ok
       def after_sign_in(conn, _), do: conn
       def before_sign_out(conn, _), do: conn
-      def on_verify(claims, jwt), do: { :ok, { claims, jwt } }
-      def on_revoke(claims, jwt), do: { :ok, { claims, jwt } }
+      def on_verify(claims, jwt), do: {:ok, {claims, jwt}}
+      def on_revoke(claims, jwt), do: {:ok, {claims, jwt}}
 
       defoverridable [
         {:before_encode_and_sign, 3},

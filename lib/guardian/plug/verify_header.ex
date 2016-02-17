@@ -40,7 +40,7 @@ defmodule Guardian.Plug.VerifyHeader do
     opts_map = Enum.into(opts, %{})
     realm = Map.get(opts_map, :realm)
     if realm do
-      { :ok, reg } = Regex.compile("#{realm}\:?\s+(.*)$", "i")
+      {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
       opts_map = Map.put(opts_map, :realm_reg, reg)
     end
     opts_map
@@ -50,8 +50,8 @@ defmodule Guardian.Plug.VerifyHeader do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.claims(conn, key) do
-      { :ok, _ } -> conn
-      { :error, :no_session } ->
+      {:ok, _} -> conn
+      {:error, :no_session} ->
         verify_token(conn, fetch_token(conn, opts), key)
       _ -> conn
     end
@@ -61,13 +61,13 @@ defmodule Guardian.Plug.VerifyHeader do
   defp verify_token(conn, "", _), do: conn
 
   defp verify_token(conn, token, key) do
-    case Guardian.decode_and_verify(token, %{ }) do
-      { :ok, claims } ->
+    case Guardian.decode_and_verify(token, %{}) do
+      {:ok, claims} ->
         conn
-        |> Guardian.Plug.set_claims({ :ok, claims }, key)
+        |> Guardian.Plug.set_claims({:ok, claims}, key)
         |> Guardian.Plug.set_current_token(token, key)
-      { :error, reason } ->
-        Guardian.Plug.set_claims(conn,{ :error, reason }, key)
+      {:error, reason} ->
+        Guardian.Plug.set_claims(conn,{:error, reason}, key)
     end
   end
 

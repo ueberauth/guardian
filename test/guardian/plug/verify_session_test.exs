@@ -1,4 +1,5 @@
 defmodule Guardian.Plug.VerifySessionTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
   import Guardian.TestHelper
@@ -16,7 +17,7 @@ defmodule Guardian.Plug.VerifySessionTest do
     conn = conn_with_fetched_session(conn(:get, "/"))
     claims = Guardian.Claims.app_claims(%{"sub" => "user", "aud" => "aud"})
 
-    { _, jwt } = jose_jwk
+    {_, jwt} = jose_jwk
                   |> JOSE.JWT.sign(jose_jws, claims)
                   |> JOSE.JWS.compact
 
@@ -48,7 +49,7 @@ defmodule Guardian.Plug.VerifySessionTest do
       |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), context.jwt)
       |> run_plug(VerifySession)
 
-    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
