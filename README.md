@@ -10,7 +10,7 @@ Guardian remains a functional system. It integrates with Plug, but can be used
 outside of it. If you're implementing a TCP/UDP protocol directly, or want to
 utilize your authentication via channels, Guardian is your friend.
 
-The core currency of authentication in Guardian is JWT. You can use the JWT to
+The core currency of authentication in Guardian is [JSON Web Tokens](https://jwt.io/) (JWT). You can use the JWT to
 authenticate web endpoints, channels, and TCP sockets and it can contain any
 authenticated assertions that the issuer wants to include.
 
