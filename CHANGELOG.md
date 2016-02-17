@@ -1,5 +1,7 @@
 # Master (Unreleased)
 
+* Add Guardian.Plug.Backdoor for acceptance testing
+
 # v 0.10.1
 
 * Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
