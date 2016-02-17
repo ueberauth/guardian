@@ -59,6 +59,8 @@ Update the poison and phoenix deps to allow a broader version setting
 * Use existing resource on conn if already present
 * Fix refresh to correctly use revoke
 
+* Add Guardian.Plug.Backdoor for acceptance testing
+
 # v 0.10.1
 
 * Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
