@@ -1,4 +1,5 @@
 defmodule Guardian.Plug.ErrorHandlerTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
 

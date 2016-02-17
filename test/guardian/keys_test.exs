@@ -1,4 +1,5 @@
 defmodule Guardian.KeysTest do
+  @moduledoc false
   use ExUnit.Case, async: true
 
   test "base_key with atom" do

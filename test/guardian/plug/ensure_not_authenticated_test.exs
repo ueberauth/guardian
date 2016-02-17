@@ -1,10 +1,13 @@
 defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
 
   alias Guardian.Plug.EnsureNotAuthenticated
 
   defmodule TestHandler do
+    @moduledoc false
+
     def already_authenticated(conn, _) do
       conn
       |> Plug.Conn.assign(:guardian_spec, :authenticated)
@@ -35,15 +38,15 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   end
 
   test "it validates claims and fails if the claims do match" do
-    claims = %{ "aud" => "token", "sub" => "user1" }
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
+    claims = %{"aud" => "token", "sub" => "user1"}
+    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
     opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
     assert already_authenticated?(ensured_conn)
   end
 
   test "it validates claims and calls through if the claims are not ok" do
-    claims = %{ "aud" => "oauth", "sub" => "user1" }
+    claims = %{"aud" => "oauth", "sub" => "user1"}
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
     opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
@@ -51,15 +54,15 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   end
 
   test "call authenticated when there's a session with default key" do
-    claims = %{ "aud" => "token", "sub" => "user1" }
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({ :ok, claims })
+    claims = %{"aud" => "token", "sub" => "user1"}
+    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
     opts = EnsureNotAuthenticated.init(handler: TestHandler)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
     assert already_authenticated?(ensured_conn)
   end
 
   test "call authenticated when theres a session with specific key" do
-    claims = %{ "aud" => "token", "sub" => "user1" }
+    claims = %{"aud" => "token", "sub" => "user1"}
     conn = :get
             |> conn("/foo")
             |> Guardian.Plug.set_claims({:ok, claims}, :secret)

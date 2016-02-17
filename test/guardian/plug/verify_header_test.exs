@@ -1,4 +1,5 @@
 defmodule Guardian.Plug.VerifyHeaderTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
   import Guardian.TestHelper
@@ -13,8 +14,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
-    claims = Claims.app_claims(%{ "sub" => "user", "aud" => "aud" })
-    { _, jwt } = jose_jwk
+    claims = Claims.app_claims(%{"sub" => "user", "aud" => "aud"})
+    {_, jwt} = jose_jwk
                  |> JOSE.JWT.sign(jose_jws, claims)
                  |> JOSE.JWS.compact
 
@@ -47,7 +48,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> put_req_header("authorization", context.jwt)
       |> run_plug(VerifyHeader)
 
-    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
@@ -57,7 +58,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> put_req_header("authorization", context.jwt)
       |> run_plug(VerifyHeader, %{key: :secret})
 
-    assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn, :secret) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end
 
@@ -69,7 +70,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> Guardian.Plug.set_current_token(context.jwt)
       |> run_plug(VerifyHeader, %{key: :secret})
 
-    assert Guardian.Plug.claims(conn, :secret) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn, :secret) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn, :secret) == context.jwt
   end
 
@@ -79,13 +80,13 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> put_req_header("authorization", "Bearer #{context.jwt}")
       |> run_plug(VerifyHeader, realm: "Bearer")
 
-    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn) == context.jwt
   end
 
   test "with a realm specified and multiple auth headers", context do
-    claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
-    { _, jwt2 } = context.jose_jwk
+    claims2 = Claims.app_claims(%{"sub" => "user2", "aud" => "aud2"})
+    {_, jwt2} = context.jose_jwk
                   |> JOSE.JWT.sign(context.jose_jws, claims2)
                   |> JOSE.JWS.compact
 
@@ -95,13 +96,13 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> put_req_header("authorization", "Client #{jwt2}")
       |> run_plug(VerifyHeader, realm: "Client")
 
-    assert Guardian.Plug.claims(conn) == { :ok, claims2 }
+    assert Guardian.Plug.claims(conn) == {:ok, claims2}
     assert Guardian.Plug.current_token(conn) == jwt2
   end
 
   test "pulls different tokens into different locations", context do
-    claims2 = Claims.app_claims(%{ "sub" => "user2", "aud" => "aud2" })
-    { _, jwt2 } =context.jose_jwk
+    claims2 = Claims.app_claims(%{"sub" => "user2", "aud" => "aud2"})
+    {_, jwt2} = context.jose_jwk
                   |> JOSE.JWT.sign(context.jose_jws, claims2)
                   |> JOSE.JWS.compact
 
@@ -116,9 +117,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
            |> run_plug(VerifyHeader, realm: "Bearer")
            |> run_plug(VerifyHeader, realm: "Client", key: :client)
 
-    assert Guardian.Plug.claims(conn, :client) == { :ok, claims2 }
+    assert Guardian.Plug.claims(conn, :client) == {:ok, claims2}
     assert Guardian.Plug.current_token(conn, :client) == jwt2
-    assert Guardian.Plug.claims(conn) == { :ok, context.claims }
+    assert Guardian.Plug.claims(conn) == {:ok, context.claims}
     assert Guardian.Plug.current_token(conn) == context.jwt
   end
 end

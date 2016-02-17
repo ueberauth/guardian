@@ -1,4 +1,5 @@
 defmodule Guardian.ClaimsTest do
+  @moduledoc false
   use ExUnit.Case, async: true
   @tag timeout: 1000
 

@@ -1,4 +1,5 @@
 defmodule Guardian.PlugTest do
+  @moduledoc false
   require Plug.Test
   use ExUnit.Case, async: true
   use Plug.Test
@@ -28,14 +29,14 @@ defmodule Guardian.PlugTest do
   end
 
   test "set_claims with no key", context do
-    claims = {:ok, %{ "some" => "claim" }}
+    claims = {:ok, %{"some" => "claim"}}
     new_conn = Guardian.Plug.set_claims(context.conn, claims)
 
     assert Guardian.Plug.claims(new_conn) == claims
   end
 
   test "set_claims with a key", context do
-    claims = {:ok, %{ "some" => "claim" }}
+    claims = {:ok, %{"some" => "claim"}}
     new_conn = Guardian.Plug.set_claims(context.conn, claims, :secret)
     assert Guardian.Plug.claims(new_conn, :secret) == claims
   end
@@ -45,7 +46,7 @@ defmodule Guardian.PlugTest do
   end
 
   test "claims with no key and a value", context do
-    claims = %{ "some" => "claim" }
+    claims = %{"some" => "claim"}
     new_conn = Guardian.Plug.set_claims(context.conn, {:ok, claims})
     assert Guardian.Plug.claims(new_conn) == {:ok, claims}
   end
@@ -55,7 +56,7 @@ defmodule Guardian.PlugTest do
   end
 
   test "claims with a key and a value", context do
-    claims = %{ "some" => "claim" }
+    claims = %{"some" => "claim"}
     new_conn = Guardian.Plug.set_claims(context.conn, {:ok, claims}, :secret)
     assert Guardian.Plug.claims(new_conn, :secret) == {:ok, claims}
   end
@@ -136,15 +137,15 @@ defmodule Guardian.PlugTest do
   test "sign_out/1", context do
     conn = context.conn
            |> conn_with_fetched_session
-           |> Guardian.Plug.sign_in(%{ user: "here" }, :token)
+           |> Guardian.Plug.sign_in(%{user: "here"}, :token)
 
-    assert Guardian.Plug.current_resource(conn) == %{ user: "here" }
+    assert Guardian.Plug.current_resource(conn) == %{user: "here"}
 
     cleared_conn = conn
      |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), "default jwt")
      |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), "secret jwt")
-     |> Guardian.Plug.set_claims(%{ claims: "yeah" })
-     |> Guardian.Plug.set_claims(%{ claims: "yeah" }, :secret)
+     |> Guardian.Plug.set_claims(%{claims: "yeah"})
+     |> Guardian.Plug.set_claims(%{claims: "yeah"}, :secret)
      |> Guardian.Plug.set_current_resource("resource")
      |> Guardian.Plug.set_current_resource("resource", :secret)
      |> Guardian.Plug.set_current_token("token")
@@ -172,8 +173,8 @@ defmodule Guardian.PlugTest do
     conn = conn_with_fetched_session(context.conn)
 
     cleared_conn = conn
-     |> Guardian.Plug.set_claims({:ok, %{ claims: "admin" }}, :secret)
-     |> Guardian.Plug.set_claims({:ok, %{ claims: "default" }})
+     |> Guardian.Plug.set_claims({:ok, %{claims: "admin"}}, :secret)
+     |> Guardian.Plug.set_claims({:ok, %{claims: "default"}})
      |> Guardian.Plug.set_current_resource("admin_resource", :secret)
      |> Guardian.Plug.set_current_resource("default_resource")
      |> Guardian.Plug.set_current_token("admin_token", :secret)
@@ -181,7 +182,7 @@ defmodule Guardian.PlugTest do
      |> Guardian.Plug.sign_out(:secret)
 
     assert Guardian.Plug.claims(cleared_conn, :secret) == {:error, :no_session}
-    assert Guardian.Plug.claims(cleared_conn) == {:ok, %{ claims: "default" }}
+    assert Guardian.Plug.claims(cleared_conn) == {:ok, %{claims: "default"}}
     assert Guardian.Plug.current_resource(cleared_conn, :secret) == nil
     assert Guardian.Plug.current_resource(cleared_conn) == "default_resource"
     assert Guardian.Plug.current_token(cleared_conn, :secret) == nil
@@ -208,11 +209,11 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.current_token(conn) != nil
 
     jwt = Guardian.Plug.current_token(conn)
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
 
-    { :ok, claims} = Guardian.Plug.claims(conn)
+    {:ok, claims} = Guardian.Plug.claims(conn)
     assert claims
   end
 
@@ -226,7 +227,7 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.current_token(conn) != nil
 
     jwt = Guardian.Plug.current_token(conn)
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"
@@ -261,11 +262,11 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.current_token(conn) != nil
 
     jwt = Guardian.Plug.current_token(conn)
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
 
-    { :ok, claims} = Guardian.Plug.claims(conn)
+    {:ok, claims} = Guardian.Plug.claims(conn)
     assert claims
   end
 
@@ -278,7 +279,7 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.current_token(conn) != nil
 
     jwt = Guardian.Plug.current_token(conn)
-    { :ok, claims } = Guardian.decode_and_verify(jwt)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"
