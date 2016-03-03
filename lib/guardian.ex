@@ -184,7 +184,7 @@ defmodule Guardian do
 
     case encode_and_sign(resource, type, new_claims) do
       {:ok, jwt, full_claims} ->
-        revoke!(jwt, claims)
+        revoke!(jwt, claims, %{})
         {:ok, jwt, full_claims}
       {:error, reason} -> {:error, reason}
     end
