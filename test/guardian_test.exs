@@ -25,13 +25,25 @@ defmodule GuardianTest do
                   |> JOSE.JWT.sign(jose_jws, claims)
                   |> JOSE.JWS.compact
 
+    es512_jose_jwk = JOSE.JWK.generate_key({:ec, :secp521r1})
+    es512_jose_jws = JOSE.JWS.from_map(%{"alg" => "ES512"})
+    es512_jose_jwt = es512_jose_jwk
+      |> JOSE.JWT.sign(es512_jose_jws, claims)
+      |> JOSE.JWS.compact
+      |> elem(1)
+
     {
       :ok,
       %{
         claims: claims,
         jwt: jwt,
         jose_jws: jose_jws,
-        jose_jwk: jose_jwk
+        jose_jwk: jose_jwk,
+        es512: %{
+          jwk: es512_jose_jwk,
+          jws: es512_jose_jws,
+          jwt: es512_jose_jwt
+        }
       }
     }
   end
@@ -58,6 +70,21 @@ defmodule GuardianTest do
 
   test "it verifies the jwt", context do
     assert Guardian.decode_and_verify(context.jwt) == {:ok, context.claims}
+  end
+
+  test "it verifies the jwt with custom secret %JOSE.JWK{} struct", context do
+    secret = context.es512.jwk
+    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
+  end
+
+  test "it verifies the jwt with custom secret function", context do
+    secret = fn -> context.es512.jwk end
+    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
+  end
+
+  test "it verifies the jwt with custom secret map", context do
+    secret = context.es512.jwk |> JOSE.JWK.to_map |> elem(1)
+    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
   end
 
   test "verifies the issuer", context do
@@ -177,6 +204,48 @@ defmodule GuardianTest do
     {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
+      some: "thing",
+      secret: secret
+    )
+
+    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
+    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
+  end
+
+  test "encode_and_sign custom headers and custom secret %JOSE.JWK{} struct", context do
+    secret = context.es512.jwk
+    {:ok, jwt, _} = Guardian.encode_and_sign(
+      "thinger",
+      "my_type",
+      headers: %{"alg" => "ES512"},
+      some: "thing",
+      secret: secret
+    )
+
+    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
+    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
+  end
+
+  test "encode_and_sign custom headers and custom secret function", context do
+    secret = fn -> context.es512.jwk end
+    {:ok, jwt, _} = Guardian.encode_and_sign(
+      "thinger",
+      "my_type",
+      headers: %{"alg" => "ES512"},
+      some: "thing",
+      secret: secret
+    )
+
+    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
+    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
+  end
+
+  test "encode_and_sign custom headers and custom secret map", context do
+    secret = context.es512.jwk |> JOSE.JWK.to_map |> elem(1)
+    {:ok, jwt, _} = Guardian.encode_and_sign(
+      "thinger",
+      "my_type",
+      headers: %{"alg" => "ES512"},
       some: "thing",
       secret: secret
     )

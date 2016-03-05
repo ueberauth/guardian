@@ -289,10 +289,11 @@ defmodule Guardian do
     Map.merge(%{"alg" => hd(allowed_algos)}, headers)
   end
 
-  defp jose_jwk(the_secret) do
-    secret = the_secret || config(:secret_key)
-    %{"kty" => "oct", "k" => :base64url.encode(secret)}
-  end
+  defp jose_jwk(the_secret = %JOSE.JWK{}), do: the_secret
+  defp jose_jwk(the_secret) when is_binary(the_secret), do: JOSE.JWK.from_oct(the_secret)
+  defp jose_jwk(the_secret) when is_function(the_secret, 0), do: the_secret.()
+  defp jose_jwk(the_secret) when is_map(the_secret), do: JOSE.JWK.from_map(the_secret)
+  defp jose_jwk(nil), do: jose_jwk(config(:secret_key) || false)
 
   defp encode_claims(claims) do
     {headers, claims} = strip_value(claims, "headers", %{})
