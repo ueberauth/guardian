@@ -11,7 +11,8 @@ defmodule Guardian.Serializer do
   @doc """
   Serializes the object into the token. Suggestion: \"User:2\"
   """
-  defcallback for_token(object :: term) :: String.t
+  defcallback for_token(object :: term) :: {:ok, String.t} |
+                                           {:error, String.t}
 
   @doc """
   De-serializes the object from a token
