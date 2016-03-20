@@ -168,9 +168,9 @@ defmodule Guardian do
     end
   end
 
-  defp do_refresh!(_jwt, claims, params) do
+  defp do_refresh!(original_jwt, original_claims, params) do
     params = Enum.into(params, %{})
-    new_claims = claims
+    new_claims = original_claims
      |> Map.drop(["jti", "iat", "exp", "nbf"])
      |> Map.merge(params)
      |> Guardian.Claims.jti
@@ -184,7 +184,7 @@ defmodule Guardian do
 
     case encode_and_sign(resource, type, new_claims) do
       {:ok, jwt, full_claims} ->
-        revoke!(jwt, claims)
+        revoke!(original_jwt, peek_claims(original_jwt), %{})
         {:ok, jwt, full_claims}
       {:error, reason} -> {:error, reason}
     end
