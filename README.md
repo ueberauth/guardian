@@ -96,6 +96,18 @@ will call the `:unauthenticated` function of your handler.
 When you ensure a session, you must declare an error handler. This can be done
 as part of a pipeline or inside a Phoenix controller.
 
+### Guardian.Plug.LoadResource
+
+Up to now the other plugs have been just looking for valid tokens in various
+places or making sure that the token has the correct permissions.
+
+The `LoadResource` plug looks in the `sub` field of the token, fetches the
+resource from the Serializer and makes the available via
+`Guardian.Plug.current_resource(conn)`
+
+Note that this does not _ensure_ that there is a resource that could be loaded.
+It does a best effort to load the resource only.
+
 ```elixir
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
