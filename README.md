@@ -51,8 +51,53 @@ The items in the configuration allow you to tailor how the JWT generation behave
 * `issuer` - The entry to put into the token as the issuer. This can be used in conjunction with `verify_issuer`
 * `ttl` - The default ttl of a token
 * `verify_issuer` - If set to true, the issuer will be verified to be the same issuer as specified in the `issuer` field
-* `secret_key` - The key to sign the tokens
+* `secret_key` - The key to sign the tokens. See below for examples.
 * `serializer` The serializer that serializes the 'sub' (Subject) field into and out of the token.
+
+## Secret Key
+
+By specifying a binary, the default behavior is to treat the key as an [`"oct"`](https://tools.ietf.org/html/rfc7518#section-6.4) key type (short for octet sequence). This key type may be used with the `"HS256"`, `"HS384"`, and `"HS512"` signature algorithms.
+
+Alternatively, a `Map`, `Function`, or `%JOSE.JWK{} Struct` may be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
+
+See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from jose for how to generate your own keys.
+
+```elixir
+## Map ##
+
+config :guardian, Guardian,
+  allowed_algos: ["ES512"],
+  secret_key: %{
+    "crv" => "P-521",
+    "d" => "axDuTtGavPjnhlfnYAwkHa4qyfz2fdseppXEzmKpQyY0xd3bGpYLEF4ognDpRJm5IRaM31Id2NfEtDFw4iTbDSE",
+    "kty" => "EC",
+    "x" => "AL0H8OvP5NuboUoj8Pb3zpBcDyEJN907wMxrCy7H2062i3IRPF5NQ546jIJU3uQX5KN2QB_Cq6R_SUqyVZSNpIfC",
+    "y" => "ALdxLuo6oKLoQ-xLSkShv_TA0di97I9V92sg1MKFava5hKGST1EKiVQnZMrN3HO8LtLT78SNTgwJSQHAXIUaA-lV"
+  }
+
+## Function ##
+# If, for example, you have your secret key stored externally (in this example, we're using Redix).
+
+config :guardian, Guardian,
+  allowed_algos: ["RS512"],
+  secret_key: fn ->
+    # Bad practice for example purposes only.
+    # An already established connection should be used and possibly cache the value locally.
+    {:ok, conn} = Redix.start_link
+    rsa_jwk = conn
+      |> Redix.command!(["GET my-rsa-key"])
+      |> JOSE.JWK.from_binary
+    Redix.stop(conn)
+    rsa_jwk
+  end
+
+## %JOSE.JWK{} Struct ##
+# Useful if you store your secret key in an encrypted JSON file with the passphrase in an environment variable.
+
+config :guardian, Guardian,
+  allowed_algos: ["Ed25519"],
+  secret_key: System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
+```
 
 ## Serializer
 
