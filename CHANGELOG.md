@@ -1,5 +1,8 @@
 # Master (Unreleased)
 
+* Support for secret keys other than "oct" which provides support for signature
+  algorithms other than HSxxx. See #122
+
 # v 0.10.1
 
 * Fix error in Guardian.Plug.ErrorHandler when Accept header is unset.
