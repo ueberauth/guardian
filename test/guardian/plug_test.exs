@@ -231,7 +231,9 @@ defmodule Guardian.PlugTest do
 
     assert claims["sub"]["user"] == "here"
     assert claims["here"] == "we are"
+    assert claims["typ"] == "token"
   end
+
 
   test "api_sign_in(object) error", context do
     conn = context.conn
