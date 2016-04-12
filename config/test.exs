@@ -2,7 +2,7 @@ use Mix.Config
 
 config :guardian, Guardian,
       issuer: "MyApp",
-      allowed_algos: ["HS512"],
+      allowed_algos: ["HS512", "ES512"],
       ttl: { 1, :days },
       verify_issuer: true,
       secret_key: "woiuerojksldkjoierwoiejrlskjdf",
