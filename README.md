@@ -443,7 +443,7 @@ You can use Guardian to refresh tokens. This keeps most of the information in
 the token intact, but changes the `iat`, `exp`, `jti` and `nbf` fields.
 
 ```elixir
-case Guardian.refresh!(existing_jwt, exisiting_claims, %{ttl: {15, :days}}) do
+case Guardian.refresh!(existing_jwt, existing_claims, %{ttl: {15, :days}}) do
   {:ok, new_jwt, new_claims} -> do_things(new_jwt)
   {:error, reason} -> handle_error(reason)
 end
@@ -493,7 +493,7 @@ To authenticate the initial connect there's a couple of options.
 1. Automatically authenticate
 2. Authenticate with more control manually.
 
-To automatcially authenticate `use` the Guardian.Phoenix.Socket module in your
+To automatically authenticate `use` the Guardian.Phoenix.Socket module in your
 socket.
 
 ```elixir
@@ -612,7 +612,7 @@ feedback to get up and running.
 - [x] Flexible serialization
 - [x] Integration with Plug
 - [x] Basic integrations like raw TCP
-- [x] Sevice2Service credentials. That is, pass the authentication results through many downstream requests.
+- [x] Service2Service credentials. That is, pass the authentication results through many downstream requests.
 - [x] Integration with Phoenix channels
 - [x] Integrated permission sets
 - [x] Hooks into the authentication cycle
