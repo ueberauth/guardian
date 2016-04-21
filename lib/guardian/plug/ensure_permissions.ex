@@ -16,6 +16,12 @@ defmodule Guardian.Plug.EnsurePermissions do
                               default: [:profile],
                               handler: SomeMod
 
+      # read AND write permissions for the admin set
+      # OR :profile for the default set
+      plug EnsurePermissions, one_of: [%{admin: [:read, :write]},
+                              %{default: [:profile]}],
+                              handler: SomeMod
+
       # admin :read AND :write for the claims located in the :secret location
       plug EnsurePermissions, key: :secret,
                               admin: [:read, :write],
@@ -36,7 +42,17 @@ defmodule Guardian.Plug.EnsurePermissions do
     on_failure = Map.get(opts, :on_failure)
     key = Map.get(opts, :key, :default)
     handler = Map.get(opts, :handler)
-    perms = Map.drop(opts, [:handler, :on_failure, :key])
+
+    perm_sets = case Map.get(opts, :one_of) do
+      nil ->
+        single_set = Map.drop(opts, [:handler, :on_failure, :key, :one_of])
+        if Enum.empty?(single_set) do
+          []
+        else
+          [single_set]
+        end
+      one_of -> one_of
+    end
 
     if handler do
       handler = {handler, :unauthorized}
@@ -52,8 +68,7 @@ defmodule Guardian.Plug.EnsurePermissions do
     %{
       handler: handler,
       key: key,
-      perm_keys: Map.keys(perms),
-      perms: perms,
+      perm_sets: perm_sets
     }
   end
 
@@ -62,23 +77,32 @@ defmodule Guardian.Plug.EnsurePermissions do
     key = Map.get(opts, :key)
     case Guardian.Plug.claims(conn, key) do
       {:ok, claims} ->
-        perms = Map.get(opts, :perms, %{})
-        result = Enum.all?(Map.get(opts, :perm_keys), fn(perm_key) ->
-          found_perms = Guardian.Permissions.from_claims(claims, perm_key)
-          Guardian.Permissions.all?(
-            found_perms,
-            Map.get(perms, perm_key),
-            perm_key
-          )
-        end)
-        if result, do: conn, else: handle_error(conn, opts)
+        if matches_permissions?(claims, Map.get(opts, :perm_sets)) do
+          conn
+        else
+          handle_error(conn, opts)
+        end
       {:error, _} -> handle_error(conn, opts)
     end
+  end
+
+  defp matches_permissions?(_, []), do: true
+  defp matches_permissions?(claims, sets) do
+    Enum.any?(sets, &matches_permission_set?(claims, &1))
+  end
+
+  defp matches_permission_set?(claims, set) do
+    Enum.all?(set, fn({perm_key, required_perms}) ->
+      claims
+      |> Guardian.Permissions.from_claims(perm_key)
+      |> Guardian.Permissions.all?(required_perms, perm_key)
+    end)
   end
 
   defp handle_error(%Plug.Conn{params: params} = conn, opts) do
     conn = conn |> assign(:guardian_failure, :forbidden) |> halt
     params = Map.merge(params, %{reason: :forbidden})
+
     {mod, meth} = Map.get(opts, :handler)
 
     apply(mod, meth, [conn, params])
