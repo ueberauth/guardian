@@ -102,11 +102,12 @@ Up to now the other plugs have been just looking for valid tokens in various
 places or making sure that the token has the correct permissions.
 
 The `LoadResource` plug looks in the `sub` field of the token, fetches the
-resource from the Serializer and makes the available via
+resource from the Serializer and makes it available via
 `Guardian.Plug.current_resource(conn)`
 
-Note that this does not _ensure_ that there is a resource that could be loaded.
-It does a best effort to load the resource only.
+Note that this does _not ensure_ a resource will be loaded.
+If there is no available resource (because it could not be found)
+`current_resource` will return nil.
 
 ```elixir
 defmodule MyApp.MyController do
