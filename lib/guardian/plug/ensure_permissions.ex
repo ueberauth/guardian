@@ -76,17 +76,11 @@ defmodule Guardian.Plug.EnsurePermissions do
     end
   end
 
-  defp handle_error(conn, opts) do
-    the_connection = conn |> assign(:guardian_failure, :forbidden) |> halt
-
+  defp handle_error(%Plug.Conn{params: params} = conn, opts) do
+    conn = conn |> assign(:guardian_failure, :forbidden) |> halt
+    params = Map.merge(params, %{reason: :forbidden})
     {mod, meth} = Map.get(opts, :handler)
-    apply(
-      mod,
-      meth,
-      [
-        the_connection,
-        Map.merge(the_connection.params, %{reason: :forbidden})
-      ]
-    )
+
+    apply(mod, meth, [conn, params])
   end
 end
