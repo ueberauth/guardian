@@ -46,22 +46,20 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     end
   end
 
-  @doc false
-  defp handle_error(conn, reason, opts) do
-    the_connection = conn |> assign(:guardian_failure, reason) |> halt
-
+  defp handle_error(%Plug.Conn{params: params} = conn, reason, opts) do
+    conn = conn |> assign(:guardian_failure, reason) |> halt
+    params = Map.merge(params, %{reason: reason})
     {mod, meth} = Map.get(opts, :handler)
-    apply(
-      mod,
-      meth,
-      [the_connection, Map.merge(the_connection.params, %{reason: reason})]
-    )
+
+    apply(mod, meth, [conn, params])
   end
 
   defp check_claims(conn, opts = %{claims: claims_to_check}, claims) do
-    claims_match = claims_to_check
-                   |> Map.keys
-                   |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
+    claims_match =
+      claims_to_check
+      |> Map.keys
+      |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
+
     if claims_match do
       conn
     else
@@ -72,12 +70,9 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   defp build_handler_tuple(%{handler: mod}) do
     {mod, :unauthenticated}
   end
-  defp build_handler_tuple(%{on_failure: {mod, func}}) do
-    Logger.log(
-      :warn,
-      ":on_failure is deprecated. Use the :handler option instead"
-    )
-    {mod, func}
+  defp build_handler_tuple(%{on_failure: {mod, fun}}) do
+    Logger.warn(":on_failure is deprecated. Use the :handler option instead")
+    {mod, fun}
   end
   defp build_handler_tuple(_) do
     {Guardian.Plug.ErrorHandler, :unauthenticated}
