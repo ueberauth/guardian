@@ -42,7 +42,7 @@ defmodule Guardian.Channel do
     quote do
       import Guardian.Phoenix.Socket
 
-      def join(room, auth = %{"guardian_token" => jwt}, socket) do
+      def join(room, params = %{"guardian_token" => jwt}, socket) do
         case sign_in(socket, jwt, params, key: unquote(key)) do
           {:ok, authed_socket, guardian_params} ->
             join(room, Map.merge(params, guardian_params), authed_socket)
