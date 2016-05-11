@@ -21,9 +21,7 @@ defmodule Guardian.Plug.LoadResource do
     key = Map.get(opts, :key, :default)
 
     case Guardian.Plug.current_resource(conn, key) do
-      {:ok, _} -> conn
-      {:error, _} -> conn
-      _ ->
+      nil ->
         case Guardian.Plug.claims(conn, key) do
           {:ok, claims} ->
             result = Guardian.serializer.from_token(Map.get(claims, "sub"))
@@ -31,6 +29,7 @@ defmodule Guardian.Plug.LoadResource do
           {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
           _ -> Guardian.Plug.set_current_resource(conn, nil, key)
         end
+      _ -> conn
     end
   end
 
