@@ -2,6 +2,13 @@
 
 * Support for secret keys other than "oct" which provides support for signature
   algorithms other than HSxxx. See #122
+* Fix incorrect param name in channel
+* Tighten up log calls
+* Fix moar typos
+* General code cleanup
+* Losen poison requirement to >= 1.3.0
+* Use existing resource on conn if already present
+* Fix refresh to correctly use revoke
 
 # v 0.10.1
 
