@@ -1,4 +1,6 @@
-# Master (Unreleased)
+# Master (unreleased)
+
+# v 0.11.1
 
 * Support for secret keys other than "oct" which provides support for signature
   algorithms other than HSxxx. See #122
