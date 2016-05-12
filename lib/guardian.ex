@@ -192,6 +192,50 @@ defmodule Guardian do
     end
   end
 
+
+  @doc """
+  Exchange a token with type 'refresh' for a token with type 'token'
+  with the same claims but a shorter expiry time.
+
+  The token with typ 'refresh' will be revoked after the exhange
+
+  """
+  @spec exchange!(String.t) :: {:ok, String.t, Map} |
+                              {:error, atom} |
+                              {:error, String.t}
+
+  def exchange!(long_living_jwt) do
+    case decode_and_verify(long_living_jwt) do
+      {:ok, found_claims} ->
+        do_exchange!(long_living_jwt, found_claims)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp do_exchange!(long_living_jwt, claims) do
+    type = Map.get(claims, "typ")
+    if type === "refresh" do
+      new_claims = claims
+       |> Map.drop(["jti", "iat", "exp", "nbf"])
+       |> Guardian.Claims.jti
+       |> Guardian.Claims.nbf
+       |> Guardian.Claims.iat
+       |> Guardian.Claims.ttl
+      {:ok, resource} = Guardian.serializer.from_token(claims["sub"])
+
+      case encode_and_sign(resource, nil, new_claims) do
+        {:ok, jwt, full_claims} ->
+          revoke!(long_living_jwt, peek_claims(long_living_jwt), %{})
+          {:ok, jwt, full_claims}
+        {:error, reason} -> {:error, reason}
+      end
+
+    else
+        {:error, :incorrect_token_type}
+    end
+  end
+
+
   @doc """
   Fetch the configured serializer module
   """
@@ -349,7 +393,7 @@ defmodule Guardian do
                       |> Guardian.Claims.app_claims
                       |> Guardian.Claims.typ(type)
                       |> Guardian.Claims.sub(sub)
-                      |> set_ttl
+                      |> set_ttl(type)
                       |> set_aud_if_nil(sub)
 
         {:ok, full_claims}
@@ -373,10 +417,16 @@ defmodule Guardian do
     |> Map.delete("perms")
   end
 
-  defp set_ttl(claims) do
-    claims
-    |> Guardian.Claims.ttl
-    |> Map.delete("ttl")
+  defp set_ttl(claims, type) do
+    if type === "refresh" do
+      claims
+      |> Map.delete("ttl")
+      |> Guardian.Claims.ttl(Guardian.config(:refresh_ttl, {10, :years}))
+    else
+      claims
+      |> Guardian.Claims.ttl
+      |> Map.delete("ttl")
+    end
   end
 
   def set_aud_if_nil(claims, value) do
