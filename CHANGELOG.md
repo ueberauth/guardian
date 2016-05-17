@@ -1,5 +1,7 @@
 # Master (unreleased)
 
+* Add `one_of` to permissions Plug to allow for OR'd sets of permissions as well as AND'd ones
+
 # v 0.11.1
 
 * Support for secret keys other than "oct" which provides support for signature
