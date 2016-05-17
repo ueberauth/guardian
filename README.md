@@ -177,6 +177,19 @@ defmodule MyApp.MyController do
 end
 ```
 
+When permissions' sets are specified through a `:one_of` map, the token is searched for at least one
+matching permissions set to allow the request. The first set that matches will allow the request.
+If no set matches, the `:unauthorized` function is called.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, 
+    one_of: [%{default: [:read, :write]}, %{other: [:read]}]
+end
+```
+
 ### Pipelines
 
 These plugs can be used to construct pipelines in Phoenix.
