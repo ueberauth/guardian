@@ -51,7 +51,12 @@ defmodule Guardian.Plug.EnsurePermissions do
         else
           [single_set]
         end
-      one_of -> one_of
+      one_of ->
+        if Keyword.keyword?(one_of) do
+          [Enum.into(one_of, %{})]
+        else
+          one_of
+        end
     end
 
     if handler do
