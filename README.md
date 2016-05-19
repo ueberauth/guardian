@@ -196,7 +196,7 @@ If no set matches, the `:unauthorized` function is called.
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, 
+  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler,
     one_of: [%{default: [:read, :write]}, %{other: [:read]}]
 end
 ```
@@ -478,7 +478,7 @@ config :guardian, Guardian,
 
 You can use Guardian to refresh tokens. This keeps most of the information in
 the token intact, but changes the `iat`, `exp`, `jti` and `nbf` fields.
-A valid token must be used in order to be refreshed, 
+A valid token must be used in order to be refreshed,
 see [Refresh Tokens](###Refresh Tokens) for information on how to refresh invalid tokens
 
 ```elixir
@@ -489,16 +489,16 @@ end
 ```
 
 Once the new token is created, the old one is revoked before returning the new
-token. 
+token.
 
 ### Refresh Tokens
 
-You can create refresh token, which by default are long living. These can later be exhanged for shorter living access tokens, which can be used as a authorization token.
+You can create refresh token, which by default are long living. These can later be exchanged for shorter living access tokens, which can be used as a authorization token.
 
 ```elixir
-    #issue a long living refresh token
+    # issue a long living refresh token
     {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
-    #exhange the refresh token for a access token
+    # exchange the refresh token for a access token
     {:ok, new_jwt, new_claims} = Guardian.exchange!(jwt)
 ```
 
