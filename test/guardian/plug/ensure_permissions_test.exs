@@ -150,6 +150,31 @@ defmodule Guardian.Plug.EnsurePermissionTest do
     refute unauthorized?(expected_conn)
   end
 
+  test "is valid one_of and permissions are a kw list", %{conn: conn} do
+    pems = Guardian.Permissions.to_value(
+      [:read, :write, :update, :delete],
+      :default
+    )
+
+    other_pems = Guardian.Permissions.to_value(
+      [:other_read, :other_write],
+      :other
+    )
+
+    claims = %{"pem" => %{"special" => other_pems, "default" => pems}}
+    expected_conn =
+    conn
+    |> Guardian.Plug.set_claims({:ok, claims})
+    |> Plug.Conn.fetch_query_params
+    |> run_plug(
+      EnsurePermissions,
+      handler: TestHandler,
+      one_of: [default: [:read]]
+    )
+
+    refute unauthorized?(expected_conn)
+  end
+
   test "halts the connection", %{conn: conn} do
     pems = Guardian.Permissions.to_value(
       [:read, :write, :update, :delete],
