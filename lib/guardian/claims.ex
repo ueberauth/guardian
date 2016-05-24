@@ -3,7 +3,7 @@ defmodule Guardian.Claims do
   import Guardian.Utils
 
   @doc false
-  def app_claims, do: %{"iss" => Guardian.issuer} |> iat |> ttl |> jti
+  def app_claims, do: %{"iss" => Guardian.issuer} |> iat |> jti
 
   @doc false
   def app_claims(existing_claims) do
@@ -68,6 +68,9 @@ defmodule Guardian.Claims do
   def iat(claims), do: Map.put(claims, "iat", timestamp)
   @doc false
   def iat(claims, ts), do: Map.put(claims, "iat", ts)
+
+  @doc false
+  def ttl(claims = %{"exp" => _exp}), do: claims
 
   @doc false
   def ttl(claims = %{"ttl" => requested_ttl}) do
