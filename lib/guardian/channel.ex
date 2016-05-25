@@ -17,7 +17,7 @@ defmodule Guardian.Channel do
         end
 
         def handle_in("ping", _payload, socket) do
-          user = Guardian.Channel.current_resource(socket)
+          user = current_resource(socket)
           broadcast(socket, "pong", %{message: "pong", from: user.email})
           {:noreply, socket}
         end
@@ -45,7 +45,11 @@ defmodule Guardian.Channel do
       def join(room, params = %{"guardian_token" => jwt}, socket) do
         case sign_in(socket, jwt, params, key: unquote(key)) do
           {:ok, authed_socket, guardian_params} ->
-            join(room, Map.merge(params, guardian_params), authed_socket)
+            join_params = params
+            |> Map.drop(["guardian_token"])
+            |> Map.merge(guardian_params)
+
+            join(room, join_params, authed_socket)
           {:error, reason} -> handle_guardian_auth_failure(reason)
         end
       end
