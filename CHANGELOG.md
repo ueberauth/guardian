@@ -1,6 +1,8 @@
 # Master (unreleased)
 
+# v 0.12.0
 * Add `one_of` to permissions Plug to allow for OR'd sets of permissions as well as AND'd ones
+* Fix infinite recursion bug when joining channels
 
 # v 0.11.1
 
