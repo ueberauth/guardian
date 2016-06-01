@@ -96,7 +96,9 @@ config :guardian, Guardian,
 
 config :guardian, Guardian,
   allowed_algos: ["Ed25519"],
-  secret_key: System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
+  secret_key: fn ->
+    System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
+  end
 ```
 
 ## Serializer
