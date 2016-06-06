@@ -2,9 +2,8 @@ defmodule Guardian do
   @moduledoc """
   A module that provides JWT based authentication for Elixir applications.
 
-  Guardian provides the framework for using JWT any elixir application,
-  web based or otherwise,
-  Where authentication is required.
+  Guardian provides the framework for using JWT in any Elixir application,
+  web based or otherwise, where authentication is required.
 
   The base unit of authentication currency is implemented using JWTs.
 
