@@ -8,9 +8,11 @@
 * Added integration tests
 
 #v 0.12.1
+
 * Adds long living refresh tokens which can be exchanged to shorter living access tokens
 
 # v 0.12.0
+
 * Add `one_of` to permissions Plug to allow for OR'd sets of permissions as well as AND'd ones
 * Fix infinite recursion bug when joining channels
 

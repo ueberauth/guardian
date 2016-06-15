@@ -92,6 +92,27 @@ defmodule Guardian.ClaimsTest do
     end
   end
 
+  test "ttl with refresh typ" do
+    claims = %{"typ" => "refresh"}
+    the_claims = Guardian.Claims.ttl(claims)
+    assert the_claims["iat"]
+    assert the_claims["exp"] == the_claims["iat"] + 30 * 24 * 60 * 60
+  end
+
+  test "ttl with access typ" do
+    claims = %{"typ" => "access"}
+    the_claims = Guardian.Claims.ttl(claims)
+    assert the_claims["iat"]
+    assert the_claims["exp"] == the_claims["iat"] + 24 * 60 * 60
+  end
+
+  test "ttl fallback to default" do
+    claims = %{"typ" => "non_exsisting_token"}
+    the_claims = Guardian.Claims.ttl(claims)
+    assert the_claims["iat"]
+    assert the_claims["exp"] == the_claims["iat"] + 2 * 24 * 60 * 60
+  end
+
   test "encodes permissions into the claims" do
     claims = Guardian.Claims.permissions(%{}, default: [:read, :write])
     assert claims == %{"pem" => %{"default" => 3}}
