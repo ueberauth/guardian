@@ -365,10 +365,14 @@ defmodule Guardian do
     |> Map.delete("perms")
   end
 
-  defp set_ttl(claims) do
+  defp set_ttl(claims = %{"ttl" => _}) do
     claims
     |> Guardian.Claims.ttl
     |> Map.delete("ttl")
+  end
+
+  defp set_ttl(claims) do
+    claims
   end
 
   def set_aud_if_nil(claims, value) do

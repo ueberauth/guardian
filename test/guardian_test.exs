@@ -194,6 +194,30 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
+  test "encode_and_sign(object, aud) with ttl in claims" do
+  claims = Guardian.Claims.app_claims
+           |> Guardian.Claims.ttl({5, :days})
+
+  {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type", claims)
+
+  {:ok, claims} = Guardian.decode_and_verify(jwt)
+  assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
+end
+
+test "encode_and_sign(object, aud) with exp and iat" do
+  iat = Guardian.Utils.timestamp - 100
+  exp = Guardian.Utils.timestamp + 100
+
+  {:ok, jwt, _} = Guardian.encode_and_sign(
+    "thinger",
+    "my_type",
+    %{"exp" => exp, "iat" => iat})
+
+  {:ok, claims} = Guardian.decode_and_verify(jwt)
+  assert claims["exp"] == exp
+  assert claims["iat"] == iat
+end
+
   test "encode_and_sign with a serializer error" do
     {:error, reason} = Guardian.encode_and_sign(%{error: :unknown})
     assert reason
