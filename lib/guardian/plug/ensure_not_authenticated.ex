@@ -16,7 +16,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticated do
                                                  key: :secret
 
       plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule,
-                                                 aud: "token"
+                                                 typ: "access"
 
   If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
   the default behavior.

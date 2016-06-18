@@ -14,7 +14,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
       # look in the :secret location.  You can also do simple claim checks:
       plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret
 
-      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, aud: "token"
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, typ: "access"
 
   If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
   the default behavior.

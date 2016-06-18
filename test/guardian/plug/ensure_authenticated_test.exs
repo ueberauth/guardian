@@ -64,12 +64,12 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   end
 
   test "validates claims and calls through if claims are ok", %{conn: conn} do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
 
     ensured_conn =
       conn
       |> Guardian.Plug.set_claims({:ok, claims})
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, aud: "token")
+      |> run_plug(EnsureAuthenticated, handler: TestHandler, typ: "access")
 
     refute must_authenticate?(ensured_conn)
   end
@@ -80,13 +80,13 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     ensured_conn =
       conn
       |> Guardian.Plug.set_claims({:ok, claims})
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, aud: "token")
+      |> run_plug(EnsureAuthenticated, handler: TestHandler, typ: "access")
 
     assert must_authenticate?(ensured_conn)
   end
 
   test "doesn't call unauth when session for default key", %{conn: conn} do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
 
     ensured_conn =
       conn
@@ -97,7 +97,7 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   end
 
   test "doesn't call unauthenticated when session for key", %{conn: conn} do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
 
     ensured_conn =
       conn

@@ -101,7 +101,7 @@ defmodule Guardian.Permissions do
 
       Guardian.Plug.sign_in(
         user,
-        :token_type,
+        :access
         perms: %{ admin: [:users_read],
         default: [:read_item, :write_item] }
       )
@@ -112,7 +112,7 @@ defmodule Guardian.Permissions do
 
       Guardian.encode_and_sign(
         user,
-        :token_type,
+        :access,
         perms: %{
           admin: [:users_read],
           default: [:read_item, :write_item]

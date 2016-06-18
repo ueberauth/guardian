@@ -18,7 +18,7 @@ defmodule Guardian.ClaimsTest do
 
   test "typ with nil" do
     claims = %{}
-    assert Guardian.Claims.typ(claims, nil) == %{"typ" => "token"}
+    assert Guardian.Claims.typ(claims, nil) == %{"typ" => "access"}
   end
 
   test "typ with an typ atom" do

@@ -38,9 +38,9 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   end
 
   test "it validates claims and fails if the claims do match" do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
+    opts = EnsureNotAuthenticated.init(handler: TestHandler, typ: "access")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
     assert already_authenticated?(ensured_conn)
   end
@@ -48,13 +48,13 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   test "it validates claims and calls through if the claims are not ok" do
     claims = %{"aud" => "oauth", "sub" => "user1"}
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, aud: "token")
+    opts = EnsureNotAuthenticated.init(handler: TestHandler, typ: "access")
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
     refute already_authenticated?(ensured_conn)
   end
 
   test "call authenticated when there's a session with default key" do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
     conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
     opts = EnsureNotAuthenticated.init(handler: TestHandler)
     ensured_conn = EnsureNotAuthenticated.call(conn, opts)
@@ -62,7 +62,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   end
 
   test "call authenticated when theres a session with specific key" do
-    claims = %{"aud" => "token", "sub" => "user1"}
+    claims = %{"typ" => "access", "sub" => "user1"}
     conn = :get
             |> conn("/foo")
             |> Guardian.Plug.set_claims({:ok, claims}, :secret)
