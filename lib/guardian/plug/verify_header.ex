@@ -41,9 +41,10 @@ defmodule Guardian.Plug.VerifyHeader do
     realm = Map.get(opts_map, :realm)
     if realm do
       {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
-      opts_map = Map.put(opts_map, :realm_reg, reg)
+      Map.put(opts_map, :realm_reg, reg)
+    else
+      opts_map
     end
-    opts_map
   end
 
   def call(conn, opts) do

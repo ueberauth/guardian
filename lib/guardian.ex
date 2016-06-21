@@ -210,8 +210,13 @@ defmodule Guardian do
   @spec decode_and_verify(String.t, Map) :: {:ok, Map} |
                                             {:error, atom | String.t}
   def decode_and_verify(jwt, params) do
-    params = stringify_keys(params)
-    if verify_issuer?, do: params = Map.put_new(params, "iss", issuer)
+    params = if verify_issuer? do
+      params
+      |> stringify_keys
+      |> Map.put_new("iss", issuer)
+    else
+      params
+    end
     params = stringify_keys(params)
     {secret, params} = strip_value(params, "secret")
 
@@ -373,9 +378,10 @@ defmodule Guardian do
 
   def set_aud_if_nil(claims, value) do
     if Map.get(claims, "aud") == nil do
-      claims = Guardian.Claims.aud(claims, value)
+      Guardian.Claims.aud(claims, value)
+    else
+      claims
     end
-    claims
   end
 
   defp strip_value(map, key, default \\ nil) do
