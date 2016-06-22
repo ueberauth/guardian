@@ -194,17 +194,6 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
-  test "encode_and_sign(object, aud) with ttl" do
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      ttl: {5, :days}
-    )
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
-  end
-
   test "encode_and_sign(object, aud) with ttl in claims" do
     claims = Guardian.Claims.app_claims
     |> Guardian.Claims.ttl({5, :days})

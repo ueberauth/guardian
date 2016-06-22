@@ -2,6 +2,7 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
+  import ExUnit.CaptureLog
   import Guardian.TestHelper
 
   alias Guardian.Plug.EnsureAuthenticated
@@ -28,11 +29,15 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   end
 
   test "init/1 sets the handler option to the value of on_failure" do
-    %{handler: handler_opts} = EnsureAuthenticated.init(
-      on_failure: {TestHandler, :custom_failure_method}
-    )
+    fun = fn ->
+      %{handler: handler_opts} = EnsureAuthenticated.init(
+        on_failure: {TestHandler, :custom_failure_method}
+      )
 
-    assert handler_opts == {TestHandler, :custom_failure_method}
+      assert handler_opts == {TestHandler, :custom_failure_method}
+    end
+
+    assert capture_log([level: :warn], fun) =~ ":on_failure is deprecated"
   end
 
   test "init/1 defaults the handler option to Guardian.Plug.ErrorHandler" do

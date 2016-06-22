@@ -138,7 +138,7 @@ defmodule Guardian.Permissions do
     end
   end
 
-  def available(type) when is_atom(type), do: Map.get(all_available, type, [])
+  def available(type) when is_atom(type), do: Map.get(all_available(), type, [])
 
   def all_available, do: Enum.into(Guardian.config(:permissions, %{}), %{})
 

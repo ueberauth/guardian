@@ -7,7 +7,7 @@ defmodule Guardian.Claims do
 
   @doc false
   def app_claims(existing_claims) do
-    Map.merge(app_claims, Enum.into(existing_claims, %{}))
+    Map.merge(app_claims(), Enum.into(existing_claims, %{}))
   end
 
   @doc """
@@ -60,12 +60,12 @@ defmodule Guardian.Claims do
   def jti(claims, id), do: Map.put(claims, "jti", id)
 
   @doc false
-  def nbf(claims), do: Map.put(claims, "nbf", timestamp - 1)
+  def nbf(claims), do: Map.put(claims, "nbf", timestamp() - 1)
   @doc false
   def nbf(claims, ts), do: Map.put(claims, "nbf", ts)
 
   @doc false
-  def iat(claims), do: Map.put(claims, "iat", timestamp)
+  def iat(claims), do: Map.put(claims, "iat", timestamp())
   @doc false
   def iat(claims, ts), do: Map.put(claims, "iat", ts)
 
@@ -97,7 +97,7 @@ defmodule Guardian.Claims do
   end
 
   defp assign_exp_from_ttl(the_claims, {nil, _}) do
-    Map.put_new(the_claims, timestamp + 1_000_000_000)
+    Map.put_new(the_claims, "exp", timestamp() + 1_000_000_000)
   end
 
   defp assign_exp_from_ttl(the_claims, {iat_v, {millis, unit}})
