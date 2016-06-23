@@ -13,7 +13,6 @@ defmodule Guardian.Utils do
 
   @doc false
   def timestamp do
-    {mgsec, sec, _usec} = :os.timestamp
-    mgsec * 1_000_000 + sec
+    :os.system_time(:seconds)
   end
 end
