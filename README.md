@@ -14,6 +14,15 @@ The core currency of authentication in Guardian is [JSON Web Tokens](https://jwt
 authenticate web endpoints, channels, and TCP sockets and it can contain any
 authenticated assertions that the issuer wants to include.
 
+## Useful articles
+
+If you are very new to Guardian, you'll find the "Simple Guardian" series of articles useful:
+
+* [Simple Guardian - Browser login](http://blog.overstuffedgorilla.com/simple-guardian/)
+* [Simple Guardian - API authentication](http://blog.overstuffedgorilla.com/simple-guardian-api-authentication/)
+* [Simple Guardian - Permissions](http://blog.overstuffedgorilla.com/simple-guardian-permissions/)
+* [Simple Guardian - Multiple Sessions](http://blog.overstuffedgorilla.com/simple-guardian-multiple-sessions/)
+
 ## Installation
 
 Add Guardian to your application
