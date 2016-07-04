@@ -97,7 +97,7 @@ defmodule Guardian.Claims do
   end
 
   defp assign_exp_from_ttl(the_claims, {nil, _}) do
-    Map.put_new(the_claims, timestamp + 1_000_000_000)
+    Map.put_new(the_claims, "exp", timestamp + 1_000_000_000)
   end
 
   defp assign_exp_from_ttl(the_claims, {iat_v, {millis, unit}})
