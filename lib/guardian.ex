@@ -210,10 +210,10 @@ defmodule Guardian do
   @spec decode_and_verify(String.t, Map) :: {:ok, Map} |
                                             {:error, atom | String.t}
   def decode_and_verify(jwt, params) do
-    params = if verify_issuer? do
+    params = if verify_issuer?() do
       params
       |> stringify_keys
-      |> Map.put_new("iss", issuer)
+      |> Map.put_new("iss", issuer())
     else
       params
     end
@@ -262,16 +262,16 @@ defmodule Guardian do
   The configured issuer. If not configured, defaults to the node that issued.
   """
   @spec issuer() :: String.t
-  def issuer, do: config(:issuer, to_string(node))
+  def issuer, do: config(:issuer, to_string(node()))
 
   defp verify_issuer?, do: config(:verify_issuer, false)
 
   @doc false
   def config, do: Application.get_env(:guardian, Guardian)
   @doc false
-  def config(key), do: Keyword.get(config, key)
+  def config(key), do: Keyword.get(config(), key)
   @doc false
-  def config(key, default), do: Keyword.get(config, key, default)
+  def config(key, default), do: Keyword.get(config(), key, default)
 
   @doc """
   Read the header of the token.
@@ -290,7 +290,7 @@ defmodule Guardian do
   end
 
   defp jose_jws(headers) do
-    Map.merge(%{"alg" => hd(allowed_algos)}, headers)
+    Map.merge(%{"alg" => hd(allowed_algos())}, headers)
   end
 
   defp jose_jwk(the_secret = %JOSE.JWK{}), do: the_secret
@@ -311,7 +311,7 @@ defmodule Guardian do
 
   defp decode_token(token, secret) do
     secret = secret || config(:secret_key)
-    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos, token) do
+    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos(), token) do
       {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
       {false, _, _} -> {:error, :invalid_token}
     end

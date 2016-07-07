@@ -16,15 +16,15 @@ defmodule Guardian.Mixfile do
       app: :guardian,
       version: @version,
       elixir: "~> 1.1",
-      package: package,
+      package: package(),
       source_url: @url,
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       maintainers: @maintainers,
       description: "Elixir Authentication framework",
       homepage_url: @url,
-      docs: docs,
-      deps: deps
+      docs: docs(),
+      deps: deps()
     ]
   end
 
@@ -44,6 +44,7 @@ defmodule Guardian.Mixfile do
     [{:jose, "~> 1.6"},
      {:poison, ">= 1.3.0"},
      {:plug, "~> 1.0"},
+     {:phoenix, "~> 1.1.0", optional: true},
      {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
      {:credo, "~> 0.3", only: [:dev, :test]},
