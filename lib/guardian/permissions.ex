@@ -161,7 +161,7 @@ defmodule Guardian.Permissions do
   Permissions live in the :pem key and are a map of
     "<type>": <value of permissions as integer>
   """
-  @spec from_claims(Map) :: Lsit
+  @spec from_claims(Map) :: List
   def from_claims(claims), do: from_claims(claims, :default)
 
   def from_claims(claims, type) do
