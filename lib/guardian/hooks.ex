@@ -31,13 +31,13 @@ defmodule Guardian.Hooks do
   defcallback before_encode_and_sign(
     resource :: term,
     type :: atom,
-    claims :: Map
+    claims :: map()
   )
 
   defcallback after_encode_and_sign(
     resource :: term,
     type :: atom,
-    claims :: Map,
+    claims :: map(),
     token :: String.t
   )
 
@@ -52,12 +52,12 @@ defmodule Guardian.Hooks do
   )
 
   defcallback on_verify(
-    claims :: Map,
+    claims :: map(),
     jwt :: String.t
   )
 
   defcallback on_revoke(
-    claims :: Map,
+    claims :: map(),
     jwt :: String.t
   )
 end
