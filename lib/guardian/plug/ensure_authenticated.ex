@@ -43,7 +43,9 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
-    phoenix_action = Map.get(conn, :private) |> Map.get(:phoenix_action)
+    phoenix_action = conn
+      |> Map.get(:private)
+      |> Map.get(:phoenix_action)
     allowed_actions = Map.get(opts, :except)
 
     if is_list(allowed_actions) && Enum.member?(allowed_actions, phoenix_action) do
