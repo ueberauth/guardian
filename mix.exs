@@ -35,8 +35,7 @@ defmodule Guardian.Mixfile do
   def docs do
     [
       extras: ["README.md", "CHANGELOG.md"],
-      source_ref: "v#{@version}",
-      main: "extra-readme"
+      source_ref: "v#{@version}"
     ]
   end
 
