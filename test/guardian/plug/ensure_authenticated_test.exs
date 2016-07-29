@@ -52,14 +52,16 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     assert options == %{
       claims: %{},
       handler: {Guardian.Plug.ErrorHandler, :unauthenticated},
-      key: :default
+      key: :default,
+      except: []
     }
   end
 
-  test "init/1 uses all opts as claims except :on_failure, :key and :handler" do
+  test "init/1 uses all opts as claims except :on_failure, :key, :except and :handler" do
     %{claims: claims} = EnsureAuthenticated.init(
       on_failure: {TestHandler, :some_method},
       key: :super_secret,
+      except: [],
       handler: TestHandler,
       foo: "bar",
       another: "option"
@@ -127,6 +129,18 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     )
 
     assert must_authenticate?(ensured_conn)
+  end
+
+  test "doesn't call unauthenticated when action is allowed", %{conn: conn} do
+    conn = put_private(conn, :phoenix_action, :allowed_action)
+
+    ensured_conn = run_plug(conn,
+      EnsureAuthenticated,
+      handler: TestHandler,
+      key: :secret,
+      except: [:allowed_action])
+
+    refute must_authenticate?(ensured_conn)
   end
 
   test "it halts the connection", %{conn: conn} do
