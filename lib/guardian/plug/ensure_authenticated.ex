@@ -16,6 +16,9 @@ defmodule Guardian.Plug.EnsureAuthenticated do
 
       plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, aud: "token"
 
+      # It is also possible to exclude actions from authentication
+      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, except: [:new, :create]
+
   If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
   the default behavior.
   """
@@ -27,11 +30,12 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     opts = Enum.into(opts, %{})
     handler = build_handler_tuple(opts)
 
-    claims_to_check = Map.drop(opts, [:on_failure, :key, :handler])
+    claims_to_check = Map.drop(opts, [:on_failure, :key, :handler, :except])
     %{
       handler: handler,
       key: Map.get(opts, :key, :default),
-      claims: Guardian.Utils.stringify_keys(claims_to_check)
+      claims: Guardian.Utils.stringify_keys(claims_to_check),
+      except: Map.get(opts, :except) || []
     }
   end
 
@@ -39,10 +43,19 @@ defmodule Guardian.Plug.EnsureAuthenticated do
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
-    case Guardian.Plug.claims(conn, key) do
-      {:ok, claims} -> conn |> check_claims(opts, claims)
-      {:error, reason} -> handle_error(conn, {:error, reason}, opts)
-      _ -> handle_error(conn, {:error, :no_session}, opts)
+    phoenix_action = conn
+      |> Map.get(:private)
+      |> Map.get(:phoenix_action)
+    allowed_actions = Map.get(opts, :except)
+
+    if is_list(allowed_actions) && Enum.member?(allowed_actions, phoenix_action) do
+      conn
+    else
+      case Guardian.Plug.claims(conn, key) do
+        {:ok, claims} -> conn |> check_claims(opts, claims)
+        {:error, reason} -> handle_error(conn, {:error, reason}, opts)
+        _ -> handle_error(conn, {:error, :no_session}, opts)
+      end
     end
   end
 

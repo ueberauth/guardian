@@ -162,6 +162,18 @@ end
 
 The failure function must receive the connection, and the connection params.
 
+It is also possible to pass a list of actions to be excluded from authentication.
+This can be useful for signup. Here you could exclude the `:new` and `:create` actions
+in the UserController (or whatever handles your signup).
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug Guardian.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler, except: [:new, :create]
+end
+```
+
 ### Guardian.Plug.LoadResource
 
 Up to now the other plugs have been just looking for valid tokens in various
@@ -196,7 +208,7 @@ If no set matches, the `:unauthorized` function is called.
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, 
+  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler,
     one_of: [%{default: [:read, :write]}, %{other: [:read]}]
 end
 ```
