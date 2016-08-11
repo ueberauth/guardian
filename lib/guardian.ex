@@ -211,10 +211,12 @@ defmodule Guardian do
     end
   end
 
-  defp do_exchange(from_typ, to_typ, claims) do
-    if correct_typ?(claims, from_typ) do
-      {:ok, resource} = Guardian.serializer.from_token(claims["sub"])
-      case encode_and_sign(resource, to_typ, %{}) do
+  defp do_exchange(from_typ, to_typ, original_claims) do
+    if correct_typ?(original_claims, from_typ) do
+      {:ok, resource} = Guardian.serializer.from_token(original_claims["sub"])
+      new_claims = original_claims
+       |> Map.drop(["jti", "iat", "exp", "nbf", "typ"])
+      case encode_and_sign(resource, to_typ, new_claims) do
         {:ok, jwt, full_claims} -> {:ok, jwt, full_claims}
         {:error, reason} -> {:error, reason}
       end
