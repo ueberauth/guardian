@@ -194,11 +194,14 @@ defmodule Guardian do
 
 
   @doc """
-  Exchange a token with type 'refresh' for a token with type 'token'
-  with the same claims but a shorter expiry time.
+  Exchange a token with type 'from_type' for a token with type 'to_type', the
+  claims(apart from "jti", "iat", "exp", "nbf" and "typ) will persists though the
+  exchange
+  Can be used to get an access token from a refresh token
 
-  The token with typ 'refresh' will be revoked after the exhange
+      Guardian.exchange(existing_jwt, "refresh", "access")
 
+  The old token wont be revoked after the exchange
   """
   @spec exchange(String.t, String.t, String.t) :: {:ok, String.t, Map} |
                               {:error, atom} |
@@ -211,6 +214,7 @@ defmodule Guardian do
     end
   end
 
+  @doc false
   defp do_exchange(from_typ, to_typ, original_claims) do
     if correct_typ?(original_claims, from_typ) do
       {:ok, resource} = Guardian.serializer.from_token(original_claims["sub"])
@@ -225,19 +229,23 @@ defmodule Guardian do
     end
   end
 
+  @doc false
   defp correct_typ?(claims, typ) when is_binary(typ) do
     Map.get(claims, "typ") === typ
   end
 
+  @doc false
   defp correct_typ?(claims, typ) when is_atom(typ) do
     Map.get(claims, "typ") === to_string(typ)
   end
 
+  @doc false
   defp correct_typ?(claims, typ_list) when is_list(typ_list) do
     typ = Map.get(claims, "typ")
     typ_list |> Enum.any?(&(&1 === typ))
   end
 
+  @doc false
   defp correct_typ?(_claims, _typ) do
     false
   end
