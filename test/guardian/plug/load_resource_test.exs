@@ -30,10 +30,29 @@ defmodule Guardian.Plug.LoadResourceTest do
     assert Guardian.Plug.current_resource(conn) == nil
   end
 
-  test "with no resource set and valid claims", %{conn: conn} do
+  test "with no resource set, valid claims, default serializer", %{conn: conn} do
+    sub =  "User:42"
+
+    conn = conn
+    |> Guardian.Plug.set_claims({:ok, %{"sub" => sub}})
+    |> run_plug(LoadResource)
+
+    {:ok, resource} = Guardian.serializer.from_token(sub)
+    assert Guardian.Plug.current_resource(conn) == resource
+  end
+
+  test "with valid claims and custom serializer", %{conn: conn} do
+    defmodule TestSerializer do
+      @moduledoc false
+      @behaviour Guardian.Serializer
+
+      def from_token("User:" <> id), do: {:ok, id}
+      def for_token(_), do: {:ok, nil}
+    end
+
     conn = conn
     |> Guardian.Plug.set_claims({:ok, %{"sub" => "User:42"}})
-    |> run_plug(LoadResource)
-    assert Guardian.Plug.current_resource(conn) == "User:42"
+    |> run_plug(LoadResource, serializer: TestSerializer)
+    assert Guardian.Plug.current_resource(conn) == "42"
   end
 end
