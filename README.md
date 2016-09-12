@@ -27,7 +27,7 @@ If you are very new to Guardian, you'll find the "Simple Guardian" series of art
 
 Add Guardian to your application
 
-mix.deps
+mix.exs
 
 ```elixir
 defp deps do
