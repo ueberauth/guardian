@@ -24,7 +24,9 @@ defmodule Guardian.Mixfile do
       description: "Elixir Authentication framework",
       homepage_url: @url,
       docs: docs(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [plt_file: ".dialyzer/local.plt",
+                 plt_add_deps: :project]
     ]
   end
 
@@ -47,7 +49,8 @@ defmodule Guardian.Mixfile do
      {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
      {:credo, "~> 0.3", only: [:dev, :test]},
-     {:uuid, ">=1.1.1"}]
+     {:uuid, ">=1.1.1"},
+     {:dialyxir, "~> 0.3.5", only: [:dev, :test]}]
   end
 
   defp package do
