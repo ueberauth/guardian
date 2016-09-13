@@ -167,7 +167,7 @@ defmodule Guardian.Phoenix.Socket do
   def sign_out!(socket, key \\ :default) do
     jwt = current_token(socket)
     the_claims = current_claims(socket)
-    Guardian.revoke!(jwt, the_claims)
+    _ = Guardian.revoke!(jwt, the_claims)
     sign_out(socket, key)
   end
 

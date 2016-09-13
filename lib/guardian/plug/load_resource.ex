@@ -27,7 +27,6 @@ defmodule Guardian.Plug.LoadResource do
             result = Guardian.serializer.from_token(Map.get(claims, "sub"))
             set_current_resource_from_serializer(conn, key, result)
           {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
-          _ -> Guardian.Plug.set_current_resource(conn, nil, key)
         end
       _ -> conn
     end

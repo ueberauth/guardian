@@ -76,7 +76,6 @@ defmodule Guardian.Plug.VerifyHeader do
     fetch_token(conn, opts, Plug.Conn.get_req_header(conn, "authorization"))
   end
 
-  defp fetch_token(_, _, nil), do: nil
   defp fetch_token(_, _, []), do: nil
 
   defp fetch_token(conn, opts = %{realm_reg: reg}, [token|tail]) do

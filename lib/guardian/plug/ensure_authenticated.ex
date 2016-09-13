@@ -42,7 +42,6 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     case Guardian.Plug.claims(conn, key) do
       {:ok, claims} -> conn |> check_claims(opts, claims)
       {:error, reason} -> handle_error(conn, {:error, reason}, opts)
-      _ -> handle_error(conn, {:error, :no_session}, opts)
     end
   end
 
@@ -71,7 +70,7 @@ defmodule Guardian.Plug.EnsureAuthenticated do
     {mod, :unauthenticated}
   end
   defp build_handler_tuple(%{on_failure: {mod, fun}}) do
-    Logger.warn(":on_failure is deprecated. Use the :handler option instead")
+    _ = Logger.warn(":on_failure is deprecated. Use the :handler option instead")
     {mod, fun}
   end
   defp build_handler_tuple(_) do
