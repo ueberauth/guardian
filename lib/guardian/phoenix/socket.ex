@@ -29,6 +29,7 @@ defmodule Guardian.Phoenix.Socket do
   should `import Guardian.Phoenix.Socket` and use the `sign_in` function
   to authenticate.
 
+  ```elixir
   defmodule MyApp.UserSocket do
     use Phoenix.Socket
     import Guardian.Phoenix.Socket
@@ -41,6 +42,7 @@ defmodule Guardian.Phoenix.Socket do
       end
     end
   end
+  ```
 
   If you want to authenticate on the join of a channel, you can import this
   module and use the sign_in function as normal.
