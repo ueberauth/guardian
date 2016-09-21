@@ -2,15 +2,22 @@ defmodule Guardian.Plug.LoadResource do
   @moduledoc """
   Fetches the resource specified in a set of claims.
 
-  The `Guardian.serializer/0` is used
-  once the subject is extracted from the token.
+  The current resource is loaded by calling `from_token/1` on your
+  `Guardian.Serializer` with the value of the `sub` claim. See the `:serializer`
+  option for more details.
 
-  The resource becomes available at `Guardian.Plug.current_resource(conn)`
-  if successful.
+  If the the resource is loaded successfully, it is accessible by calling
+  `Guardian.Plug.current_resource/2`.
 
-  If there is no valid JWT in the request so far (Guardian.Plug.VerifySession /
-  Guardian.Plug.VerifyHeader) did not find a valid token
-  then nothing will occur, and the Guardian.Plug.current_resource/1 will be nil
+  If there is no valid JWT in the request so far (`Guardian.Plug.VerifySession`
+  / `Guardian.Plug.VerifyHeader`) did not find a valid token
+  then nothing will occur, and `Guardian.Plug.current_resource/2` will be nil.
+
+  ## Options
+
+    * `:serializer` - The serializer to use to load the current resource from
+        the subject claim of the token. Defaults to the result of
+        `Guardian.serializer/0`.
   """
 
   @doc false
@@ -24,8 +31,7 @@ defmodule Guardian.Plug.LoadResource do
       nil ->
         case Guardian.Plug.claims(conn, key) do
           {:ok, claims} ->
-            result = Guardian.serializer.from_token(Map.get(claims, "sub"))
-            set_current_resource_from_serializer(conn, key, result)
+            claims |> load_resource(opts) |> put_current_resource(conn, key)
           {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
           _ -> Guardian.Plug.set_current_resource(conn, nil, key)
         end
@@ -33,11 +39,21 @@ defmodule Guardian.Plug.LoadResource do
     end
   end
 
-  defp set_current_resource_from_serializer(conn, key, {:ok, resource}) do
+  defp put_current_resource({:ok, resource}, conn, key) do
     Guardian.Plug.set_current_resource(conn, resource, key)
   end
 
-  defp set_current_resource_from_serializer(conn, key, {:error, _}) do
+  defp put_current_resource({:error, _}, conn, key) do
     Guardian.Plug.set_current_resource(conn, nil, key)
+  end
+
+  defp load_resource(claims, opts) do
+    serializer = get_serializer(opts)
+
+    claims |> Map.get("sub") |> serializer.from_token
+  end
+
+  defp get_serializer(opts) do
+    Map.get(opts, :serializer, Guardian.serializer)
   end
 end

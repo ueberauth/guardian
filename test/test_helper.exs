@@ -51,6 +51,19 @@ defmodule Guardian.TestHelper do
     opts = apply(plug_module, :init, [plug_opts])
     apply(plug_module, :call, [conn, opts])
   end
+
+  def build_jwt(claims) do
+    config = Application.get_env(:guardian, Guardian)
+    algo = hd(Keyword.get(config, :allowed_algos))
+    secret = Keyword.get(config, :secret_key)
+
+    jose_jws = %{"alg" => algo}
+    jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
+    {_, jwt} = jose_jwk
+                 |> JOSE.JWT.sign(jose_jws, claims)
+                 |> JOSE.JWS.compact
+    jwt
+  end
 end
 
 ExUnit.start()
