@@ -69,7 +69,6 @@ defmodule Guardian.Plug do
   def authenticated?(conn, type) do
     case claims(conn, type) do
       {:error, _} -> false
-      nil -> false
       _ -> true
     end
   end
@@ -110,7 +109,7 @@ defmodule Guardian.Plug do
       Guardian.sign_in(conn, user, :token, perms: %{default: [:read, :write]})
 
   """
-  @spec sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
+  @spec sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t
   def sign_in(conn, object, type, new_claims) do
     the_key = Map.get(new_claims, :key, :default)
     new_claims = Map.delete(new_claims, :key)
@@ -171,7 +170,7 @@ defmodule Guardian.Plug do
         perms: %{default: [:read, :write]}
       )
   """
-  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Map) :: Plug.Conn.t
+  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t
   def api_sign_in(conn, object, type, new_claims) do
     the_key = Map.get(new_claims, :key, :default)
     new_claims = Map.delete(new_claims, :key)
@@ -205,7 +204,7 @@ defmodule Guardian.Plug do
   @doc """
   Fetch the currently verified claims from the current request
   """
-  @spec claims(Plug.Conn.t, atom) :: {:ok, Map} |
+  @spec claims(Plug.Conn.t, atom) :: {:ok, map} |
                                      {:error, atom | String.t}
   def claims(conn, the_key \\ :default) do
     case conn.private[claims_key(the_key)] do
@@ -216,7 +215,7 @@ defmodule Guardian.Plug do
   end
 
   @doc false
-  @spec set_claims(Plug.Conn.t, {:ok, Map}, atom) :: Plug.Conn.t
+  @spec set_claims(Plug.Conn.t, nil | {:ok, map} | {:error, String.t}, atom) :: Plug.Conn.t
   def set_claims(conn, new_claims, the_key \\ :default) do
     Plug.Conn.put_private(conn, claims_key(the_key), new_claims)
   end
@@ -319,7 +318,7 @@ defmodule Guardian.Plug do
     case Plug.Conn.get_session(conn, base_key(key)) do
       nil -> conn
       jwt ->
-        Guardian.revoke!(jwt)
+        _ = Guardian.revoke!(jwt)
         conn
     end
   end

@@ -64,7 +64,7 @@ defmodule Guardian.Plug.EnsurePermissions do
     else
       case on_failure do
         {mod, f} ->
-          Logger.warn(":on_failure is deprecated. Use :handler")
+          _ = Logger.warn(":on_failure is deprecated. Use :handler")
           {mod, f}
         _ -> raise "Requires a handler module to be passed"
       end

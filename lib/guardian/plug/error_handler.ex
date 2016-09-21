@@ -3,8 +3,8 @@ defmodule Guardian.Plug.ErrorHandler do
   A default error handler that can be used for failed authentication
   """
 
-  @callback unauthenticated(Plug.t, Map.t) :: Plug.t
-  @callback unauthorized(Plug.t, Map.t) :: Plug.t
+  @callback unauthenticated(Plug.Conn.t, map) :: Plug.Conn.t
+  @callback unauthorized(Plug.Conn.t, map) :: Plug.Conn.t
 
   import Plug.Conn
 

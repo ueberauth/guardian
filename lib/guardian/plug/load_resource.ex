@@ -33,7 +33,6 @@ defmodule Guardian.Plug.LoadResource do
           {:ok, claims} ->
             claims |> load_resource(opts) |> put_current_resource(conn, key)
           {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
-          _ -> Guardian.Plug.set_current_resource(conn, nil, key)
         end
       _ -> conn
     end

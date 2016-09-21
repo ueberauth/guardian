@@ -34,7 +34,7 @@ defmodule Guardian do
   The resource will be run through the configured serializer
   to obtain a value suitable for storage inside a JWT.
   """
-  @spec encode_and_sign(any) :: {:ok, String.t, Map} |
+  @spec encode_and_sign(any) :: {:ok, String.t, map} |
                                 {:error, atom} |
                                 {:error, String.t}
   def encode_and_sign(object), do: encode_and_sign(object, nil, %{})
@@ -45,7 +45,7 @@ defmodule Guardian do
 
   The type can be anything but suggested is "token".
   """
-  @spec encode_and_sign(any, atom | String.t) :: {:ok, String.t, Map} |
+  @spec encode_and_sign(any, atom | String.t) :: {:ok, String.t, map} |
                                                  {:error, atom} |
                                                  {:error, String.t}
   def encode_and_sign(object, type), do: encode_and_sign(object, type, %{})
@@ -70,7 +70,7 @@ defmodule Guardian do
         perms: %{ default: [:read, :write] }
       )
   """
-  @spec encode_and_sign(any, atom | String.t, Map) :: {:ok, String.t, Map} |
+  @spec encode_and_sign(any, atom | String.t, map) :: {:ok, String.t, map} |
                                                       {:error, atom} |
                                                       {:error, String.t}
   def encode_and_sign(object, type, claims) do
@@ -90,16 +90,13 @@ defmodule Guardian do
   end
 
   defp encode_from_hooked({:ok, {resource, type, claims_from_hook}}) do
-    case encode_claims(claims_from_hook) do
-      {:ok, jwt} ->
-        call_after_encode_and_sign_hook(
-          resource,
-          type,
-          claims_from_hook, jwt
-        )
-        {:ok, jwt, claims_from_hook}
-      {:error, reason} -> {:error, reason}
-    end
+    {:ok, jwt} = encode_claims(claims_from_hook)
+    call_after_encode_and_sign_hook(
+      resource,
+      type,
+      claims_from_hook, jwt
+    )
+    {:ok, jwt, claims_from_hook}
   end
 
   defp encode_from_hooked({:error, _reason} = error), do: error
@@ -145,7 +142,7 @@ defmodule Guardian do
 
   Note: A valid token must be used in order to be refreshed.
   """
-  @spec refresh!(String.t) :: {:ok, String.t, Map.t} | {:error, any}
+  @spec refresh!(String.t) :: {:ok, String.t, map} | {:error, any}
   def refresh!(jwt), do: refresh!(jwt, %{}, %{})
 
 
@@ -157,7 +154,7 @@ defmodule Guardian do
 
   Once the new token is created, the old one will be revoked.
   """
-  @spec refresh!(String.t, Map.t, Map.t) :: {:ok, String.t, Map.t} |
+  @spec refresh!(String.t, map, map) :: {:ok, String.t, map} |
                                             {:error, any}
   def refresh!(jwt, claims, params \\ %{}) do
     case decode_and_verify(jwt, params) do
@@ -183,7 +180,7 @@ defmodule Guardian do
 
     case encode_and_sign(resource, type, new_claims) do
       {:ok, jwt, full_claims} ->
-        revoke!(original_jwt, peek_claims(original_jwt), %{})
+        _ = revoke!(original_jwt, peek_claims(original_jwt), %{})
         {:ok, jwt, full_claims}
       {:error, reason} -> {:error, reason}
     end
@@ -192,13 +189,13 @@ defmodule Guardian do
   @doc """
   Fetch the configured serializer module
   """
-  @spec serializer() :: Module.t
+  @spec serializer() :: atom
   def serializer, do: config(:serializer)
 
   @doc """
   Verify the given JWT. This will decode_and_verify via decode_and_verify/2
   """
-  @spec decode_and_verify(String.t) :: {:ok, Map} |
+  @spec decode_and_verify(String.t) :: {:ok, map} |
                                        {:error, atom} |
                                        {:error, String.t}
   def decode_and_verify(jwt), do: decode_and_verify(jwt, %{})
@@ -207,7 +204,7 @@ defmodule Guardian do
   @doc """
   Verify the given JWT.
   """
-  @spec decode_and_verify(String.t, Map) :: {:ok, Map} |
+  @spec decode_and_verify(String.t, map) :: {:ok, map} |
                                             {:error, atom | String.t}
   def decode_and_verify(jwt, params) do
     params = if verify_issuer?() do
@@ -243,14 +240,14 @@ defmodule Guardian do
   If successfully verified, returns the claims encoded into the JWT.
   Raises otherwise
   """
-  @spec decode_and_verify!(String.t) :: Map
+  @spec decode_and_verify!(String.t) :: map
   def decode_and_verify!(jwt), do: decode_and_verify!(jwt, %{})
 
   @doc """
   If successfully verified, returns the claims encoded into the JWT.
   Raises otherwise
   """
-  @spec decode_and_verify!(String.t, Map) :: Map
+  @spec decode_and_verify!(String.t, map) :: map
   def decode_and_verify!(jwt, params) do
     case decode_and_verify(jwt, params) do
       {:ok, claims} -> claims

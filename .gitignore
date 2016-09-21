@@ -1,5 +1,6 @@
 /_build
 /deps
+/.dialyzer
 erl_crash.dump
 *.ez
 doc

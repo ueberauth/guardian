@@ -161,7 +161,7 @@ defmodule Guardian.Permissions do
   Permissions live in the :pem key and are a map of
     "<type>": <value of permissions as integer>
   """
-  @spec from_claims(Map) :: List
+  @spec from_claims(map) :: list
   def from_claims(claims), do: from_claims(claims, :default)
 
   def from_claims(claims, type) do
@@ -175,7 +175,7 @@ defmodule Guardian.Permissions do
   Fetches the value as a bitstring (integer)
   of the list of permissions in the `type` list
   """
-  @spec to_value(Integer, atom) :: Integer
+  @spec to_value(integer | list, atom) :: integer
   def to_value(num, _) when is_integer(num), do: num
 
   @doc false
