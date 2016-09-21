@@ -20,6 +20,7 @@ defmodule Guardian do
   import Guardian.Utils
 
   @default_algos ["HS512"]
+  @default_token_type "access"
 
   unless Application.get_env(:guardian, Guardian) do
     raise "Guardian is not configured"
@@ -30,6 +31,11 @@ defmodule Guardian do
   end
 
   @doc """
+  Returns the current default token type.
+  """
+  def default_token_type, do: @default_token_type
+
+  @doc """
   Encode and sign a JWT from a resource.
   The resource will be run through the configured serializer
   to obtain a value suitable for storage inside a JWT.
@@ -37,13 +43,13 @@ defmodule Guardian do
   @spec encode_and_sign(any) :: {:ok, String.t, map} |
                                 {:error, atom} |
                                 {:error, String.t}
-  def encode_and_sign(object), do: encode_and_sign(object, nil, %{})
+  def encode_and_sign(object), do: encode_and_sign(object, @default_token_type, %{})
 
   @doc """
   Like encode_and_sign/1 but also accepts the type (encoded to the typ key)
   for the JWT
 
-  The type can be anything but suggested is "token".
+  The type can be anything but suggested is "access".
   """
   @spec encode_and_sign(any, atom | String.t) :: {:ok, String.t, map} |
                                                  {:error, atom} |
@@ -66,7 +72,7 @@ defmodule Guardian do
 
       Guardian.encode_and_sign(
         user,
-        :token,
+        :access,
         perms: %{ default: [:read, :write] }
       )
   """

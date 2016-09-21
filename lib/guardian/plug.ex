@@ -8,13 +8,13 @@ defmodule Guardian.Plug do
   ## Example
 
       Guardian.Plug.sign_in(conn, user)
-      Guardian.Plug.sign_in(conn, user, :token)
+      Guardian.Plug.sign_in(conn, user, :access)
 
       # stores this JWT in a different location (keyed by :secret)
       Guardian.Plug.sign_in(
         conn,
         user,
-        :token,
+        :access,
         %{ claims: "i", make: true, key: :secret }
       )
 
@@ -30,13 +30,13 @@ defmodule Guardian.Plug do
   ## Example
 
       Guardian.Plug.api_sign_in(conn, user)
-      Guardian.Plug.api_sign_in(conn, user, :token)
+      Guardian.Plug.api_sign_in(conn, user, :access)
 
       # Store the JWT on the conn
       Guardian.Plug.api_sign_in(
         conn,
         user,
-        :token,
+        :access,
         %{
           claims: "i",
           make: true,
@@ -106,7 +106,7 @@ defmodule Guardian.Plug do
 
   ### Example
 
-      Guardian.sign_in(conn, user, :token, perms: %{default: [:read, :write]})
+      Guardian.sign_in(conn, user, :access, perms: %{default: [:read, :write]})
 
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t

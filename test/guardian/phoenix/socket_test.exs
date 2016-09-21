@@ -13,7 +13,7 @@ defmodule Guardian.Phoenix.SocketTest do
   setup do
     claims = %{
       "aud" => "User:1",
-      "typ" => "token",
+      "typ" => "access",
       "exp" => Guardian.Utils.timestamp + 100_00,
       "iat" => Guardian.Utils.timestamp,
       "iss" => "MyApp",

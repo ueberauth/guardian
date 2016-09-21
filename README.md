@@ -275,18 +275,18 @@ Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
 ```
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :token, claims)  # give some claims to used for the token jwt
+Guardian.Plug.sign_in(conn, user, :access, claims)  # give some claims to used for the token jwt
 
-Guardian.Plug.sign_in(conn, user, :token, key: :secret)  # create a token in the :secret location
+Guardian.Plug.sign_in(conn, user, :access, key: :secret)  # create a token in the :secret location
 ```
 
 To attach permissions to the token, use the `:perms` key and pass it a map.
 Note. To add permissions, you should configure them in your guardian config.
 
 ```elixir
-Guardian.Plug.sign_in(conn, user, :token, perms: %{ default: [:read, :write], admin: [:all] })
+Guardian.Plug.sign_in(conn, user, :access, perms: %{ default: [:read, :write], admin: [:all] })
 
-Guardian.Plug.sign_in(conn, user, :token, key: :secret, perms: %{ default: [:read, :write], admin: [:all]})  # create a token in the :secret location
+Guardian.Plug.sign_in(conn, user, :access, key: :secret, perms: %{ default: [:read, :write], admin: [:all]})  # create a token in the :secret location
 ```
 
 ### Guardian.Plug.sign\_out
@@ -332,21 +332,21 @@ sockets for e.g. If you need to do things your own way.
 
 This will give you a new JWT to use with the claims ready to go.
 The token type is encoded into the JWT as the 'typ' field and is intended to be
-used as the _type_ of token.
+used as the _type_ of "access".
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token)
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access)
 ```
 
 Add some permissions
 
 ```elixir
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
 ```
 
 Currently suggested token types are:
 
-* `"token"` - Use for API or CORS access. These are basic tokens.
+* `"access"` - Use for API or CORS access. These are basic tokens.
 
 You can also customize the claims you're asserting.
 
@@ -355,7 +355,7 @@ claims = Guardian.Claims.app_claims
          |> Map.put("some_claim", some_value)
          |> Guardian.Claims.ttl({3, :days})
 
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :token, claims)
+{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access, claims)
 ```
 
 To verify the token:
@@ -420,7 +420,7 @@ You can use a plug to ensure permissions are present. See Guardian.Plug.EnsurePe
 When you generate (or sign in) a token, you can inject permissions into it.
 
 ```elixir
-Guardian.encode_and_sign(resource, :token, perms: %{ admin: [:dashboard], default: Guardian.Permissions.max}})
+Guardian.encode_and_sign(resource, :access, perms: %{ admin: [:dashboard], default: Guardian.Permissions.max}})
 ```
 
 By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.

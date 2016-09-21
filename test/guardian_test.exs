@@ -6,7 +6,7 @@ defmodule GuardianTest do
   setup do
     claims = %{
       "aud" => "User:1",
-      "typ" => "token",
+      "typ" => "access",
       "exp" => Guardian.Utils.timestamp + 100_00,
       "iat" => Guardian.Utils.timestamp,
       "iss" => "MyApp",
@@ -93,7 +93,7 @@ defmodule GuardianTest do
 
   test "fails if the issuer is not correct", context do
     claims = %{
-      typ: "token",
+      typ: "access",
       exp: Guardian.Utils.timestamp + 100_00,
       iat: Guardian.Utils.timestamp,
       iss: "not the issuer",
@@ -146,7 +146,7 @@ defmodule GuardianTest do
     {:ok, jwt, _} = Guardian.encode_and_sign("thinger")
 
     {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["typ"] == "token"
+    assert claims["typ"] == "access"
     assert claims["aud"] == "thinger"
     assert claims["sub"] == "thinger"
     assert claims["iat"]

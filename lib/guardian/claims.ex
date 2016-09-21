@@ -28,7 +28,7 @@ defmodule Guardian.Claims do
   end
 
   @doc false
-  def typ(claims, nil), do: typ(claims, "token")
+  def typ(claims, nil), do: typ(claims, Guardian.default_token_type)
   @doc false
   def typ(claims, type) when is_atom(type), do: typ(claims, to_string(type))
   @doc false
