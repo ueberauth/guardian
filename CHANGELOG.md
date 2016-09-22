@@ -1,6 +1,11 @@
-# Master (unreleased)
+# v 0.13.0
 
 * Change default token type from "token" to "access"
+* Fix Dialyzer errors
+* Target Elixir 1.3+
+* Update Jose and Phoenix dependencies
+* Fixes for ttl and exp
+* Added integration tests
 
 # v 0.12.0
 * Add `one_of` to permissions Plug to allow for OR'd sets of permissions as well as AND'd ones
