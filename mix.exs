@@ -15,7 +15,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: "~> 1.1",
+      elixir: "~> 1.2",
       package: package(),
       source_url: @url,
       build_embedded: Mix.env == :prod,
@@ -42,10 +42,10 @@ defmodule Guardian.Mixfile do
   end
 
   defp deps do
-    [{:jose, "~> 1.6"},
+    [{:jose, "~> 1.8"},
      {:poison, ">= 1.3.0"},
      {:plug, "~> 1.0"},
-     {:phoenix, "~> 1.1.0", optional: true},
+     {:phoenix, "~> 1.2.0", optional: true},
      {:ex_doc, "~> 0.10", only: :docs},
      {:earmark, ">= 0.0.0", only: :docs},
      {:credo, "~> 0.3", only: [:dev, :test]},
