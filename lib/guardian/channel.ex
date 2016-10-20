@@ -49,7 +49,7 @@ defmodule Guardian.Channel do
             |> Map.drop(["guardian_token"])
             |> Map.merge(guardian_params)
 
-            join(room, join_params, authed_socket)
+            __MODULE__.join(room, join_params, authed_socket)
           {:error, reason} -> handle_guardian_auth_failure(reason)
         end
       end
