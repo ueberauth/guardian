@@ -28,7 +28,7 @@ defmodule Guardian.Plug.VerifySession do
 
     case Guardian.Plug.claims(conn, key) do
       {:ok, _} -> conn
-      {:error, :no_session} ->
+      {:error, _} ->
         jwt = Plug.Conn.get_session(conn, base_key(key))
 
         if jwt do
