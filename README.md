@@ -491,9 +491,20 @@ end
 Once the new token is created, the old one is revoked before returning the new
 token.
 
-### Refresh Tokens
+### Exhange Tokens
 
-You can create refresh token, which by default are long living. These can later be exchanged for shorter living access tokens, which can be used as a authorization token.
+You can exchange one type of token to an other given that the first is valid
+This can be used to issue long living tokens that can be exchanged for shorter living ones
+
+```elixir
+    # issue a long living refresh token
+    {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
+    # exchange the refresh token for a access token
+    {:ok, access_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
+```
+
+
+The old token wont be revoked after the exchange
 
 ```elixir
     # issue a long living refresh token
