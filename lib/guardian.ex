@@ -272,9 +272,13 @@ defmodule Guardian do
   @doc false
   def config, do: Application.get_env(:guardian, Guardian)
   @doc false
-  def config(key), do: Keyword.get(config(), key)
-  @doc false
-  def config(key, default), do: Keyword.get(config(), key, default)
+  def config(key, default \\ nil),
+    do: config() |> Keyword.get(key, default) |> resolve_config(default)
+
+  defp resolve_config({:system, var_name}, default),
+    do: System.get_env(var_name) || default
+  defp resolve_config(value, _default),
+    do: value
 
   @doc """
   Read the header of the token.

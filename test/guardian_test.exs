@@ -60,6 +60,12 @@ defmodule GuardianTest do
     assert Guardian.config(:not_a_thing, :this_is_a_thing) == :this_is_a_thing
   end
 
+  test "config with a system value" do
+    assert Guardian.config(:system_foo) == nil
+    System.put_env("FOO", "foo")
+    assert Guardian.config(:system_foo) == "foo"
+  end
+
   test "it fetches the currently configured serializer" do
     assert Guardian.serializer == Guardian.TestGuardianSerializer
   end
