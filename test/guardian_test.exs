@@ -7,7 +7,7 @@ defmodule GuardianTest do
     claims = %{
       "aud" => "User:1",
       "typ" => "access",
-      "exp" => Guardian.Utils.timestamp + 100_00,
+      "exp" => Guardian.Utils.timestamp + 10_000,
       "iat" => Guardian.Utils.timestamp,
       "iss" => "MyApp",
       "sub" => "User:1",
@@ -100,7 +100,7 @@ defmodule GuardianTest do
   test "fails if the issuer is not correct", context do
     claims = %{
       typ: "access",
-      exp: Guardian.Utils.timestamp + 100_00,
+      exp: Guardian.Utils.timestamp + 10_000,
       iat: Guardian.Utils.timestamp,
       iss: "not the issuer",
       sub: "User:1"
