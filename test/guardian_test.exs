@@ -7,7 +7,7 @@ defmodule GuardianTest do
     claims = %{
       "aud" => "User:1",
       "typ" => "access",
-      "exp" => Guardian.Utils.timestamp + 100_00,
+      "exp" => Guardian.Utils.timestamp + 10_000,
       "iat" => Guardian.Utils.timestamp,
       "iss" => "MyApp",
       "sub" => "User:1",
@@ -60,6 +60,12 @@ defmodule GuardianTest do
     assert Guardian.config(:not_a_thing, :this_is_a_thing) == :this_is_a_thing
   end
 
+  test "config with a system value" do
+    assert Guardian.config(:system_foo) == nil
+    System.put_env("FOO", "foo")
+    assert Guardian.config(:system_foo) == "foo"
+  end
+
   test "it fetches the currently configured serializer" do
     assert Guardian.serializer == Guardian.TestGuardianSerializer
   end
@@ -94,7 +100,7 @@ defmodule GuardianTest do
   test "fails if the issuer is not correct", context do
     claims = %{
       typ: "access",
-      exp: Guardian.Utils.timestamp + 100_00,
+      exp: Guardian.Utils.timestamp + 10_000,
       iat: Guardian.Utils.timestamp,
       iss: "not the issuer",
       sub: "User:1"
