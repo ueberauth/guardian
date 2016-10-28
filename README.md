@@ -84,12 +84,12 @@ config :guardian, Guardian,
     "y" => "ALdxLuo6oKLoQ-xLSkShv_TA0di97I9V92sg1MKFava5hKGST1EKiVQnZMrN3HO8LtLT78SNTgwJSQHAXIUaA-lV"
   }
 
-## Function ##
+## Tuple ##
 # If, for example, you have your secret key stored externally (in this example, we're using Redix).
 
-config :guardian, Guardian,
-  allowed_algos: ["RS512"],
-  secret_key: fn ->
+# defined elsewhere
+def MySecretKey do
+  def fetch do
     # Bad practice for example purposes only.
     # An already established connection should be used and possibly cache the value locally.
     {:ok, conn} = Redix.start_link
@@ -98,16 +98,26 @@ config :guardian, Guardian,
       |> JOSE.JWK.from_binary
     Redix.stop(conn)
     rsa_jwk
-  end
+  end  
+end
+
+config :guardian, Guardian,
+  allowed_algos: ["RS512"],
+  secret_key: {MySecretKey, :fetch}
 
 ## %JOSE.JWK{} Struct ##
 # Useful if you store your secret key in an encrypted JSON file with the passphrase in an environment variable.
 
+# defined elsewhere
+def MySecretKey do
+  def fetch do
+    System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
+  end  
+end
+
 config :guardian, Guardian,
   allowed_algos: ["Ed25519"],
-  secret_key: fn ->
-    System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
-  end
+  secret_key: {MySecretKey, :fetch}
 ```
 
 ## Serializer
@@ -196,7 +206,7 @@ If no set matches, the `:unauthorized` function is called.
 defmodule MyApp.MyController do
   use MyApp.Web, :controller
 
-  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, 
+  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler,
     one_of: [%{default: [:read, :write]}, %{other: [:read]}]
 end
 ```
