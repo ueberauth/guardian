@@ -57,8 +57,12 @@ defmodule Guardian.TestHelper do
 
   It simply returns whatever secret it is given.
   """
-
   def secret_key_function(secret), do: secret
+
+  @doc """
+  Helper for simulating a tuple to be used by `apply/2` to get a `secret_key`
+  """
+  def secret_key_function, do: "secret"
 
   def build_jwt(claims) do
     config = Application.get_env(:guardian, Guardian)

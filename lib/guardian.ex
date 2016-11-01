@@ -299,7 +299,7 @@ defmodule Guardian do
   defp jose_jwk(the_secret = %JOSE.JWK{}), do: the_secret
   defp jose_jwk(the_secret) when is_binary(the_secret), do: JOSE.JWK.from_oct(the_secret)
   defp jose_jwk(the_secret) when is_map(the_secret), do: JOSE.JWK.from_map(the_secret)
-  defp jose_jwk({mod, fun}), do: jose_jwk(:erlang.apply(mod, fun))
+  defp jose_jwk({mod, fun}),       do: jose_jwk(:erlang.apply(mod, fun, []))
   defp jose_jwk({mod, fun, args}), do: jose_jwk(:erlang.apply(mod, fun, args))
   defp jose_jwk(nil), do: jose_jwk(config(:secret_key) || false)
 
