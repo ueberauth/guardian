@@ -1,3 +1,9 @@
+# v 0.13.1
+
+### Bugs
+
+* Replaced taking a function for configuring secret_key with accepting a tuple {mod, func, args}
+
 # v 0.13.0
 
 * Change default token type from "token" to "access"
