@@ -52,6 +52,18 @@ defmodule Guardian.TestHelper do
     apply(plug_module, :call, [conn, opts])
   end
 
+  @doc """
+  Helper for simulating a tuple to be used by `apply/3` to get a `secret_key`
+
+  It simply returns whatever secret it is given.
+  """
+  def secret_key_function(secret), do: secret
+
+  @doc """
+  Helper for simulating a tuple to be used by `apply/2` to get a `secret_key`
+  """
+  def secret_key_function, do: "secret"
+
   def build_jwt(claims) do
     config = Application.get_env(:guardian, Guardian)
     algo = hd(Keyword.get(config, :allowed_algos))

@@ -83,8 +83,8 @@ defmodule GuardianTest do
     assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
   end
 
-  test "it verifies the jwt with custom secret function", context do
-    secret = fn -> context.es512.jwk end
+  test "it verifies the jwt with custom secret tuple", context do
+    secret = {Guardian.TestHelper, :secret_key_function, [context.es512.jwk]}
     assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
   end
 
@@ -256,8 +256,21 @@ defmodule GuardianTest do
     {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
   end
 
-  test "encode_and_sign custom headers and custom secret function", context do
-    secret = fn -> context.es512.jwk end
+  test "encode_and_sign custom headers and custom secret function without args" do
+    secret = {Guardian.TestHelper, :secret_key_function}
+    {:ok, jwt, _} = Guardian.encode_and_sign(
+      "thinger",
+      "my_type",
+      some: "thing",
+      secret: secret
+    )
+
+    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
+    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
+  end
+
+  test "encode_and_sign custom headers and custom secret function with args", context do
+    secret = {Guardian.TestHelper, :secret_key_function, [context.es512.jwk]}
     {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
