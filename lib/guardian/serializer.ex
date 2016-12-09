@@ -6,17 +6,16 @@ defmodule Guardian.Serializer do
   the resource from the encoded value in the JWT and also encoding a resource
   into a String so that it may be stored in the JWT
   """
-  use Behaviour
 
   @doc """
   Serializes the object into the token. Suggestion: \"User:2\"
   """
-  defcallback for_token(object :: term) :: {:ok, String.t} |
+  @callback for_token(object :: term) :: {:ok, String.t} |
                                            {:error, String.t}
 
   @doc """
   De-serializes the object from a token
   """
-  defcallback from_token(subject :: String.t) :: {:ok, object :: term} |
+  @callback from_token(subject :: String.t) :: {:ok, object :: term} |
                                                  {:error, String.t}
 end
