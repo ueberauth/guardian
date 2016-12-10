@@ -88,7 +88,7 @@ config :guardian, Guardian,
 # If, for example, you have your secret key stored externally (in this example, we're using Redix).
 
 # defined elsewhere
-def MySecretKey do
+defmodule MySecretKey do
   def fetch do
     # Bad practice for example purposes only.
     # An already established connection should be used and possibly cache the value locally.
@@ -109,7 +109,7 @@ config :guardian, Guardian,
 # Useful if you store your secret key in an encrypted JSON file with the passphrase in an environment variable.
 
 # defined elsewhere
-def MySecretKey do
+defmodule MySecretKey do
   def fetch do
     System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
   end  
