@@ -97,12 +97,14 @@ defmodule Guardian do
 
   defp encode_from_hooked({:ok, {resource, type, claims_from_hook}}) do
     {:ok, jwt} = encode_claims(claims_from_hook)
-    call_after_encode_and_sign_hook(
+    case call_after_encode_and_sign_hook(
       resource,
       type,
       claims_from_hook, jwt
-    )
-    {:ok, jwt, claims_from_hook}
+    ) do
+      :ok -> {:ok, jwt, claims_from_hook}
+      { :error, reason } -> {:error, reason}
+    end
   end
 
   defp encode_from_hooked({:error, _reason} = error), do: error
