@@ -79,6 +79,8 @@ defmodule Guardian.TestHelper do
 end
 
 defmodule Guardian.Hooks.Test do
+  @moduledoc false
+
   use Guardian.Hooks
 
   def before_encode_and_sign("before_encode_and_sign" = resource, "send" = type, claims) do
