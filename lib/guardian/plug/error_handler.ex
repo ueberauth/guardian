@@ -5,6 +5,7 @@ defmodule Guardian.Plug.ErrorHandler do
 
   @callback unauthenticated(Plug.Conn.t, map) :: Plug.Conn.t
   @callback unauthorized(Plug.Conn.t, map) :: Plug.Conn.t
+  @callback no_resource(Plug.Conn.t, map) :: Plug.Conn.t
 
   import Plug.Conn
 
@@ -13,6 +14,10 @@ defmodule Guardian.Plug.ErrorHandler do
   end
 
   def unauthorized(conn, _params) do
+    respond(conn, response_type(conn), 403, "Unauthorized")
+  end
+
+  def no_resource(conn, _params) do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 

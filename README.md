@@ -98,7 +98,7 @@ defmodule MySecretKey do
       |> JOSE.JWK.from_binary
     Redix.stop(conn)
     rsa_jwk
-  end  
+  end
 end
 
 config :guardian, Guardian,
@@ -112,7 +112,7 @@ config :guardian, Guardian,
 defmodule MySecretKey do
   def fetch do
     System.get_env("SECRET_KEY_PASSPHRASE") |> JOSE.JWK.from_file(System.get_env("SECRET_KEY_FILE"))
-  end  
+  end
 end
 
 config :guardian, Guardian,
@@ -183,7 +183,21 @@ resource from the Serializer and makes it available via
 
 Note that this does _not ensure_ a resource will be loaded.
 If there is no available resource (because it could not be found)
-`current_resource` will return nil.
+`current_resource` will return nil. You can ensure it's loaded with
+`Guardian.Plug.EnsureResource`
+
+### Guardian.Plug.EnsureResource
+
+Looks for a previously loaded resource. If not found, the `:no_resource`
+function is called on your handler.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug Guardian.Plug.EnsureResource, handler: MyApp.MyAuthErrorHandler
+end
+```
 
 ### Guardian.Plug.EnsurePermissions
 
