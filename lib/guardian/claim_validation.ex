@@ -9,9 +9,7 @@ defmodule Guardian.ClaimValidation do
 
       use Guardian.ClaimValidation
   """
-  use Behaviour
-
-  defcallback validate_claim(String.t, map, map) :: :ok |
+  @callback validate_claim(String.t, map, map) :: :ok |
                                                         {:error, atom}
 
   defmacro __using__(_options \\ []) do

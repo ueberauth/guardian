@@ -2,7 +2,6 @@ defmodule Guardian.Hooks do
   @moduledoc """
   This module helps to hook into the lifecycle of authentication.
   """
-  use Behaviour
 
   defmacro __using__(_) do
     quote do
@@ -28,38 +27,38 @@ defmodule Guardian.Hooks do
     end
   end
 
-  defcallback before_encode_and_sign(
+  @callback before_encode_and_sign(
     resource :: term,
     type :: atom,
     claims :: map()
-  )
+  ) :: {:ok, {term, atom, map}}
 
-  defcallback after_encode_and_sign(
+  @callback after_encode_and_sign(
     resource :: term,
     type :: atom,
     claims :: map(),
     token :: String.t
-  )
+  ) :: Plug.Conn.t
 
-  defcallback after_sign_in(
+  @callback after_sign_in(
     conn :: Plug.Conn.t,
     location :: atom | nil
-  )
+  ) :: Plug.Conn.t
 
-  defcallback before_sign_out(
+  @callback before_sign_out(
     conn :: Plug.Conn.t,
     location :: atom | nil
-  )
+  ) :: Plug.Conn.t
 
-  defcallback on_verify(
+  @callback on_verify(
     claims :: map(),
     jwt :: String.t
-  )
+  ) :: {:ok, {map(), String.t}}
 
-  defcallback on_revoke(
+  @callback on_revoke(
     claims :: map(),
     jwt :: String.t
-  )
+  ) :: {:ok, {map(), String.t}}
 end
 
 defmodule Guardian.Hooks.Default do
