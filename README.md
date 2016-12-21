@@ -488,6 +488,8 @@ config :guardian, Guardian,
 
 You can use Guardian to refresh tokens. This keeps most of the information in
 the token intact, but changes the `iat`, `exp`, `jti` and `nbf` fields.
+A valid token must be used in order to be refreshed,
+see [Refresh Tokens](###Refresh Tokens) for information on how to refresh invalid tokens
 
 ```elixir
 case Guardian.refresh!(existing_jwt, existing_claims, %{ttl: {15, :days}}) do
@@ -498,6 +500,29 @@ end
 
 Once the new token is created, the old one is revoked before returning the new
 token.
+
+### Exhange Tokens
+
+You can exchange one type of token to an other given that the first is valid
+This can be used to issue long living tokens that can be exchanged for shorter living ones
+
+```elixir
+    # issue a long living refresh token
+    {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
+    # exchange the refresh token for a access token
+    {:ok, access_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
+```
+
+
+The old token wont be revoked after the exchange
+
+```elixir
+    # issue a long living refresh token
+    {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
+    # exchange the refresh token for a access token
+    {:ok, new_jwt, new_claims} = Guardian.exchange!(jwt)
+```
+
 
 ### Phoenix Controllers
 

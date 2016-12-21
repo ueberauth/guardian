@@ -194,6 +194,65 @@ defmodule Guardian do
     end
   end
 
+
+  @doc """
+  Exchange a token with type 'from_type' for a token with type 'to_type', the
+  claims(apart from "jti", "iat", "exp", "nbf" and "typ) will persists though the
+  exchange
+  Can be used to get an access token from a refresh token
+
+      Guardian.exchange(existing_jwt, "refresh", "access")
+
+  The old token wont be revoked after the exchange
+  """
+  @spec exchange(String.t, String.t, String.t) :: {:ok, String.t, Map} |
+                              {:error, atom} |
+                              {:error, String.t}
+
+  def exchange(old_jwt, from_typ, to_typ) do
+    case decode_and_verify(old_jwt) do
+      {:ok, found_claims} -> do_exchange(from_typ, to_typ, found_claims)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc false
+  defp do_exchange(from_typ, to_typ, original_claims) do
+    if correct_typ?(original_claims, from_typ) do
+      {:ok, resource} = Guardian.serializer.from_token(original_claims["sub"])
+      new_claims = original_claims
+       |> Map.drop(["jti", "iat", "exp", "nbf", "typ"])
+      case encode_and_sign(resource, to_typ, new_claims) do
+        {:ok, jwt, full_claims} -> {:ok, jwt, full_claims}
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      {:error, :incorrect_token_type}
+    end
+  end
+
+  @doc false
+  defp correct_typ?(claims, typ) when is_binary(typ) do
+    Map.get(claims, "typ") === typ
+  end
+
+  @doc false
+  defp correct_typ?(claims, typ) when is_atom(typ) do
+    Map.get(claims, "typ") === to_string(typ)
+  end
+
+  @doc false
+  defp correct_typ?(claims, typ_list) when is_list(typ_list) do
+    typ = Map.get(claims, "typ")
+    typ_list |> Enum.any?(&(&1 === typ))
+  end
+
+  @doc false
+  defp correct_typ?(_claims, _typ) do
+    false
+  end
+
+
   @doc """
   Fetch the configured serializer module
   """

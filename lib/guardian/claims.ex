@@ -80,8 +80,21 @@ defmodule Guardian.Claims do
   end
 
   @doc false
+  def ttl(claims = %{"typ" => token_typ}) do
+    ttl_map = Guardian.config(:token_ttl, %{})
+    case ttl_map |> Map.fetch(token_typ) do
+      {:ok, token_ttl} ->  ttl(claims, token_ttl)
+      :error -> ttl(claims, Guardian.config(:ttl, {1_000_000_000, :seconds}))
+    end
+  end
+
+  @doc false
   def ttl(claims) do
-    ttl(claims, Guardian.config(:ttl, {1_000_000_000, :seconds}))
+    ttl_map = Guardian.config(:token_ttl, %{})
+    case ttl_map |> Map.fetch("access") do
+      {:ok, token_ttl} ->  ttl(claims, token_ttl)
+      :error -> ttl(claims, Guardian.config(:ttl, {1_000_000_000, :seconds}))
+    end
   end
 
   @doc false

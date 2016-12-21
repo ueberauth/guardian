@@ -380,4 +380,67 @@ defmodule GuardianTest do
     refute Map.get(new_claims, "exp") == nil
     refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
   end
+
+  test "exchange" do
+      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh")
+
+      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
+
+      refute jwt == new_jwt
+      refute Map.get(new_claims, "jti") == nil
+      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+
+      refute Map.get(new_claims, "exp") == nil
+      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
+      assert Map.get(new_claims, "typ") == "access"
+    end
+
+    test "exchange with claims" do
+      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh", some: "thing")
+
+      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
+
+      refute jwt == new_jwt
+      refute Map.get(new_claims, "jti") == nil
+      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+
+      refute Map.get(new_claims, "exp") == nil
+      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
+      assert Map.get(new_claims, "typ") == "access"
+      assert Map.get(new_claims, "some") == "thing"
+    end
+
+    test "exchange with list of from typs" do
+      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "rememberMe")
+
+      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, ["refresh", "rememberMe"], "access")
+
+      refute jwt == new_jwt
+      refute Map.get(new_claims, "jti") == nil
+      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+
+      refute Map.get(new_claims, "exp") == nil
+      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
+      assert Map.get(new_claims, "typ") == "access"
+    end
+
+    test "exchange with atom typ" do
+      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh")
+
+      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, :refresh, :access)
+
+      refute jwt == new_jwt
+      refute Map.get(new_claims, "jti") == nil
+      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+
+      refute Map.get(new_claims, "exp") == nil
+      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
+      assert Map.get(new_claims, "typ") == "access"
+    end
+
+    test "exchange with a wrong from typ" do
+      {:ok, jwt, _claims} = Guardian.encode_and_sign("thinger")
+      assert  Guardian.exchange(jwt, "refresh", "access") == {:error, :incorrect_token_type}
+  end
+
 end
