@@ -78,4 +78,34 @@ defmodule Guardian.TestHelper do
   end
 end
 
+defmodule Guardian.Hooks.Test do
+  @moduledoc false
+
+  use Guardian.Hooks
+
+  def before_encode_and_sign("before_encode_and_sign" = resource, "send" = type, claims) do
+    send self(), :before_encode_and_sign
+    {:ok, {resource, type, claims}}
+  end
+
+  def before_encode_and_sign("before_encode_and_sign", "error", _) do
+    {:error, "before_encode_and_sign_error"}
+  end
+
+  def before_encode_and_sign(resource, type, claims) do
+    {:ok, {resource, type, claims}}
+  end
+
+  def after_encode_and_sign("after_encode_and_sign", "send", _, _) do
+    send self(), :after_encode_and_sign
+    :ok
+  end
+
+  def after_encode_and_sign("after_encode_and_sign", "error", _, _) do
+    {:error, "after_encode_and_sign_error"}
+  end
+
+  def after_encode_and_sign(_, _, _, _), do: :ok
+end
+
 ExUnit.start()

@@ -7,6 +7,7 @@ config :guardian, Guardian,
       verify_issuer: true,
       secret_key: "woiuerojksldkjoierwoiejrlskjdf",
       serializer: Guardian.TestGuardianSerializer,
+      hooks: Guardian.Hooks.Test,
       system_foo: {:system, "FOO"},
       permissions: %{
         default: [:read, :write, :update, :delete],

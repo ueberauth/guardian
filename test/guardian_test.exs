@@ -229,6 +229,26 @@ defmodule GuardianTest do
     assert reason
   end
 
+  test "encode_and_sign calls before_encode_and_sign hook" do
+    {:ok, _, _} = Guardian.encode_and_sign("before_encode_and_sign", "send")
+    assert_received :before_encode_and_sign
+  end
+
+  test "encode_and_sign calls before_encode_and_sign hook w/ error" do
+    {:error, reason} = Guardian.encode_and_sign("before_encode_and_sign", "error")
+    assert reason == "before_encode_and_sign_error"
+  end
+
+  test "encode_and_sign calls after_encode_and_sign hook" do
+    {:ok, _, _} = Guardian.encode_and_sign("after_encode_and_sign", "send")
+    assert_received :after_encode_and_sign
+  end
+
+  test "encode_and_sign calls after_encode_and_sign hook w/ error" do
+    {:error, reason} = Guardian.encode_and_sign("after_encode_and_sign", "error")
+    assert reason == "after_encode_and_sign_error"
+  end
+
   test "encode_and_sign with custom secret" do
     secret = "ABCDEF"
     {:ok, jwt, _} = Guardian.encode_and_sign(
