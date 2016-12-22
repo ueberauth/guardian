@@ -39,10 +39,10 @@ defmodule Guardian.ClaimValidation do
         case Map.get(payload, "nbf") do
           nil -> :ok
           nbf ->
-            if nbf > Guardian.Utils.timestamp do
-              {:error, :token_not_yet_valid}
-            else
+            if time_within_allowed_drift?(nbf) || nbf < Guardian.Utils.timestamp do
               :ok
+            else
+              {:error, :token_not_yet_valid}
             end
         end
       end
@@ -55,10 +55,10 @@ defmodule Guardian.ClaimValidation do
         case Map.get(payload, "iat") do
           nil -> :ok
           iat ->
-            if iat > Guardian.Utils.timestamp do
-              {:error, :token_not_yet_valid}
-            else
+            if time_within_allowed_drift?(iat) || iat < Guardian.Utils.timestamp do
               :ok
+            else
+              {:error, :token_not_yet_valid}
             end
         end
       end
@@ -71,10 +71,11 @@ defmodule Guardian.ClaimValidation do
         case Map.get(payload, "exp") do
           nil -> :ok
           _ ->
-            if payload["exp"] < Guardian.Utils.timestamp do
-              {:error, :token_expired}
-            else
+            exp = payload["exp"]
+            if time_within_allowed_drift?(exp) || exp > Guardian.Utils.timestamp do
               :ok
+            else
+              {:error, :token_expired}
             end
         end
       end
@@ -104,6 +105,13 @@ defmodule Guardian.ClaimValidation do
           :ok
         end
       end
+
+      def time_within_allowed_drift?(expected_time) when is_integer(expected_time) do
+        allowed_drift = Guardian.config(:allowed_drift, 0) / 1000
+        diff = abs(expected_time - Guardian.Utils.timestamp)
+        diff <= allowed_drift
+      end
+      def time_within_allowed_drift?(_), do: true
     end
   end
 end

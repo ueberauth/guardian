@@ -1,5 +1,7 @@
 # v 0.13.1
 
+* Adds an `allowed_drift` option to allow for clock skew
+
 ### Bugs
 
 * Replaced taking a function for configuring secret_key with accepting a tuple {mod, func, args}
