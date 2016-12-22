@@ -8,6 +8,7 @@ config :guardian, Guardian,
         "access" =>  {1, :days}
       },
       ttl: {2, :days},
+      allowed_drift: 2000,
       verify_issuer: true,
       secret_key: "woiuerojksldkjoierwoiejrlskjdf",
       serializer: Guardian.TestGuardianSerializer,

@@ -47,6 +47,7 @@ config :guardian, Guardian,
   verify_module: Guardian.JWT,  # optional
   issuer: "MyApp",
   ttl: { 30, :days },
+  allowed_drift: 2000,
   verify_issuer: true, # optional
   secret_key: <guardian secret key>,
   serializer: MyApp.GuardianSerializer
@@ -59,6 +60,7 @@ The items in the configuration allow you to tailor how the JWT generation behave
   in the token. Default is `Guardian.JWT`
 * `issuer` - The entry to put into the token as the issuer. This can be used in conjunction with `verify_issuer`
 * `ttl` - The default ttl of a token
+* `allowed_drift` - The allowable drift in miliseconds to allow for time fields. Allows for dealing with clock skew
 * `verify_issuer` - If set to true, the issuer will be verified to be the same issuer as specified in the `issuer` field
 * `secret_key` - The key to sign the tokens. See below for examples.
 * `serializer` The serializer that serializes the 'sub' (Subject) field into and out of the token.
