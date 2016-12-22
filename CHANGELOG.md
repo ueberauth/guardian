@@ -1,5 +1,11 @@
-# v 0.13.1
+# v 0.14.0
 
+* Update to Elixir 1.3
+* Added test coverage: https://github.com/ueberauth/guardian/pull/234
+* Token exchange: https://github.com/ueberauth/guardian/pull/150
+* Adds ensure resource plug https://github.com/ueberauth/guardian/pull/238
+* Name collision fix: https://github.com/ueberauth/guardian/pull/215
+* Support for `{:system, var}` configuration options
 * Adds an `allowed_drift` option to allow for clock skew
 
 ### Bugs
