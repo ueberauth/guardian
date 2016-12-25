@@ -102,7 +102,7 @@ defmodule Guardian do
       type,
       claims_from_hook, jwt
     ) do
-      :ok -> {:ok, jwt, claims_from_hook}
+      {:ok, _} -> {:ok, jwt, claims_from_hook}
       {:error, reason} -> {:error, reason}
     end
   end
