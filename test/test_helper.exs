@@ -96,16 +96,18 @@ defmodule Guardian.Hooks.Test do
     {:ok, {resource, type, claims}}
   end
 
-  def after_encode_and_sign("after_encode_and_sign", "send", _, _) do
-    send self(), :after_encode_and_sign
-    :ok
-  end
-
   def after_encode_and_sign("after_encode_and_sign", "error", _, _) do
     {:error, "after_encode_and_sign_error"}
   end
 
-  def after_encode_and_sign(_, _, _, _), do: :ok
+  def after_encode_and_sign("after_encode_and_sign" = resource, "send" = type, claims, _) do
+    send self(), :after_encode_and_sign
+    {:ok, {resource, type, claims, "jwt"}}
+  end
+
+  def after_encode_and_sign(resource, type, claims, jwt) do
+    {:ok, {resource, type, claims, jwt}}
+  end
 end
 
 ExUnit.start()
