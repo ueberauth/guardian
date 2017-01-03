@@ -6,7 +6,7 @@ defmodule Guardian.Plug.LoadResource do
   `Guardian.Serializer` with the value of the `sub` claim. See the `:serializer`
   option for more details.
 
-  If the the resource is loaded successfully, it is accessible by calling
+  If the resource is loaded successfully, it is accessible by calling
   `Guardian.Plug.current_resource/2`.
 
   If there is no valid JWT in the request so far (`Guardian.Plug.VerifySession`
