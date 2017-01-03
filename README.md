@@ -33,7 +33,7 @@ mix.exs
 defp deps do
   [
     # ...
-    {:guardian, "~> 0.14.0"}
+    {:guardian, "~> 0.14"}
     # ...
   ]
 end
