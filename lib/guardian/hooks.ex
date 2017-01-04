@@ -10,7 +10,7 @@ defmodule Guardian.Hooks do
       def before_encode_and_sign(resource, type, claims) do
         {:ok, {resource, type, claims}}
       end
-      def after_encode_and_sign(_, _, _, _), do: :ok
+      def after_encode_and_sign(resource, type, claims, token), do: {:ok, {resource, type, claims, token}}
       def after_sign_in(conn, _), do: conn
       def before_sign_out(conn, _), do: conn
       def on_verify(claims, jwt), do: {:ok, {claims, jwt}}
