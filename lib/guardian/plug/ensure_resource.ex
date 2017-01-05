@@ -9,10 +9,10 @@ defmodule Guardian.Plug.EnsureResource do
   ## Example
 
       # Will call the no_resource/2 function on your handler
-      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule
+      plug Guardian.Plug.EnsureResource, handler: SomeModule
 
       # look in the :secret location.
-      plug Guardian.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret
+      plug Guardian.Plug.EnsureResource, handler: SomeModule, key: :secret
 
   If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
   the default behavior.
