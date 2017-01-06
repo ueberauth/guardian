@@ -1,3 +1,7 @@
+# v 0.14.2
+
+* __Really_ fix pattern matching error with GuardianDB
+
 # v 0.14.1
 
 * Fixed pattern matching error with GuardianDB
