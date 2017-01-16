@@ -31,14 +31,14 @@ defmodule Guardian.Hooks do
     resource :: term,
     type :: atom,
     claims :: map()
-  ) :: {:ok, {term, atom, map}}
+  ) :: {:ok, {term, atom, map}} | {:error, atom | String.t}
 
   @callback after_encode_and_sign(
     resource :: term,
     type :: atom,
     claims :: map(),
     token :: String.t
-  ) :: Plug.Conn.t
+  ) :: {:ok, {term, atom, map, String.t}} | {:error, atom | String.t}
 
   @callback after_sign_in(
     conn :: Plug.Conn.t,
@@ -53,12 +53,12 @@ defmodule Guardian.Hooks do
   @callback on_verify(
     claims :: map(),
     jwt :: String.t
-  ) :: {:ok, {map(), String.t}}
+  ) :: {:ok, {map(), String.t}} | {:error, atom | String.t}
 
   @callback on_revoke(
     claims :: map(),
     jwt :: String.t
-  ) :: {:ok, {map(), String.t}}
+  ) :: {:ok, {map(), String.t}} | {:error, atom | String.t}
 end
 
 defmodule Guardian.Hooks.Default do
