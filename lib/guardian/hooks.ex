@@ -38,7 +38,7 @@ defmodule Guardian.Hooks do
     type :: atom,
     claims :: map(),
     token :: String.t
-  ) :: Plug.Conn.t
+  ) :: {:ok, {term, atom, map, String.t}}
 
   @callback after_sign_in(
     conn :: Plug.Conn.t,
