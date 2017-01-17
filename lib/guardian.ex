@@ -285,18 +285,10 @@ defmodule Guardian do
     {secret, params} = strip_value(params, "secret")
 
     try do
-      case decode_token(jwt, secret) do
-        {:ok, claims} ->
-          case verify_claims(claims, params) do
-            {:ok, verified_claims} ->
-              case Guardian.hooks_module.on_verify(verified_claims, jwt) do
-                {:ok, {claims, _}} -> {:ok, claims}
-                {:error, reason} -> {:error, reason}
-              end
-            {:error, reason} -> {:error, reason}
-          end
-        {:error, reason} -> {:error, reason}
-      end
+      with {:ok, claims} <- decode_token(jwt, secret),
+           {:ok, verified_claims} <- verify_claims(claims, params),
+           {:ok, {claims, _}} <- Guardian.hooks_module.on_verify(verified_claims, jwt),
+        do: {:ok, claims}
     rescue
       e ->
         {:error, e}
