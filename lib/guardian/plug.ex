@@ -117,6 +117,7 @@ defmodule Guardian.Plug do
     case Guardian.encode_and_sign(object, type, new_claims) do
       {:ok, jwt, full_claims} ->
         conn
+        |> Plug.Conn.configure_session(renew: true)
         |> Plug.Conn.put_session(base_key(the_key), jwt)
         |> set_current_resource(object, the_key)
         |> set_claims({:ok, full_claims}, the_key)
