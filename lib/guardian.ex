@@ -41,8 +41,7 @@ defmodule Guardian do
   to obtain a value suitable for storage inside a JWT.
   """
   @spec encode_and_sign(any) :: {:ok, String.t, map} |
-                                {:error, atom} |
-                                {:error, String.t}
+                                {:error, any}
   def encode_and_sign(object), do: encode_and_sign(object, @default_token_type, %{})
 
   @doc """
@@ -52,8 +51,7 @@ defmodule Guardian do
   The type can be anything but suggested is "access".
   """
   @spec encode_and_sign(any, atom | String.t) :: {:ok, String.t, map} |
-                                                 {:error, atom} |
-                                                 {:error, String.t}
+                                                 {:error, any}
   def encode_and_sign(object, type), do: encode_and_sign(object, type, %{})
 
   @doc false
@@ -77,8 +75,7 @@ defmodule Guardian do
       )
   """
   @spec encode_and_sign(any, atom | String.t, map) :: {:ok, String.t, map} |
-                                                      {:error, atom} |
-                                                      {:error, String.t}
+                                                      {:error, any}
   def encode_and_sign(object, type, claims) do
     case build_claims(object, type, claims) do
       {:ok, claims_for_token} ->
@@ -119,6 +116,7 @@ defmodule Guardian do
   This function is less efficient that revoke!/2.
   If you have claims, you should use that.
   """
+  @spec revoke!(String.t, map) :: :ok | {:error, any}
   def revoke!(jwt, params \\ %{}) do
     case decode_and_verify(jwt, params) do
       {:ok, claims} -> revoke!(jwt, claims, params)
@@ -131,6 +129,7 @@ defmodule Guardian do
   This provides a hook to revoke.
   The logic for revocation of belongs in a Guardian.Hook.on_revoke
   """
+  @spec revoke!(String.t, map, map) :: :ok | {:error, any}
   def revoke!(jwt, claims, _params) do
     case Guardian.hooks_module.on_revoke(claims, jwt) do
       {:ok, _} -> :ok
@@ -206,8 +205,7 @@ defmodule Guardian do
   The old token wont be revoked after the exchange
   """
   @spec exchange(String.t, String.t, String.t) :: {:ok, String.t, Map} |
-                              {:error, atom} |
-                              {:error, String.t}
+                                                  {:error, any}
 
   def exchange(old_jwt, from_typ, to_typ) do
     case decode_and_verify(old_jwt) do
@@ -263,8 +261,7 @@ defmodule Guardian do
   Verify the given JWT. This will decode_and_verify via decode_and_verify/2
   """
   @spec decode_and_verify(String.t) :: {:ok, map} |
-                                       {:error, atom} |
-                                       {:error, String.t}
+                                       {:error, any}
   def decode_and_verify(jwt), do: decode_and_verify(jwt, %{})
 
 
@@ -272,7 +269,7 @@ defmodule Guardian do
   Verify the given JWT.
   """
   @spec decode_and_verify(String.t, map) :: {:ok, map} |
-                                            {:error, atom | String.t}
+                                            {:error, any}
   def decode_and_verify(jwt, params) do
     params = if verify_issuer?() do
       params
