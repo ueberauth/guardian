@@ -43,16 +43,16 @@ defmodule Guardian.Mixfile do
 
   defp deps do
     [{:jose, "~> 1.8"},
-     {:phoenix, "~> 1.2.0", optional: true},
-     {:plug, "~> 1.0"},
+     {:phoenix, "~> 1.2.1", optional: true},
+     {:plug, "~> 1.3"},
      {:poison, ">= 1.3.0"},
      {:uuid, ">=1.1.1"},
 
      # Dev and Test dependencies
-     {:credo, "~> 0.3", only: [:dev, :test]},
-     {:dialyxir, "~> 0.3.5", only: [:dev, :test]},
+     {:credo, "~> 0.6.1", only: [:dev, :test]},
+     {:dialyxir, "~> 0.4.3", only: [:dev, :test]},
      {:earmark, ">= 0.0.0", only: :dev},
-     {:ex_doc, "~> 0.10", only: :dev}]
+     {:ex_doc, "~> 0.12", only: :dev}]
   end
 
   defp package do
