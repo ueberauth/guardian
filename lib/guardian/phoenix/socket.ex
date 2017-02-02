@@ -54,7 +54,7 @@ defmodule Guardian.Phoenix.Socket do
     quote do
       import Guardian.Phoenix.Socket
 
-      def connect(%{"guardian_token" => jwt} = params, socket) do
+      def connect(%{"guardian_token" => jwt}, socket) do
         case sign_in(socket, jwt, params, key: unquote(key)) do
           {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
           _ -> :error

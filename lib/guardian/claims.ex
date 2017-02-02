@@ -98,7 +98,7 @@ defmodule Guardian.Claims do
   end
 
   @doc false
-  def ttl(%{"iat" => iat_v} = the_claims, requested_ttl) do
+  def ttl(the_claims = %{"iat" => iat_v}, requested_ttl) do
     assign_exp_from_ttl(the_claims, {iat_v, requested_ttl})
   end
 
@@ -150,3 +150,4 @@ defmodule Guardian.Claims do
   defp assign_exp_from_ttl(the_claims, _), do: the_claims
 
 end
+

@@ -59,7 +59,7 @@ defmodule Guardian.Plug.EnsurePermissions do
         end
     end
 
-    handler = if handler do
+    handler_tuple = if handler do
       {handler, :unauthorized}
     else
       case on_failure do
@@ -71,7 +71,7 @@ defmodule Guardian.Plug.EnsurePermissions do
     end
 
     %{
-      handler: handler,
+      handler: handler_tuple,
       key: key,
       perm_sets: perm_sets
     }
