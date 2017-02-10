@@ -98,7 +98,17 @@ defmodule Guardian.Claims do
   end
 
   @doc false
-  def ttl(the_claims = %{"iat" => iat_v}, requested_ttl) do
+  def ttl(the_claims, {num, period}) when is_binary(num) do
+    ttl(the_claims, {String.to_integer(num), period})
+  end
+
+  @doc false
+  def ttl(the_claims, {num, period}) when is_binary(period) do
+    ttl(the_claims, {num, String.to_existing_atom(period)})
+  end
+
+  @doc false
+  def ttl(%{"iat" => iat_v} = the_claims, requested_ttl) do
     assign_exp_from_ttl(the_claims, {iat_v, requested_ttl})
   end
 
