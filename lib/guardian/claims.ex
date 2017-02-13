@@ -150,4 +150,3 @@ defmodule Guardian.Claims do
   defp assign_exp_from_ttl(the_claims, _), do: the_claims
 
 end
-

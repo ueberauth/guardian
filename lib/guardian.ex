@@ -278,14 +278,12 @@ defmodule Guardian do
     else
       params
     end
-    stringify_params = stringify_keys(params)
-    
-    #tuple {secret, params}
-    secret_params = strip_value(stringify_params, "secret")
+    params = stringify_keys(params)
+    {secret, params} = strip_value(params, "secret")
 
     try do
-      with {:ok, claims} <- decode_token(jwt, secret_params |> elem(0)),
-           {:ok, verified_claims} <- verify_claims(claims, secret_params |> elem(1)),
+      with {:ok, claims} <- decode_token(jwt, secret),
+           {:ok, verified_claims} <- verify_claims(claims, params),
            {:ok, {claims, _}} <- Guardian.hooks_module.on_verify(verified_claims, jwt),
         do: {:ok, claims}
     rescue
@@ -360,16 +358,11 @@ defmodule Guardian do
   defp jose_jwk(nil), do: jose_jwk(config(:secret_key) || false)
 
   defp encode_claims(claims) do
-    #tuple {header, claims}
-    headers_claims = strip_value(claims, "headers", %{})
-    
-    #tuple {secret, claims}
-    secret_claims = strip_value(headers_claims |> elem(1), "secret")
-    
-    {_, token} = secret_claims
-                   |> elem(0)
+    {headers, claims} = strip_value(claims, "headers", %{})
+    {secret, claims} = strip_value(claims, "secret")
+    {_, token} = secret
                    |> jose_jwk()
-                   |> JOSE.JWT.sign(jose_jws(headers_claims |> elem(0)), secret_claims |> elem(1))
+                   |> JOSE.JWT.sign(jose_jws(headers), claims)
                    |> JOSE.JWS.compact
     {:ok, token}
   end
