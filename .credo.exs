@@ -50,7 +50,9 @@
         {Credo.Check.Consistency.ExceptionNames},
         {Credo.Check.Consistency.LineEndings},
         {Credo.Check.Consistency.MultiAliasImportRequireUse},
-        {Credo.Check.Consistency.ParameterPatternMatching},
+
+        #needs refactor
+        {Credo.Check.Consistency.ParameterPatternMatching, false},
         {Credo.Check.Consistency.SpaceAroundOperators},
         {Credo.Check.Consistency.SpaceInParentheses},
         {Credo.Check.Consistency.TabsOrSpaces},
@@ -101,7 +103,9 @@
         {Credo.Check.Refactor.Nesting},
         {Credo.Check.Refactor.PipeChainStart},
         {Credo.Check.Refactor.UnlessWithElse},
-        {Credo.Check.Refactor.VariableRebinding},
+        
+        #needs refactor
+        {Credo.Check.Refactor.VariableRebinding, false},
 
         {Credo.Check.Warning.BoolOperationOnSameValues},
         {Credo.Check.Warning.IExPry},
