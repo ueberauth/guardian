@@ -517,7 +517,7 @@ end
 Once the new token is created, the old one is revoked before returning the new
 token.
 
-### Exhange Tokens
+### Exchange Tokens
 
 You can exchange one type of token to an other given that the first is valid
 This can be used to issue long living tokens that can be exchanged for shorter living ones
