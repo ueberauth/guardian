@@ -130,20 +130,24 @@ defmodule Guardian.Plug do
   end
 
   @doc """
-  Sign in a resource for API requests
-  (that your configured serializer knows about).
-  This is not stored in the session but is stored in the assigns only.
+  Sign in a resource for API requests.
+
+  This function does not store the resource in the session. Instead the
+  resource is stored in the `Plug.Conn` and is designed to be accessed with
+  `Guardian.Plug.current_resource/2`.
   """
   @spec api_sign_in(Plug.Conn.t, any) :: Plug.Conn.t
   def api_sign_in(conn, object), do: api_sign_in(conn, object, nil, %{})
 
   @doc """
-  Sign in a resource
-  (that your configured serializer knows about) only in the assigns.
-  For use without a web session.
+  Sign in a resource for API requests.
 
-  By specifying the 'type' of the token,
-  you're setting the typ field in the JWT.
+  This function does not store the resource in the session. Instead the
+  resource is stored in the `Plug.Conn` and is designed to be accessed with
+  `Guardian.Plug.current_resource/2`.
+
+  By specifying the 'type' of the token, you're setting the typ field in the
+  JWT.
   """
   @spec api_sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
   def api_sign_in(conn, object, type), do: api_sign_in(conn, object, type, %{})
