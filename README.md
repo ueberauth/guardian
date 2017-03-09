@@ -1,7 +1,9 @@
 Guardian
 ========
 
-An authentication framework for use with Elixir applications.
+> An authentication framework for use with Elixir applications.
+
+[![Build Status](https://travis-ci.org/ueberauth/guardian.svg?branch=master)](https://travis-ci.org/ueberauth/guardian)
 
 Guardian is based on similar ideas to Warden but is re-imagined
 for modern systems where Elixir manages the authentication requirements.
