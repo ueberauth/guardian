@@ -75,6 +75,16 @@ Alternatively, a `Map`, `Function`, or `%JOSE.JWK{} Struct` may be specified for
 
 See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from jose for how to generate your own keys.
 
+To get off the ground quickly, simply replace `<guardian secret key>` in your Guardian config with the output of either:
+
+`$ mix phoenix.gen.secret`
+
+or
+
+`iex(1)> JOSE.JWS.generate_key(%{"alg" => "HS512"}) |> JOSE.JWK.to_map |> elem(1) |> Map.take(["k", "kty"])`
+
+After running `$ mix deps.get` because JOSE is one of Guardian's dependencies.
+
 ```elixir
 ## Map ##
 
