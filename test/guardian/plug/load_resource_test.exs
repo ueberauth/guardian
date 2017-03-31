@@ -55,4 +55,25 @@ defmodule Guardian.Plug.LoadResourceTest do
     |> run_plug(LoadResource, serializer: TestSerializer)
     assert Guardian.Plug.current_resource(conn) == "42"
   end
+
+  test "claim option specified, but not found", %{conn: conn} do
+    sub =  "User:42"
+
+    conn = conn
+    |> Guardian.Plug.set_claims({:ok, %{"sub" => sub}})
+    |> run_plug(LoadResource, claim: "user")
+
+    assert Guardian.Plug.current_resource(conn) == nil
+  end
+
+  test "claim option specified, and is found", %{conn: conn} do
+    sub =  "User:42"
+
+    conn = conn
+    |> Guardian.Plug.set_claims({:ok, %{"user" => sub}})
+    |> run_plug(LoadResource, claim: "user")
+
+    {:ok, resource} = Guardian.serializer.from_token(sub)
+    assert Guardian.Plug.current_resource(conn) == resource
+  end
 end
