@@ -52,7 +52,9 @@ defmodule Guardian.Plug.LoadResource do
     serializer = get_serializer(opts)
     resource_claim = Map.get(opts, :claim, "sub")
 
-    claims |> Map.get(resource_claim) |> serializer.from_token
+    claims
+    |> Map.get(resource_claim)
+    |> serializer.from_token()
   end
 
   defp get_serializer(opts) do
