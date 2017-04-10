@@ -18,6 +18,8 @@ defmodule Guardian.Plug.LoadResource do
     * `:serializer` - The serializer to use to load the current resource from
         the subject claim of the token. Defaults to the result of
         `Guardian.serializer/0`.
+
+    * `:claim` - The claim to look for to pass value to serializer. Defaults to `sub`.
   """
 
   @doc false
@@ -48,8 +50,11 @@ defmodule Guardian.Plug.LoadResource do
 
   defp load_resource(claims, opts) do
     serializer = get_serializer(opts)
+    resource_claim = Map.get(opts, :claim, "sub")
 
-    claims |> Map.get("sub") |> serializer.from_token
+    claims
+    |> Map.get(resource_claim)
+    |> serializer.from_token()
   end
 
   defp get_serializer(opts) do
