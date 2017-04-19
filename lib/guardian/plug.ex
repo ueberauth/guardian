@@ -85,7 +85,7 @@ defmodule Guardian.Plug do
   into the current web session.
 
   By specifying the 'type' of the token,
-  you're setting the typ field in the JWT.
+  you're setting the type field in the JWT.
   """
   @spec sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
