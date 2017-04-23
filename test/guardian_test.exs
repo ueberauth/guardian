@@ -48,6 +48,20 @@ defmodule GuardianTest do
     }
   end
 
+  test "no config" do
+    cfg = Guardian.config
+    Application.put_env(:guardian, Guardian, nil)
+    assert_raise RuntimeError, "Guardian is not configured", &Guardian.config/0
+    Application.put_env(:guardian, Guardian, cfg)
+  end
+
+  test "config with no serializer" do
+    cfg = Guardian.config
+    Application.put_env(:guardian, Guardian, Keyword.drop(cfg, [:serializer]))
+    assert_raise RuntimeError, "Guardian requires a serializer", &Guardian.config/0
+    Application.put_env(:guardian, Guardian, cfg)
+  end
+
   test "config with a value" do
     assert Guardian.config(:issuer) == "MyApp"
   end
