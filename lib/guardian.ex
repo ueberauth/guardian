@@ -313,7 +313,8 @@ defmodule Guardian do
 
   @doc false
   def config do
-    Application.get_env(:guardian, Guardian)
+    :guardian
+    |> Application.get_env(Guardian)
     |> check_config
   end
 
