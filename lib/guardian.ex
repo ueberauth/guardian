@@ -22,14 +22,6 @@ defmodule Guardian do
   @default_algos ["HS512"]
   @default_token_type "access"
 
-  unless Application.get_env(:guardian, Guardian) do
-    raise "Guardian is not configured"
-  end
-
-  unless Keyword.get(Application.get_env(:guardian, Guardian), :serializer) do
-    raise "Guardian requires a serializer"
-  end
-
   @doc """
   Returns the current default token type.
   """
@@ -320,7 +312,21 @@ defmodule Guardian do
   defp verify_issuer?, do: config(:verify_issuer, false)
 
   @doc false
-  def config, do: Application.get_env(:guardian, Guardian)
+  def config do
+    :guardian
+    |> Application.get_env(Guardian)
+    |> check_config
+  end
+
+  @doc false
+  def check_config(nil), do: raise "Guardian is not configured"
+  def check_config(cfg) do
+    case Keyword.has_key?(cfg, :serializer) do
+      false -> raise "Guardian requires a serializer"
+      true  -> cfg
+    end
+  end
+
   @doc false
   def config(key, default \\ nil),
     do: config() |> Keyword.get(key, default) |> resolve_config(default)
