@@ -19,7 +19,6 @@ defmodule Guardian do
   """
   import Guardian.Utils
 
-  @default_algos ["HS512"]
   @default_token_type "access"
 
   @doc """
@@ -179,7 +178,7 @@ defmodule Guardian do
 
     case encode_and_sign(resource, type, new_claims) do
       {:ok, jwt, full_claims} ->
-        _ = revoke!(original_jwt, peek_claims(original_jwt), %{})
+        _ = revoke!(original_jwt, original_claims, %{})
         {:ok, jwt, full_claims}
       {:error, reason} -> {:error, reason}
     end
@@ -336,58 +335,21 @@ defmodule Guardian do
   defp resolve_config(value, _default),
     do: value
 
-  @doc """
-  Read the header of the token.
-  This is not a verified read, it does not check the signature.
-  """
-  def peek_header(token) do
-    JOSE.JWT.peek_protected(token).fields
-  end
-
-  @doc """
-  Read the claims of the token.
-  This is not a verified read, it does not check the signature.
-  """
-  def peek_claims(token) do
-    JOSE.JWT.peek_payload(token).fields
-  end
-
-  defp jose_jws(headers) do
-    Map.merge(%{"alg" => hd(allowed_algos())}, headers)
-  end
-
-  defp jose_jwk(the_secret = %JOSE.JWK{}), do: the_secret
-  defp jose_jwk(the_secret) when is_binary(the_secret), do: JOSE.JWK.from_oct(the_secret)
-  defp jose_jwk(the_secret) when is_map(the_secret), do: JOSE.JWK.from_map(the_secret)
-  defp jose_jwk({mod, fun}),       do: jose_jwk(:erlang.apply(mod, fun, []))
-  defp jose_jwk({mod, fun, args}), do: jose_jwk(:erlang.apply(mod, fun, args))
-  defp jose_jwk(nil), do: jose_jwk(config(:secret_key) || false)
-
   defp encode_claims(claims) do
-    {headers, claims} = strip_value(claims, "headers", %{})
-    {secret, claims} = strip_value(claims, "secret")
-    {_, token} = secret
-                   |> jose_jwk()
-                   |> JOSE.JWT.sign(jose_jws(headers), claims)
-                   |> JOSE.JWS.compact
-    {:ok, token}
+    encoding_module = config(:encoding_module, Guardian.Encoder.JWT)
+    apply(encoding_module, :encode_claims, [claims])
   end
 
   defp decode_token(token, secret) do
-    secret = secret || config(:secret_key)
-    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos(), token) do
-      {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
-      {false, _, _} -> {:error, :invalid_token}
-    end
+    encoding_module = config(:encoding_module, Guardian.Encoder.JWT)
+    apply(encoding_module, :decode_token, [token, secret])
   end
-
-  defp allowed_algos, do: config(:allowed_algos, @default_algos)
 
   def verify_claims(claims, params) do
     verify_claims(
       claims,
       Map.keys(claims),
-      config(:verify_module, Guardian.JWT),
+      config(:encoding_module, Guardian.Encoder.JWT),
       params
     )
   end

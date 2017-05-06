@@ -46,7 +46,7 @@ config.exs
 ```elixir
 config :guardian, Guardian,
   allowed_algos: ["HS512"], # optional
-  verify_module: Guardian.JWT,  # optional
+  encoding_module: Guardian.Encoder.JWT,  # optional
   issuer: "MyApp",
   ttl: { 30, :days },
   allowed_drift: 2000,
@@ -58,8 +58,8 @@ config :guardian, Guardian,
 The items in the configuration allow you to tailor how the JWT generation behaves.
 
 * `allowed_algos` - The list of algorithms (must be compatible with JOSE). The first is used as the encoding key. Default is: ["HS512"]
-* `verify_module` - Provides a mechanism to setup your own validations for items
-  in the token. Default is `Guardian.JWT`
+* `encoding_module` - Provides a mechanism to setup your own validations for items
+  in the token. Default is `Guardian.Encoder.JWT`
 * `issuer` - The entry to put into the token as the issuer. This can be used in conjunction with `verify_issuer`
 * `ttl` - The default ttl of a token
 * `allowed_drift` - The allowable drift in miliseconds to allow for time fields. Allows for dealing with clock skew

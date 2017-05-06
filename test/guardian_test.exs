@@ -352,34 +352,6 @@ defmodule GuardianTest do
     {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
   end
 
-  test "peeking at the headers" do
-    secret = "ABCDEF"
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret,
-      headers: %{"foo" => "bar"}
-    )
-
-    header = Guardian.peek_header(jwt)
-    assert header["foo"] == "bar"
-  end
-
-  test "peeking at the payload" do
-    secret = "ABCDEF"
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret,
-      headers: %{"foo" => "bar"}
-    )
-
-    header = Guardian.peek_claims(jwt)
-    assert header["some"] == "thing"
-  end
-
   test "revoke" do
     {:ok, jwt, claims} = Guardian.encode_and_sign(
       "thinger",

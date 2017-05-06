@@ -3,7 +3,7 @@ defmodule Guardian.ClaimValidation do
   Validates claims found in a JWT.
 
   This provides the default implementation for Guardian and
-  is used in Guardian.JWT
+  is used in Guardian.Encoder.JWT
 
   To use it in your own module
 
