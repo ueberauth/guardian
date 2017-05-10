@@ -174,7 +174,7 @@ defmodule GuardianTest do
     assert claims["iss"] == Guardian.issuer
   end
 
-  test "encode_and_sign(object, audience)" do
+  test "encode_and_sign(object, type)" do
     {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type")
 
     {:ok, claims} = Guardian.decode_and_verify(jwt)
@@ -203,7 +203,7 @@ defmodule GuardianTest do
     assert claims["some"] == "thing"
   end
 
-  test "encode_and_sign(object, aud) with ttl" do
+  test "encode_and_sign(object, type) with ttl" do
     {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
@@ -214,7 +214,7 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
-  test "encode_and_sign(object, aud) with ttl in claims" do
+  test "encode_and_sign(object, type) with ttl in claims" do
     claims = Guardian.Claims.app_claims
     |> Guardian.Claims.ttl({5, :days})
 
@@ -224,7 +224,7 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
-  test "encode_and_sign(object, aud) with ttl, number and period as binaries" do
+  test "encode_and_sign(object, type) with ttl, number and period as binaries" do
     {:ok, jwt, _} = Guardian.encode_and_sign(
       "thinger",
       "my_type",
@@ -235,7 +235,7 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
-  test "encode_and_sign(object, aud) with ttl in claims, number and period as binaries" do
+  test "encode_and_sign(object, type) with ttl in claims, number and period as binaries" do
     claims = Guardian.Claims.app_claims
     |> Guardian.Claims.ttl({"5", "days"})
 
@@ -245,7 +245,7 @@ defmodule GuardianTest do
     assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
   end
 
-  test "encode_and_sign(object, aud) with exp and iat" do
+  test "encode_and_sign(object, type) with exp and iat" do
     iat = Guardian.Utils.timestamp - 100
     exp = Guardian.Utils.timestamp + 100
 

@@ -66,8 +66,8 @@ defmodule Guardian.Plug do
   A simple check to see if a request is authenticated
   """
   @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
-  def authenticated?(conn, type) do
-    case claims(conn, type) do
+  def authenticated?(conn, the_key) do
+    case claims(conn, the_key) do
       {:error, _} -> false
       _ -> true
     end
