@@ -401,7 +401,7 @@ defmodule Guardian do
 
   defp verify_claims(claims, [], _, _), do: {:ok, claims}
 
-  defp build_claims(object, type, claims) do
+  def build_claims(object, type, claims) do
     case Guardian.serializer.for_token(object) do
       {:ok, sub} ->
         full_claims = claims

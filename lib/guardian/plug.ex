@@ -130,6 +130,60 @@ defmodule Guardian.Plug do
   end
 
   @doc """
+  Sign in a resource (that your configured serializer knows about)
+  into the current web session.
+  """
+  @spec claims_sign_in(Plug.Conn.t, any) :: Plug.Conn.t
+  def claims_sign_in(conn, object), do: claims_sign_in(conn, object, nil, %{})
+
+  @doc """
+  Sign in a resource (that your configured serializer knows about)
+  into the current web session.
+
+  By specifying the 'type' of the token,
+  you're setting the typ field in the claims.
+  """
+  @spec claims_sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
+  def claims_sign_in(conn, object, type), do: claims_sign_in(conn, object, type, %{})
+
+  @doc false
+  def claims_sign_in(conn, object, type, new_claims) when is_list(new_claims) do
+    claims_sign_in(conn, object, type, Enum.into(new_claims, %{}))
+  end
+
+  @doc """
+  Same as claims_sign_in/3 but also encodes all claims into the default claims.
+
+  The `:key` key in the claims map is special in that it
+  sets the location of the storage.
+
+  The :perms key will provide the ability to encode permissions into the claims.
+  The value at :perms should be a map
+
+  ### Example
+
+      Guardian.claims_sign_in(conn, user, :access, perms: %{default: [:read, :write]})
+
+  """
+  @spec claims_sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t
+  def claims_sign_in(conn, object, type, new_claims) do
+    the_key = Map.get(new_claims, :key, :default)
+    new_claims = Map.delete(new_claims, :key)
+
+    case Guardian.build_claims(object, type, new_claims) do
+      {:ok, claims} ->
+        conn
+        |> Plug.Conn.configure_session(renew: true)
+        |> Plug.Conn.put_session(base_key(the_key), claims)
+        |> set_current_resource(object, the_key)
+        |> set_claims({:ok, claims}, the_key)
+        |> Guardian.hooks_module.after_sign_in(the_key)
+      {:error, reason} ->
+        Plug.Conn.put_session(conn, base_key(the_key), {:error, reason})
+    end
+  end
+
+  @doc """
   Sign in a resource for API requests.
 
   This function does not store the resource in the session. Instead the
