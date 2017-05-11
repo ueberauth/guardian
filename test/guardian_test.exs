@@ -2,6 +2,7 @@ defmodule GuardianTest do
   @moduledoc false
 
   use ExUnit.Case, async: true
+  import Mock
 
   setup do
     claims = %{
@@ -13,6 +14,18 @@ defmodule GuardianTest do
       "sub" => "User:1",
       "something_else" => "foo"
     }
+
+    claims_with_valid_jku = claims
+      |> Map.merge(%{
+        "jku" => "https://server.example/jwk/abcd",
+        "kid" => "abcd"
+      })
+
+    claims_with_invalid_jku = claims
+      |> Map.merge(%{
+        "jku" => "https://bad.actor/jwk/abcd",
+        "kid" => "abcd"
+      })
 
     config = Application.get_env(:guardian, Guardian)
     algo = hd(Keyword.get(config, :allowed_algos))
@@ -32,17 +45,47 @@ defmodule GuardianTest do
       |> JOSE.JWS.compact
       |> elem(1)
 
+    es512_jose_jwt_with_valid_jku = es512_jose_jwk
+      |> JOSE.JWT.sign(es512_jose_jws, claims_with_valid_jku)
+      |> JOSE.JWS.compact
+      |> elem(1)
+
+    es512_jose_jwt_with_invalid_jku = es512_jose_jwk
+      |> JOSE.JWT.sign(es512_jose_jws, claims_with_invalid_jku)
+      |> JOSE.JWS.compact
+      |> elem(1)
+
+    es512_jose_jku_response = with pkey <- JOSE.JWK.to_public(es512_jose_jwk),
+      {_, key} <- JOSE.JWK.to_map(pkey),
+      do: Poison.encode!(key)
+
+    mocks = [
+      request: fn(verb, url, _headers, _body, _opts) ->
+        cond do
+          verb == :get && url =~ ~r{/jwk/abcd} ->
+            {:ok, 200, [ content_type: "application/json" ], es512_jose_jku_response}
+          true ->
+            {:ok, 404, [], ""}
+        end
+      end,
+      body: fn(value) -> {:ok, value} end,
+    ]
+
     {
       :ok,
       %{
         claims: claims,
+        claims_with_valid_jku: claims_with_valid_jku,
         jwt: jwt,
         jose_jws: jose_jws,
         jose_jwk: jose_jwk,
         es512: %{
           jwk: es512_jose_jwk,
           jws: es512_jose_jws,
-          jwt: es512_jose_jwt
+          jwt: es512_jose_jwt,
+          jwt_with_valid_jku: es512_jose_jwt_with_valid_jku,
+          jwt_with_invalid_jku: es512_jose_jwt_with_invalid_jku,
+          mocks: mocks
         }
       }
     }
@@ -95,6 +138,18 @@ defmodule GuardianTest do
   test "it verifies the jwt with custom secret %JOSE.JWK{} struct", context do
     secret = context.es512.jwk
     assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
+  end
+
+  test "it verifies the jwt with public key in jku", context do
+    with_mock :hackney, context.es512.mocks do
+      assert Guardian.decode_and_verify(context.es512.jwt_with_valid_jku) == {:ok, context.claims_with_valid_jku}
+    end
+  end
+
+  test "it rejects untrusted jku urls", context do
+    with_mock :hackney, context.es512.mocks do
+      assert Guardian.decode_and_verify(context.es512.jwt_with_invalid_jku) == {:error, :invalid_token}
+    end
   end
 
   test "it verifies the jwt with custom secret tuple", context do

@@ -17,4 +17,6 @@ config :guardian, Guardian,
       permissions: %{
         default: [:read, :write, :update, :delete],
         other: [:other_read, :other_write, :other_update, :other_delete]
-      }
+      },
+      allowed_jku_domains: [ "server.example" ]
+

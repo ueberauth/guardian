@@ -374,11 +374,39 @@ defmodule Guardian do
   end
 
   defp decode_token(token, secret) do
-    secret = secret || config(:secret_key)
-    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos(), token) do
-      {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
-      {false, _, _} -> {:error, :invalid_token}
-    end
+    secrets =
+      []
+      |> List.insert_at(-1, jose_jwk(secret))
+      |> List.insert_at(-1, jku_secret(token))
+      |> Enum.filter(fn
+        %JOSE.JWK{} -> true
+        _ -> false
+      end)
+
+    results =
+      secrets
+      |> Stream.map(fn(s) ->
+        case JOSE.JWT.verify_strict(s, allowed_algos(), token) do
+          {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
+          {false, _, _} -> {:error, :invalid_token}
+        end
+      end)
+
+    Enum.find(results, fn({r, _}) -> r == :ok end) || Enum.at(results, 0)
+  end
+
+  defp jku_secret(token) do
+    with %{"jku" => jku, "kid" => kid} <- JOSE.JWT.peek_payload(token).fields,
+      do: fetch_remote_key(kid, jku, config(:allowed_jku_domains))
+  end
+
+  defp fetch_remote_key(_kid, _jku, nil), do: nil
+  defp fetch_remote_key(_kid, jku, domains) do
+    with true <- Enum.member?(domains, URI.parse(jku).authority),
+      {:ok, 200, _headers, client} <- :hackney.request(:get, jku, [], "", []),
+      {:ok, body} <- :hackney.body(client),
+      {:ok, json} <- Poison.decode(body),
+      do: JOSE.JWK.from_map(json)
   end
 
   defp allowed_algos, do: config(:allowed_algos, @default_algos)
