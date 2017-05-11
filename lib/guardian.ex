@@ -385,8 +385,12 @@ defmodule Guardian do
   end
 
   defp decode_token(token, secret) do
-    secrets = []
-      |> List.insert_at(0, jose_jwk(secret))
+    secrets = secret
+      |> List.wrap
+      |> List.insert_at(-1, config(:secret_key))
+      |> List.flatten
+      |> Enum.uniq
+      |> Enum.map(fn(x) -> jose_jwk(x) end)
       |> List.insert_at(0, jku_secret(JOSE.JWT.peek_payload(token).fields))
       |> Enum.filter(fn
         %JOSE.JWK{} -> true

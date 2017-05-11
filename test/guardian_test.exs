@@ -140,6 +140,11 @@ defmodule GuardianTest do
     assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
   end
 
+  test "it verifies with an array of keys provided", context do
+    secrets = [context.jose_jwk, context.es512.jwk]
+    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secrets}) == {:ok, context.claims}
+  end
+
   test "it verifies the jwt with public key in jku", context do
     with_mock :hackney, context.es512.mocks do
       assert Guardian.decode_and_verify(context.es512.jwt_with_valid_jku) == {:ok, context.claims_with_valid_jku}
