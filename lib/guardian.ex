@@ -16,6 +16,17 @@ defmodule Guardian do
         serializer: MyApp.GuardianSerializer,
         secret_key: "lksjdlkjsdflkjsdf"
 
+  ## Specifying multiple secrets or verification using jku
+
+      config :guardian, Guardian,
+        allowed_algos: ["ES256", "ES512"],
+        issuer: "MyApp",
+        ttl: { 7, :days },
+        serializer: MyApp.GuardianSerializer,
+        secret_key: [ "lksjdlkjsdflkjsdf", "lejrlkwejrekrew" ],
+        allowed_jku_domains: [ "myapp.domain" ],
+        allowed_jku_schemes: [ "https" ]
+
   """
   import Guardian.Utils
 
@@ -374,12 +385,42 @@ defmodule Guardian do
   end
 
   defp decode_token(token, secret) do
-    secret = secret || config(:secret_key)
-    case JOSE.JWT.verify_strict(jose_jwk(secret), allowed_algos(), token) do
-      {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
-      {false, _, _} -> {:error, :invalid_token}
-    end
+    secrets = secret
+      |> List.wrap
+      |> List.insert_at(-1, config(:secret_key))
+      |> List.flatten
+      |> Enum.uniq
+      |> Enum.map(fn(x) -> jose_jwk(x) end)
+      |> List.insert_at(0, jku_secret(JOSE.JWT.peek_payload(token).fields))
+      |> Enum.filter(fn
+        %JOSE.JWK{} -> true
+        _ -> false
+      end)
+
+    results = secrets
+      |> Stream.map(fn(s) ->
+        case JOSE.JWT.verify_strict(s, allowed_algos(), token) do
+          {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
+          {false, _, _} -> {:error, :invalid_token}
+        end
+      end)
+
+    Enum.find(results, fn({r, _}) -> r == :ok end) || Enum.at(results, 0)
   end
+
+  defp jku_secret(%{"jku" => jku, "kid" => _kid}) do
+    uri = URI.parse(jku)
+    domains = config(:allowed_jku_domains) || []
+    schemes = config(:allowed_jku_schemes) || ~w(https)
+
+    with true <- Enum.member?(schemes, uri.scheme),
+         true <- Enum.member?(domains, uri.authority),
+         {:ok, 200, _headers, client} <- :hackney.request(:get, jku, [], "", []),
+         {:ok, body} <- :hackney.body(client),
+         {:ok, json} <- Poison.decode(body),
+      do: JOSE.JWK.from_map(json)
+  end
+  defp jku_secret(_), do: nil
 
   defp allowed_algos, do: config(:allowed_algos, @default_algos)
 

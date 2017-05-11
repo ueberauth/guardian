@@ -4,4 +4,4 @@
 erl_crash.dump
 *.ez
 doc
-
+.tool-versions
