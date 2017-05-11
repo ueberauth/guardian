@@ -1,3 +1,7 @@
+# v 0.15.0
+
+* Add support for multiple secrets and jku claims
+
 # v 0.14.2
 
 * __Really_ fix pattern matching error with GuardianDB
