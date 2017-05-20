@@ -1,13 +1,12 @@
 defmodule Guardian.Mixfile do
   use Mix.Project
 
-  @version "0.14.2"
+  @version "1.0.0-alpha.1"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
     "Sean Callan",
-    "Aaron Renner"
   ]
 
   def project do
@@ -15,7 +14,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: "~> 1.3",
+      elixir: "~> 1.4",
       package: package(),
       source_url: @url,
       build_embedded: Mix.env == :prod,
@@ -43,16 +42,14 @@ defmodule Guardian.Mixfile do
 
   defp deps do
     [{:jose, "~> 1.8"},
-     {:phoenix, "~> 1.2", optional: true},
      {:plug, "~> 1.3"},
      {:poison, ">= 1.3.0"},
      {:uuid, ">=1.1.1"},
 
      # Dev and Test dependencies
-     {:credo, "~> 0.6.1", only: [:dev, :test]},
-     {:dialyxir, "~> 0.4.3", only: [:dev, :test]},
+     {:dialyxir, "~> 0.5.0", only: [:dev, :test]},
      {:earmark, ">= 0.0.0", only: :dev},
-     {:ex_doc, "~> 0.12", only: :dev}]
+     {:ex_doc, "~> 0.15", only: :dev}]
   end
 
   defp package do
