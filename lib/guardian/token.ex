@@ -1,24 +1,42 @@
 defmodule Guardian.Token do
   @moduledoc """
   """
-  @type jwt :: String.t
+  @type token :: String.t
+  @type claims :: map()
+  @type resource :: any()
+
   @type secret_error :: {:error, :secret_not_found}
   @type signing_error :: {:error, :signing_error}
-  @type encoding_error :: {:error, atom}
-  @type dencoding_error :: {:error, atom}
+  @type encoding_error :: {:error, atom()}
+  @type decoding_error :: {:error, atom()}
 
-  @callback peek_header(token :: jwt) :: map
-  @callback peek_claims(token :: jwt) :: map
+  @callback peek(token :: token) :: map()
+  @callback token_id() :: String.t
   @callback build_claims(
+    mod :: Module.t,
+    resource :: any(),
     sub :: String.t,
-    token_type :: any,
-    claims :: map,
+    token_type :: any(),
+    claims :: claims(),
     options :: Keyword.t
-  ) :: {:ok, map} | {:error, atom}
+  ) :: {:ok, claims()} | {:error, atom()}
 
+  @callback create_token(
+    mod :: Module.t,
+    claims :: claims(),
+    options :: Guardian.options()
+  ) :: {:ok, token} | signing_error | secret_error | encoding_error
 
-  @callback sign_claims(claims :: map, options :: Keyword.t) :: {:ok, jwt} |
-                                                                signing_error
-  @callback decode_token(token :: jwt, secret :: secret) :: {:ok, jwt} |
-                                                            decoding_error
+  @callback decode_token(
+    mod :: Module.t,
+    token :: token(),
+    options :: Guadian.options()
+  ) :: {:ok, token} | secret_error | decoding_error
+
+  @callback verify_claims(
+    mod :: Module.t,
+    claims :: claims(),
+    claims_to_check :: claims(),
+    options :: Guardian.options()
+  ) :: {:ok, claims()} | {:error, any()}
 end
