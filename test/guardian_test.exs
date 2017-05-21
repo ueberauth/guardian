@@ -1,481 +1,367 @@
 defmodule GuardianTest do
   @moduledoc false
 
-  use ExUnit.Case, async: true
+  defmodule Impl do
+    @moduledoc false
+    use Guardian, otp_app: :guardian,
+                  token_module: Guardian.Support.TokenModule
 
-  setup do
-    claims = %{
-      "aud" => "User:1",
-      "typ" => "access",
-      "exp" => Guardian.Utils.timestamp + 10_000,
-      "iat" => Guardian.Utils.timestamp,
-      "iss" => "MyApp",
-      "sub" => "User:1",
-      "something_else" => "foo"
-    }
+    import Guardian.Support.Utils, only: [
+      print_function_call: 1,
+    ]
 
-    config = Application.get_env(:guardian, Guardian)
-    algo = hd(Keyword.get(config, :allowed_algos))
-    secret = Keyword.get(config, :secret_key)
+    def subject_for_token(%{id: id} = r, claims) do
+      print_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
 
-    jose_jws = %{"alg" => algo}
-    jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
+    def subject_for_token(%{"id" => id} = r, claims) do
+      print_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
 
-    {_, jwt} = jose_jwk
-                  |> JOSE.JWT.sign(jose_jws, claims)
-                  |> JOSE.JWS.compact
+    def resource_from_claims(%{"sub" => id} = claims) do
+      print_function_call({__MODULE__, :subject_for_token, [claims]})
+      {:ok, %{id: id}}
+    end
 
-    es512_jose_jwk = JOSE.JWK.generate_key({:ec, :secp521r1})
-    es512_jose_jws = JOSE.JWS.from_map(%{"alg" => "ES512"})
-    es512_jose_jwt = es512_jose_jwk
-      |> JOSE.JWT.sign(es512_jose_jws, claims)
-      |> JOSE.JWS.compact
-      |> elem(1)
+    def build_claims(claims, resource, options) do
+      print_function_call({
+        __MODULE__,
+        :build_claims,
+        [claims, resource, options]
+      })
 
-    {
-      :ok,
-      %{
-        claims: claims,
-        jwt: jwt,
-        jose_jws: jose_jws,
-        jose_jwk: jose_jwk,
-        es512: %{
-          jwk: es512_jose_jwk,
-          jws: es512_jose_jws,
-          jwt: es512_jose_jwt
-        }
+      if Keyword.get(options, :fail_build_claims) do
+        {:error, Keyword.get(options, :fail_build_claims)}
+      else
+        {:ok, claims}
+      end
+    end
+
+    def after_encode_and_sign(resource, claims, token, options) do
+      print_function_call({
+        __MODULE__,
+        :after_encode_and_sign,
+        [resource, claims, token, options]
+      })
+
+      if Keyword.get(options, :fail_after_encode_and_sign) do
+        {:error, Keyword.get(options, :fail_after_encode_and_sign)}
+      else
+        {:ok, token}
+      end
+    end
+
+    def after_sign_in(conn, location) do
+      print_function_call({
+        __MODULE__,
+        :after_sign_in,
+        [:conn, location]
+      })
+      conn
+    end
+
+    def before_sign_out(conn, location) do
+      print_function_call({
+        __MODULE__,
+        :before_sign_out,
+        [:conn, location]
+      })
+      conn
+    end
+
+    def verify_claims(claims, options) do
+      print_function_call({
+        __MODULE__,
+        :verify_claims,
+        [claims, options]
+      })
+
+      if Keyword.get(options, :fail_mod_verify_claims) do
+        {:error, Keyword.get(options, :fail_mod_verify_claims)}
+      else
+        {:ok, claims}
+      end
+    end
+
+    def on_verify(claims, token, options) do
+      print_function_call({
+        __MODULE__,
+        :on_verify,
+        [claims, token, options]
+      })
+
+      if Keyword.get(options, :fail_on_verify) do
+        {:error, Keyword.get(options, :fail_on_verify)}
+      else
+        {:ok, claims}
+      end
+    end
+
+    def on_revoke(claims, token, options) do
+      print_function_call({
+        __MODULE__,
+        :on_revoke,
+        [claims, token, options]
+      })
+
+      if Keyword.get(options, :fail_on_revoke) do
+        {:error, Keyword.get(options, :fail_on_revoke)}
+      else
+        {:ok, token}
+      end
+    end
+  end
+
+  defmodule EncodeAndSign do
+    @moduledoc "Testing Guardian.encode_and_sign"
+    use ExUnit.Case, async: true
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @impl __MODULE__
+            |> Module.split()
+            |> List.pop_at(-1)
+            |> elem(1)
+            |> List.insert_at(-1, :Impl)
+            |> Module.concat()
+
+    @resource %{id: "bobby"}
+
+    test "the impl has access to it's config" do
+      assert @impl.config(:token_module) == Guardian.Support.TokenModule
+    end
+
+    test "encode_and_sign with only a resource" do
+      io = capture_io(fn ->
+        {:ok, _token, full_claims} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            %{},
+            []
+          )
+
+        assert full_claims ==
+          %{"sub" => "bobby"}
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "GuardianTest.Impl.subject_for_token(%{id: \"bobby\"}, %{})",
+        "Guardian.Support.TokenModule.build_claims(GuardianTest.Impl, %{id: \"bobby\"}, \"bobby\", %{}, [])",
+        "GuardianTest.Impl.build_claims(%{\"sub\" => \"bobby\"}, %{id: \"bobby\"}, [])",
+        "Guardian.Support.TokenModule.create_token(GuardianTest.Impl, %{\"sub\" => \"bobby\"}, [])",
+        "GuardianTest.Impl.after_encode_and_sign(%{id: \"bobby\"}, %{\"sub\" => \"bobby\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"bobby\\\"}}\", [])",
+      ]
+
+      assert function_calls == expected
+    end
+
+    test "with custom claims" do
+      claims = %{some: "claim"}
+      io = capture_io(fn ->
+        {:ok, _token, full_claims} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            claims,
+            []
+          )
+
+        assert full_claims ==
+          %{"sub" => "bobby", "some" => "claim"}
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "GuardianTest.Impl.subject_for_token(%{id: \"bobby\"}, %{\"some\" => \"claim\"})",
+        "Guardian.Support.TokenModule.build_claims(GuardianTest.Impl, %{id: \"bobby\"}, \"bobby\", %{\"some\" => \"claim\"}, [])",
+        "GuardianTest.Impl.build_claims(%{\"some\" => \"claim\", \"sub\" => \"bobby\"}, %{id: \"bobby\"}, [])",
+        "Guardian.Support.TokenModule.create_token(GuardianTest.Impl, %{\"some\" => \"claim\", \"sub\" => \"bobby\"}, [])",
+        "GuardianTest.Impl.after_encode_and_sign(%{id: \"bobby\"}, %{\"some\" => \"claim\", \"sub\" => \"bobby\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"bobby\\\",\\\"some\\\":\\\"claim\\\"}}\", [])"
+      ]
+
+      assert function_calls == expected
+    end
+
+    test "encode_and_sign with options" do
+      claims = %{some: "claim"}
+      options = [some: "option"]
+      io = capture_io(fn ->
+        {:ok, _token, full_claims} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            claims,
+            options
+          )
+
+        assert full_claims ==
+          %{"sub" => "bobby", "some" => "claim"}
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "GuardianTest.Impl.subject_for_token(%{id: \"bobby\"}, %{\"some\" => \"claim\"})",
+        "Guardian.Support.TokenModule.build_claims(GuardianTest.Impl, %{id: \"bobby\"}, \"bobby\", %{\"some\" => \"claim\"}, [some: \"option\"])",
+        "GuardianTest.Impl.build_claims(%{\"some\" => \"claim\", \"sub\" => \"bobby\"}, %{id: \"bobby\"}, [some: \"option\"])",
+        "Guardian.Support.TokenModule.create_token(GuardianTest.Impl, %{\"some\" => \"claim\", \"sub\" => \"bobby\"}, [some: \"option\"])",
+        "GuardianTest.Impl.after_encode_and_sign(%{id: \"bobby\"}, %{\"some\" => \"claim\", \"sub\" => \"bobby\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"bobby\\\",\\\"some\\\":\\\"claim\\\"}}\", [some: \"option\"])"
+      ]
+
+      assert function_calls == expected
+    end
+
+    test "encode_and_sign when build_claims fails" do
+      capture_io(fn ->
+        {:error, :bad_things} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            %{},
+            [fail_build_claims: :bad_things]
+          )
+      end)
+    end
+
+    test "encode_and_sign when after_encode_and_sign fails" do
+      capture_io(fn ->
+        {:error, :bad_things} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            %{},
+            [fail_after_encode_and_sign: :bad_things]
+          )
+      end)
+    end
+
+    test "encode_and_sign when create_token fails in the token module" do
+      capture_io(fn ->
+        {:error, :bad_things} =
+          Guardian.encode_and_sign(
+            @impl,
+            @resource,
+            %{},
+            [fail_create_token: :bad_things]
+          )
+      end)
+    end
+  end
+
+  defmodule DecodeAndVerify do
+    @moduledoc "Testing Guardian.decode_and_verify"
+    use ExUnit.Case, async: true
+
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @impl __MODULE__
+          |> Module.split()
+          |> List.pop_at(-1)
+          |> elem(1)
+          |> List.insert_at(-1, :Impl)
+          |> Module.concat()
+
+    setup do
+      claims = %{
+        "sub" => "freddy",
+        "some" => "other_claim"
       }
-    }
-  end
-
-  test "no config" do
-    cfg = Guardian.config
-    Application.put_env(:guardian, Guardian, nil)
-    assert_raise RuntimeError, "Guardian is not configured", &Guardian.config/0
-    Application.put_env(:guardian, Guardian, cfg)
-  end
-
-  test "config with no serializer" do
-    cfg = Guardian.config
-    Application.put_env(:guardian, Guardian, Keyword.drop(cfg, [:serializer]))
-    assert_raise RuntimeError, "Guardian requires a serializer", &Guardian.config/0
-    Application.put_env(:guardian, Guardian, cfg)
-  end
-
-  test "config with a value" do
-    assert Guardian.config(:issuer) == "MyApp"
-  end
-
-  test "config with no value" do
-    assert Guardian.config(:not_a_thing) == nil
-  end
-
-  test "config with a default value" do
-    assert Guardian.config(:not_a_thing, :this_is_a_thing) == :this_is_a_thing
-  end
-
-  test "config with a system value" do
-    assert Guardian.config(:system_foo) == nil
-    System.put_env("FOO", "foo")
-    assert Guardian.config(:system_foo) == "foo"
-  end
-
-  test "it fetches the currently configured serializer" do
-    assert Guardian.serializer == Guardian.TestGuardianSerializer
-  end
-
-  test "it returns the current app name" do
-    assert Guardian.issuer == "MyApp"
-  end
-
-  test "it verifies the jwt", context do
-    assert Guardian.decode_and_verify(context.jwt) == {:ok, context.claims}
-  end
-
-  test "it verifies the jwt with custom secret %JOSE.JWK{} struct", context do
-    secret = context.es512.jwk
-    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
-  end
-
-  test "it verifies the jwt with custom secret tuple", context do
-    secret = {Guardian.TestHelper, :secret_key_function, [context.es512.jwk]}
-    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
-  end
-
-  test "it verifies the jwt with custom secret map", context do
-    secret = context.es512.jwk |> JOSE.JWK.to_map |> elem(1)
-    assert Guardian.decode_and_verify(context.es512.jwt, %{secret: secret}) == {:ok, context.claims}
-  end
-
-  test "verifies the issuer", context do
-    assert Guardian.decode_and_verify(context.jwt) == {:ok, context.claims}
-  end
-
-  test "fails if the issuer is not correct", context do
-    claims = %{
-      typ: "access",
-      exp: Guardian.Utils.timestamp + 10_000,
-      iat: Guardian.Utils.timestamp,
-      iss: "not the issuer",
-      sub: "User:1"
-    }
-
-    {_, jwt} = context.jose_jwk
-                  |> JOSE.JWT.sign(context.jose_jws, claims)
-                  |> JOSE.JWS.compact
-
-    assert Guardian.decode_and_verify(jwt) == {:error, :invalid_issuer}
-  end
-
-  test "fails if the expiry has passed", context do
-    claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
-    {_, jwt} = context.jose_jwk
-                  |> JOSE.JWT.sign(context.jose_jws, claims)
-                  |> JOSE.JWS.compact
-
-    assert Guardian.decode_and_verify(jwt) == {:error, :token_expired}
-  end
-
-  test "it is invalid if the typ is incorrect", context do
-    response = Guardian.decode_and_verify(
-      context.jwt,
-      %{typ: "something_else"}
-    )
-
-    assert response == {:error, :invalid_type}
-  end
-
-  test "verify! with a jwt", context do
-    assert Guardian.decode_and_verify!(context.jwt) == context.claims
-  end
-
-  test "verify! with a bad token", context do
-    claims = Map.put(context.claims, "exp", Guardian.Utils.timestamp - 10)
-    {_, jwt} = context.jose_jwk
-                  |> JOSE.JWT.sign(context.jose_jws, claims)
-                  |> JOSE.JWS.compact
-
-    assert_raise(RuntimeError, fn() -> Guardian.decode_and_verify!(jwt) end)
-  end
-
-  test "serializer" do
-    assert Guardian.serializer == Guardian.TestGuardianSerializer
-  end
-
-  test "encode_and_sign(object)" do
-    {:ok, jwt, _} = Guardian.encode_and_sign("thinger")
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["typ"] == "access"
-    assert claims["aud"] == "thinger"
-    assert claims["sub"] == "thinger"
-    assert claims["iat"]
-    assert claims["exp"] > claims["iat"]
-    assert claims["iss"] == Guardian.issuer
-  end
-
-  test "encode_and_sign(object, audience)" do
-    {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type")
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["typ"] == "my_type"
-    assert claims["aud"] == "thinger"
-    assert claims["sub"] == "thinger"
-    assert claims["iat"]
-    assert claims["exp"] > claims["iat"]
-    assert claims["iss"] == Guardian.issuer
-  end
-
-  test "encode_and_sign(object, type, claims)" do
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing"
-    )
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["typ"] == "my_type"
-    assert claims["aud"] == "thinger"
-    assert claims["sub"] == "thinger"
-    assert claims["iat"]
-    assert claims["exp"] > claims["iat"]
-    assert claims["iss"] == Guardian.issuer
-    assert claims["some"] == "thing"
-  end
-
-  test "encode_and_sign(object, aud) with ttl" do
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      ttl: {5, :days}
-    )
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
-  end
-
-  test "encode_and_sign(object, aud) with ttl in claims" do
-    claims = Guardian.Claims.app_claims
-    |> Guardian.Claims.ttl({5, :days})
-
-    {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type", claims)
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
-  end
-
-  test "encode_and_sign(object, aud) with ttl, number and period as binaries" do
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      ttl: {"5", "days"}
-    )
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
-  end
-
-  test "encode_and_sign(object, aud) with ttl in claims, number and period as binaries" do
-    claims = Guardian.Claims.app_claims
-    |> Guardian.Claims.ttl({"5", "days"})
-
-    {:ok, jwt, _} = Guardian.encode_and_sign("thinger", "my_type", claims)
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == claims["iat"] + 5 * 24 * 60 * 60
-  end
-
-  test "encode_and_sign(object, aud) with exp and iat" do
-    iat = Guardian.Utils.timestamp - 100
-    exp = Guardian.Utils.timestamp + 100
-
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      %{"exp" => exp, "iat" => iat})
-
-    {:ok, claims} = Guardian.decode_and_verify(jwt)
-    assert claims["exp"] == exp
-    assert claims["iat"] == iat
-  end
-
-  test "encode_and_sign with a serializer error" do
-    {:error, reason} = Guardian.encode_and_sign(%{error: :unknown})
-    assert reason
-  end
-
-  test "encode_and_sign calls before_encode_and_sign hook" do
-    {:ok, _, _} = Guardian.encode_and_sign("before_encode_and_sign", "send")
-    assert_received :before_encode_and_sign
-  end
-
-  test "encode_and_sign calls before_encode_and_sign hook w/ error" do
-    {:error, reason} = Guardian.encode_and_sign("before_encode_and_sign", "error")
-    assert reason == "before_encode_and_sign_error"
-  end
-
-  test "encode_and_sign calls after_encode_and_sign hook" do
-    {:ok, _, _} = Guardian.encode_and_sign("after_encode_and_sign", "send")
-    assert_received :after_encode_and_sign
-  end
-
-  test "encode_and_sign calls after_encode_and_sign hook w/ error" do
-    {:error, reason} = Guardian.encode_and_sign("after_encode_and_sign", "error")
-    assert reason == "after_encode_and_sign_error"
-  end
-
-  test "encode_and_sign with custom secret" do
-    secret = "ABCDEF"
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret
-    )
-
-    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
-    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
-  end
-
-  test "encode_and_sign custom headers and custom secret %JOSE.JWK{} struct", context do
-    secret = context.es512.jwk
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      headers: %{"alg" => "ES512"},
-      some: "thing",
-      secret: secret
-    )
-
-    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
-    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
-  end
-
-  test "encode_and_sign custom headers and custom secret function without args" do
-    secret = {Guardian.TestHelper, :secret_key_function}
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret
-    )
-
-    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
-    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
-  end
-
-  test "encode_and_sign custom headers and custom secret function with args", context do
-    secret = {Guardian.TestHelper, :secret_key_function, [context.es512.jwk]}
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      headers: %{"alg" => "ES512"},
-      some: "thing",
-      secret: secret
-    )
-
-    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
-    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
-  end
-
-  test "encode_and_sign custom headers and custom secret map", context do
-    secret = context.es512.jwk |> JOSE.JWK.to_map |> elem(1)
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      headers: %{"alg" => "ES512"},
-      some: "thing",
-      secret: secret
-    )
-
-    {:error, :invalid_token} = Guardian.decode_and_verify(jwt)
-    {:ok, _claims} = Guardian.decode_and_verify(jwt, %{secret: secret})
-  end
-
-  test "peeking at the headers" do
-    secret = "ABCDEF"
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret,
-      headers: %{"foo" => "bar"}
-    )
-
-    header = Guardian.peek_header(jwt)
-    assert header["foo"] == "bar"
-  end
-
-  test "peeking at the payload" do
-    secret = "ABCDEF"
-    {:ok, jwt, _} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing",
-      secret: secret,
-      headers: %{"foo" => "bar"}
-    )
-
-    header = Guardian.peek_claims(jwt)
-    assert header["some"] == "thing"
-  end
-
-  test "revoke" do
-    {:ok, jwt, claims} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      some: "thing"
-    )
-
-    assert Guardian.revoke!(jwt, claims) == :ok
-  end
-
-  test "refresh" do
-
-    old_claims = Guardian.Claims.app_claims
-                 |> Map.put("iat", Guardian.Utils.timestamp - 100)
-                 |> Map.put("exp", Guardian.Utils.timestamp + 100)
-
-    {:ok, jwt, claims} = Guardian.encode_and_sign(
-      "thinger",
-      "my_type",
-      old_claims
-    )
-
-    {:ok, new_jwt, new_claims} = Guardian.refresh!(jwt, claims)
-
-    refute jwt == new_jwt
-
-    refute Map.get(new_claims, "jti") == nil
-    refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
-
-    refute Map.get(new_claims, "iat") == nil
-    refute Map.get(new_claims, "iat") == Map.get(claims, "iat")
-
-    refute Map.get(new_claims, "exp") == nil
-    refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
-  end
-
-  test "exchange" do
-      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh")
-
-      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
-
-      refute jwt == new_jwt
-      refute Map.get(new_claims, "jti") == nil
-      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
-
-      refute Map.get(new_claims, "exp") == nil
-      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
-      assert Map.get(new_claims, "typ") == "access"
+      {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
     end
 
-    test "exchange with claims" do
-      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh", some: "thing")
+    test "simple decode", %{token: token, claims: claims} do
+      io = capture_io(fn ->
+        {:ok, ^claims} =
+          Guardian.decode_and_verify(@impl, token, %{}, [])
+      end)
 
-      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
+      function_calls = filter_function_calls(io)
 
-      refute jwt == new_jwt
-      refute Map.get(new_claims, "jti") == nil
-      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
+      expected = [
+        "Guardian.Support.TokenModule.decode_token(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
+        "Guardian.Support.TokenModule.verify_claims(GuardianTest.Impl, %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+        "GuardianTest.Impl.verify_claims(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+        "GuardianTest.Impl.on_verify(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])"
+      ]
 
-      refute Map.get(new_claims, "exp") == nil
-      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
-      assert Map.get(new_claims, "typ") == "access"
-      assert Map.get(new_claims, "some") == "thing"
+      assert function_calls == expected
     end
 
-    test "exchange with list of from typs" do
-      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "rememberMe")
-
-      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, ["refresh", "rememberMe"], "access")
-
-      refute jwt == new_jwt
-      refute Map.get(new_claims, "jti") == nil
-      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
-
-      refute Map.get(new_claims, "exp") == nil
-      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
-      assert Map.get(new_claims, "typ") == "access"
+    test "verifying specific claims", %{claims: claims, token: token} do
+      capture_io(fn ->
+        {:ok, ^claims} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{some: "other_claim"}
+          )
+      end)
     end
 
-    test "exchange with atom typ" do
-      {:ok, jwt, claims} = Guardian.encode_and_sign("thinger", "refresh")
-
-      {:ok, new_jwt, new_claims} = Guardian.exchange(jwt, :refresh, :access)
-
-      refute jwt == new_jwt
-      refute Map.get(new_claims, "jti") == nil
-      refute Map.get(new_claims, "jti") == Map.get(claims, "jti")
-
-      refute Map.get(new_claims, "exp") == nil
-      refute Map.get(new_claims, "exp") == Map.get(claims, "exp")
-      assert Map.get(new_claims, "typ") == "access"
+    test "a failing claim check", %{token: token} do
+      capture_io(fn ->
+        {:error, "not_a"} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{not_a: "thing"}
+          )
+      end)
     end
 
-    test "exchange with a wrong from typ" do
-      {:ok, jwt, _claims} = Guardian.encode_and_sign("thinger")
-      assert  Guardian.exchange(jwt, "refresh", "access") == {:error, :incorrect_token_type}
+    test "failure on decoding", %{token: token} do
+      capture_io(fn ->
+        {:error, :decode_failure} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{},
+            [fail_decode_token: :decode_failure]
+          )
+      end)
+    end
+
+    test "fails verifying within the token module", %{token: token} do
+      capture_io(fn ->
+        {:error, :verify_failure} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{},
+            [fail_verify_claims: :verify_failure]
+          )
+      end)
+    end
+
+    test "fails verifying within the module", %{token: token} do
+      capture_io(fn ->
+        {:error, :verify_failure} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{},
+            [fail_mod_verify_claims: :verify_failure]
+          )
+      end)
+    end
+
+    test "fails on verify", %{token: token} do
+      capture_io(fn ->
+        {:error, :on_verify_failure} =
+          Guardian.decode_and_verify(
+            @impl,
+            token,
+            %{},
+            [fail_on_verify: :on_verify_failure]
+          )
+      end)
+    end
   end
-
 end

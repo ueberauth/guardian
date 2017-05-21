@@ -16,7 +16,6 @@ defmodule Guardian.Token do
     mod :: Module.t,
     resource :: any(),
     sub :: String.t,
-    token_type :: any(),
     claims :: claims(),
     options :: Keyword.t
   ) :: {:ok, claims()} | {:error, atom()}
@@ -36,7 +35,6 @@ defmodule Guardian.Token do
   @callback verify_claims(
     mod :: Module.t,
     claims :: claims(),
-    claims_to_check :: claims(),
     options :: Guardian.options()
   ) :: {:ok, claims()} | {:error, any()}
 end

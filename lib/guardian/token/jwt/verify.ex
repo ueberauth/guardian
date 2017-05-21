@@ -4,12 +4,17 @@ defmodule Guardian.Token.Jwt.Verify do
   """
   use Guardian.Token.Verify
 
-  def verify_claim(mod, "iss", %{"iss" => iss} = claims) do
+  def verify_claim(mod, "iss", %{"iss" => iss} = claims, _opts) do
     issuer = apply(mod, :config, [:issuer])
-    if issuer == iss, do: {:ok, claims}, else: {:error, :invalid_issuer}
+    verify_issuer = apply(mod, :config, [:verify_issuer])
+    if verify_issuer && issuer == iss do
+      {:ok, claims}
+    else
+      {:error, :invalid_issuer}
+    end
   end
 
-  def verify_claim(mod, "nbf", %{"nbf" => nbf} = claims) do
+  def verify_claim(mod, "nbf", %{"nbf" => nbf} = claims, _opts) do
     if nbf == nil do
       {:ok, claims}
     else
@@ -23,7 +28,7 @@ defmodule Guardian.Token.Jwt.Verify do
     end
   end
 
-  def verify_claim(mod, "exp", %{"exp" => exp} = claims) do
+  def verify_claim(mod, "exp", %{"exp" => exp} = claims, _opts) do
     if exp == nil do
       {:ok, claims}
     else
@@ -37,5 +42,5 @@ defmodule Guardian.Token.Jwt.Verify do
     end
   end
 
-  def verify_claim(_mod, _claim_key, claims), do: {:ok, claims}
+  def verify_claim(_mod, _claim_key, claims, _opts), do: {:ok, claims}
 end
