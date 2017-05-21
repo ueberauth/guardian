@@ -15,6 +15,7 @@ defmodule Guardian.Mixfile do
       app: :guardian,
       version: @version,
       elixir: "~> 1.4",
+      elixirc_paths: elixirc_paths(Mix.env),
       package: package(),
       source_url: @url,
       build_embedded: Mix.env == :prod,
@@ -28,6 +29,9 @@ defmodule Guardian.Mixfile do
                  plt_add_deps: :project]
     ]
   end
+
+  defp elixirc_paths(env) when env in [:test], do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def application do
     [applications: [:logger, :poison, :jose, :uuid]]

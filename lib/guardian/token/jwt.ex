@@ -40,15 +40,15 @@ defmodule Guardian.Token.Jwt do
     mod,
     _resource,
     sub,
-    token_type,
     claims \\ %{},
     options \\ []
   ) do
     claims
     |> set_jti()
     |> set_iat()
+    |> set_iss(mod, options)
     |> set_aud(mod, options)
-    |> set_type(mod, token_type, options)
+    |> set_type(mod, options)
     |> set_sub(mod, sub, options)
     |> set_ttl(mod, options)
   end
@@ -66,14 +66,14 @@ defmodule Guardian.Token.Jwt do
   end
 
 
-  def verify_claims(mod, claims, claims_to_check, options) do
+  def verify_claims(mod, claims, options) do
     result =
       mod
       |> apply(:config, [:token_verify_module, Guardian.Token.Jwt.Verify])
-      |> apply(:verify, [mod, claims, claims_to_check, options])
+      |> apply(:verify_claims, [mod, claims, options])
     case result do
       {:ok, claims} ->
-        apply(mod, :verify_claims, [claims, claims_to_check, options])
+        apply(mod, :verify_claims, [claims, options])
       err -> err
     end
   end
@@ -113,18 +113,22 @@ defmodule Guardian.Token.Jwt do
     end
   end
 
-  defp set_type(claims, mod, token_type, _opts) do
-    typ =
-      if token_type do
-        to_string(token_type)
-      else
-        apply(mod, :config, [:default_token_type, @default_token_type])
-      end
+  defp set_type(%{"typ" => typ} = claims, _mod, _opts) when not is_nil(typ) do
+    claims
+  end
 
+  defp set_type(claims, mod, opts) do
+    typ = Keyword.get(
+      opts,
+      :token_type,
+      apply(mod, :default_token_type, [@default_token_type])
+    )
     Map.put(claims, @type_key, to_string(typ))
   end
 
-  defp set_sub(claims, _mod, subject, _opts), do: Map.put(claims, "sub", subject)
+  defp set_sub(claims, _mod, subject, _opts) do
+    Map.put(claims, "sub", subject)
+  end
 
   defp set_iat(claims) do
     ts = Guardian.timestamp()
@@ -209,10 +213,15 @@ defmodule Guardian.Token.Jwt do
     raise "Unknown Units: #{units}"
   end
 
+  defp set_iss(claims, mod, _opts) do
+    issuer = apply(mod, :config, [:issuer])
+    Map.put(claims, "iss", to_string(issuer))
+  end
+
   defp set_aud(%{"aud" => aud} = claims, _mod, _opts) when not is_nil(aud), do: claims
   defp set_aud(claims, mod, _opts) do
     issuer = apply(mod, :config, [:issuer])
-    Map.put(claims, "iss", to_string(issuer))
+    Map.put(claims, "aud", to_string(issuer))
   end
 
   defp set_jti(claims) do
