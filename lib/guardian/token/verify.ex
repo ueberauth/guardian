@@ -12,23 +12,14 @@ defmodule Guardian.Token.Verify do
 
   defmacro __using__(_opts \\ []) do
     quote do
-      def verify(mod, claims, claims_to_check, opts) do
-        result = Guardian
-                 .Token
-                 .Verify
-                 .verify_literal_claims(claims, claims_to_check, opts)
-
-        case result do
-          {:ok, ^claims} ->
-            Enum.reduce(
-              claims,
-              {:ok, claims},
-              fn {k,v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
-                 _, {:error, reason} = err -> err
-              end
-            )
-          err -> err
-        end
+      def verify_claims(mod, claims, opts) do
+        Enum.reduce(
+          claims,
+          {:ok, claims},
+          fn {k,v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
+             _, {:error, reason} = err -> err
+          end
+        )
       end
 
       def verify_claim(_mod, _claim_key, claims, _opts), do: {:ok, claims}
@@ -47,9 +38,11 @@ defmodule Guardian.Token.Verify do
   def verify_literal_claims(claims, claims_to_check, _opts) do
     errors =
       for {k,v} <- claims_to_check,
-        result <- verify_literal_claim(claims, k, v),
-        elem(result, 0) == :error,
-        into: [], do: result
+        into: []
+      do
+        verify_literal_claim(claims, k, v)
+      end
+      |> Enum.filter(&(elem(&1, 0) == :error))
 
     if Enum.any?(errors) do
       hd(errors)

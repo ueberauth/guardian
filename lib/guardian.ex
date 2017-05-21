@@ -1,9 +1,7 @@
 defmodule Guardian do
-  @type token_type :: String.t
   @type options :: Keyword.t
 
   @default_token_module Guardian.Token.Jwt
-  @default_token_type "access"
 
   @doc """
   Encodes the subject into a token in the "sub" field
@@ -42,7 +40,6 @@ defmodule Guardian do
 
   @callback verify_claims(
     claims :: Guardian.Token.claims(),
-    claims_to_check :: Guardian.Token.claims(),
     options :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, atom()}
 
@@ -93,17 +90,17 @@ defmodule Guardian do
       def on_revoke(claims, _token, _options), do: {:ok, claims}
 
       def build_claims(c, _, _), do: {:ok, c}
-      def verify_claims(claims, _claims_to_check, _options), do: {:ok, claims}
+      def verify_claims(claims, _options), do: {:ok, claims}
 
-      @defoverridable [
-        after_encode_and_sign: 5,
+      defoverridable [
+        after_encode_and_sign: 4,
         after_sign_in: 2,
         before_sign_out: 2,
-        build_claims: 1,
+        build_claims: 3,
         default_token_type: 0,
         on_revoke: 3,
         on_verify: 3,
-        verify_claims: 3,
+        verify_claims: 2,
       ]
     end
   end
@@ -112,11 +109,15 @@ defmodule Guardian do
     System.system_time(:seconds)
   end
 
-  def stringify_keys(map) do
-    for {k,v} <- map, into: %{}, do: {to_string(k), v}
+  def stringify_keys(map) when is_map(map) do
+    for {k,v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
   end
+  def stringify_keys(list) when is_list(list) do
+    for item <- list, into: [], do: stringify_keys(item)
+  end
+  def stringify_keys(value), do: value
 
-  def encode_and_sign(mod, resource, token_type, claims \\ %{}, opts \\ []) do
+  def encode_and_sign(mod, resource, claims \\ %{}, opts \\ []) do
     claims =
       claims
       |> Enum.into(%{})
@@ -125,10 +126,10 @@ defmodule Guardian do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
     with {:ok, subject} <- apply(mod, :subject_for_token, [resource, claims]),
-         claims <- apply(
+         {:ok, claims} <- apply(
            token_mod,
            :build_claims,
-           [mod, resource, subject, token_type, claims, opts]
+           [mod, resource, subject, claims, opts]
          ),
          {:ok, claims} <- apply(mod, :build_claims, [claims, resource, opts]),
          {:ok, token} <- apply(token_mod, :create_token, [mod, claims, opts]),
@@ -139,6 +140,9 @@ defmodule Guardian do
          )
     do
       {:ok, token, claims}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
     end
   end
 
@@ -152,19 +156,28 @@ defmodule Guardian do
 
     try do
       with {:ok, claims} <- apply(token_mod, :decode_token, [mod, token, opts]),
+           {:ok, claims} <- Guardian.Token.Verify
+                            .verify_literal_claims(
+                              claims,
+                              claims_to_check,
+                              opts
+                            ),
            {:ok, claims} <- apply(
              token_mod,
              :verify_claims,
-             [mod, claims, claims_to_check, opts]
+             [mod, claims, opts]
            ),
            {:ok, claims} <- apply(
              mod,
              :verify_claims,
-             [claims, claims_to_check, opts]
+             [claims, opts]
            ),
            {:ok, claims} <- apply(mod, :on_verify, [claims, token, opts])
       do
         {:ok, claims}
+      else
+        {:error, _} = err -> err
+        err -> {:error, err}
       end
     rescue
       e -> {:error, e}
