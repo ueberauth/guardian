@@ -6,6 +6,7 @@ defmodule Guardian.Token.Jwt do
   @behaviour Guardian.Token
 
   alias Guardian.Config
+  import Guardian, only: [stringify_keys: 1]
 
   @default_algos ["HS512"]
   @default_token_type "access"
@@ -23,13 +24,12 @@ defmodule Guardian.Token.Jwt do
   def token_id, do: UUID.uuid4
 
   def create_token(mod, claims, options \\ []) do
-    headers = fetch_headers(mod, options)
     secret = fetch_secret(mod, options)
 
     {_, token} =
       secret
       |> jose_jwk()
-      |> JOSE.JWT.sign(jose_jws(mod, headers), claims)
+      |> JOSE.JWT.sign(jose_jws(mod, options), claims)
       |> JOSE.JWS.compact()
 
     {:ok, token}
@@ -44,6 +44,7 @@ defmodule Guardian.Token.Jwt do
     options \\ []
   ) do
     claims
+    |> stringify_keys()
     |> set_jti()
     |> set_iat()
     |> set_iss(mod, options)
@@ -89,14 +90,10 @@ defmodule Guardian.Token.Jwt do
   defp jose_jwk(the_secret) when is_map(the_secret), do: JOSE.JWK.from_map(the_secret)
   defp jose_jwk(value), do: Config.resolve_value(value)
 
-  defp fetch_headers(_mod, opts) do
-    Keyword.get(opts, :headers, [])
-  end
-
   defp fetch_allowed_algos(mod, opts) do
     allowed = Keyword.get(opts, :allowed_algos)
     if allowed do
-      allowed
+      Guardian.Config.resolve_value(allowed)
     else
       mod
       |> apply(:config, [:allowed_algos, @default_algos])
@@ -106,7 +103,7 @@ defmodule Guardian.Token.Jwt do
   defp fetch_secret(mod, opts) do
     secret = Keyword.get(opts, :secret)
     if secret do
-      secret
+      Guardian.Config.resolve_value(secret)
     else
       mod
       |> apply(:config, [:secret_key])
@@ -121,9 +118,9 @@ defmodule Guardian.Token.Jwt do
     typ = Keyword.get(
       opts,
       :token_type,
-      apply(mod, :default_token_type, [@default_token_type])
+      apply(mod, :default_token_type, [])
     )
-    Map.put(claims, @type_key, to_string(typ))
+    Map.put(claims, @type_key, to_string(typ || @default_token_type))
   end
 
   defp set_sub(claims, _mod, subject, _opts) do
@@ -141,23 +138,20 @@ defmodule Guardian.Token.Jwt do
     claims
   end
 
-  defp set_ttl(%{"ttl" => requested_ttl} = claims, _mod, _opts) do
-    claims
-    |> Map.delete("ttl")
-    |> set_ttl(requested_ttl)
-  end
-
   defp set_ttl(%{"typ" => token_typ} = claims, mod, opts) do
-    ttl_value =
-      if Keyword.get(opts, :ttl) do
-        Keyword.get(opts, :ttl)
-      else
+    ttl = Keyword.get(opts, :ttl)
+    if ttl do
+      set_ttl(claims, ttl)
+    else
+      ttl =
         mod
         |> apply(:config, [:token_ttl, %{}])
-        |> Map.get(token_typ, @default_ttl)
-      end
-
-    set_ttl(claims, ttl_value)
+        |> Map.get(
+          to_string(token_typ),
+          apply(mod, :config, [:ttl, @default_ttl])
+        )
+      set_ttl(claims, ttl)
+    end
   end
 
   defp set_ttl(the_claims, {num, period}) when is_binary(num) do
@@ -177,11 +171,6 @@ defmodule Guardian.Token.Jwt do
     claims
     |> set_iat()
     |> set_ttl(requested_ttl)
-  end
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {millis, unit}})
-  when unit in [:milli, :millis] do
-    Map.put(the_claims, "exp", iat_v + millis / 1000)
   end
 
   defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}})
@@ -218,7 +207,9 @@ defmodule Guardian.Token.Jwt do
     Map.put(claims, "iss", to_string(issuer))
   end
 
-  defp set_aud(%{"aud" => aud} = claims, _mod, _opts) when not is_nil(aud), do: claims
+  defp set_aud(%{"aud" => aud} = claims, _mod, _opts) when not is_nil(aud) do
+    claims
+  end
   defp set_aud(claims, mod, _opts) do
     issuer = apply(mod, :config, [:issuer])
     Map.put(claims, "aud", to_string(issuer))
