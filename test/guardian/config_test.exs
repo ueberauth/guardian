@@ -38,7 +38,8 @@ defmodule Guardian.ConfigTest do
   end
 
   test "config with a system value" do
-    assert __MODULE__.Impl.config(:system_foo) == nil
+    System.put_env("FOO", "")
+    assert __MODULE__.Impl.config(:system_foo) == ""
     System.put_env("FOO", "foo")
     assert __MODULE__.Impl.config(:system_foo) == "foo"
   end
