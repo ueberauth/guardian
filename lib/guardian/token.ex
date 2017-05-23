@@ -37,4 +37,11 @@ defmodule Guardian.Token do
     claims :: claims(),
     options :: Guardian.options()
   ) :: {:ok, claims()} | {:error, any()}
+
+  @callback revoke(
+    mod :: Module.t,
+    claims :: claims(),
+    token :: token(),
+    options :: Guardian.options()
+  ) :: {:ok, claims() | {:error, any()}}
 end
