@@ -74,6 +74,8 @@ defmodule Guardian do
         |> Guardian.Config.resolve_value()
       end
 
+      def peek(token), do: Guardian.peek(__MODULE__, token)
+
       def encode_and_sign(resource, token_type \\ nil, claims \\ %{}, opts \\ []) do
         token_type = token_type || default_token_type()
         Guardian.encode_and_sign(__MODULE__, resource, token_type, claims, opts)
@@ -81,6 +83,10 @@ defmodule Guardian do
 
       def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []) do
         Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
+      end
+
+      def revoke(token, opts \\ []) do
+        Guardian.revoke(__MODULE__, token, opts)
       end
 
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
@@ -116,6 +122,11 @@ defmodule Guardian do
     for item <- list, into: [], do: stringify_keys(item)
   end
   def stringify_keys(value), do: value
+
+  def peek(mod, token) do
+    token_mod = apply(mod, :config, [:token_module, @default_token_module])
+    apply(token_mod, :peek, [token])
+  end
 
   def encode_and_sign(mod, resource, claims \\ %{}, opts \\ []) do
     claims =
@@ -181,6 +192,24 @@ defmodule Guardian do
       end
     rescue
       e -> {:error, e}
+    end
+  end
+
+  def revoke(mod, token, options \\ []) do
+    token_mod = apply(mod, :config, [:token_module, @default_token_module])
+    %{claims: claims} = Guardian.peek(mod, token)
+
+    with {:ok, claims} <- apply(
+                            token_mod,
+                            :revoke,
+                            [mod, claims, token, options]
+                          ),
+         {:ok, claims} <- apply(mod, :on_revoke, [claims, token, options])
+    do
+      {:ok, claims}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
     end
   end
 end

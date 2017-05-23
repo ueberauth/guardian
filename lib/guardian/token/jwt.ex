@@ -66,7 +66,6 @@ defmodule Guardian.Token.Jwt do
     end
   end
 
-
   def verify_claims(mod, claims, options) do
     result =
       mod
@@ -78,6 +77,8 @@ defmodule Guardian.Token.Jwt do
       err -> err
     end
   end
+
+  def revoke(_mod, claims, _token, _options), do: {:ok, claims}
 
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
