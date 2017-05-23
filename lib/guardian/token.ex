@@ -50,4 +50,12 @@ defmodule Guardian.Token do
     old_token :: token(),
     options :: Guardian.options()
   ) :: {:ok, {token(), claims()}, {token(), claims()}} | {:error, any()}
+
+  @callback exchange(
+    mod :: Module.t,
+    old_token :: token(),
+    from_type :: String.t,
+    to_type :: String.t,
+    options :: Guardian.options()
+  ) :: {:ok, {token(), claims()}, {token(), claims()}} | {:error, any()}
 end

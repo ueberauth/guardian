@@ -528,3 +528,61 @@ defmodule Guardian.Token.JwtTest.Refresh do
     assert very_new_c["exp"] == very_new_c["iat"] + 78
   end
 end
+
+defmodule Guardian.Token.JwtTest.Exchange do
+  use Guardian.Token.JwtTest, async: true
+  alias Guardian.Token.Jwt
+
+  test "it refreshes the jwt exp", ctx do
+    old_token = ctx.jwt
+    old_claims = ctx.claims
+    {:ok, {^old_token = old_t, ^old_claims = old_c}, {new_t, new_c}} =
+      Jwt.exchange(ctx.impl, ctx.jwt, old_claims["typ"], "refresh", [])
+
+    refute old_t == new_t
+    assert new_c["sub"] == old_c["sub"]
+    assert new_c["aud"] == old_c["aud"]
+    assert new_c["typ"] == "refresh"
+
+    refute new_c["jti"] == old_c["jti"]
+    refute new_c["nbf"] == old_c["nbf"]
+    refute new_c["exp"] == old_c["exp"]
+  end
+
+  test "it allows custom ttl", ctx do
+    old_token = ctx.jwt
+    old_claims = ctx.claims
+    {:ok, {^old_token = old_t, ^old_claims = old_c}, {new_t, new_c}} =
+      Jwt.exchange(
+        ctx.impl,
+        ctx.jwt,
+        old_claims["typ"],
+        "refresh",
+        [ttl: {30, :seconds}]
+      )
+
+    refute old_t == new_t
+
+    assert new_c["sub"] == old_c["sub"]
+    assert new_c["aud"] == old_c["aud"]
+    assert new_c["typ"] == "refresh"
+
+    refute new_c["jti"] == old_c["jti"]
+    refute new_c["nbf"] == old_c["nbf"]
+    refute new_c["exp"] == old_c["exp"]
+    assert new_c["exp"] == new_c["iat"] + 30
+
+    {:ok, {^new_t, ^new_c}, {very_new_t, very_new_c}} =
+      Jwt.exchange(
+        ctx.impl,
+        new_t,
+        new_c["typ"],
+        "other",
+        [ttl: {78, :seconds}]
+      )
+
+    refute new_t == very_new_t
+    assert very_new_c["exp"] == very_new_c["iat"] + 78
+    assert very_new_c["typ"] == "other"
+  end
+end

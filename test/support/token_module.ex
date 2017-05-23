@@ -87,4 +87,20 @@ defmodule Guardian.Support.TokenModule do
       {:ok, resp, resp}
     end
   end
+
+  def exchange(mod, old_token, from_type, to_type, options) do
+    print_function_call({
+      __MODULE__,
+      :exchange,
+      [mod, old_token, from_type, to_type, options]
+    })
+
+    if Keyword.get(options, :fail_exchange) do
+      {:error, Keyword.get(options, :fail_exchange)}
+    else
+      old_claims = Poison.decode!(old_token)["claims"]
+      resp = {old_token, old_claims}
+      {:ok, resp, resp}
+    end
+  end
 end

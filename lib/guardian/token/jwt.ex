@@ -96,6 +96,23 @@ defmodule Guardian.Token.Jwt do
     end
   end
 
+  def exchange(mod, old_token, from_type, to_type, options) do
+    with {:ok, old_claims} <- apply(
+                            mod,
+                            :decode_and_verify,
+                            [old_token, %{}, options]
+                          ),
+         {:ok, claims} <-
+           exchange_claims(mod, old_claims, from_type, to_type, options),
+         {:ok, token} <- create_token(mod, claims, options)
+    do
+      {:ok, {old_token, old_claims}, {token, claims}}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
+    end
+  end
+
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
     headers = Keyword.get(opts, :headers, %{})
@@ -237,14 +254,38 @@ defmodule Guardian.Token.Jwt do
   end
 
   defp refresh_claims(mod, claims, options) do
-    claims =
-      claims
-      |> Map.drop(["jti", "iss", "iat", "nbf", "exp"])
-      |> set_jti()
-      |> set_iat()
-      |> set_iss(mod, options)
-      |> set_ttl(mod, options)
+    {:ok, reset_claims(mod, claims, options)}
+  end
 
-    {:ok, claims}
+  defp exchange_claims(mod, old_claims, from_type, to_type, options)
+  when is_list(from_type)
+  do
+    from_type = Enum.map(from_type, &(to_string(&1)))
+
+    if Enum.member?(from_type, old_claims["typ"]) do
+      exchange_claims(mod, old_claims, old_claims["typ"], to_type, options)
+    else
+      {:error, :incorrect_token_type}
+    end
+  end
+
+  defp exchange_claims(mod, old_claims, from_type, to_type, options) do
+    if old_claims["typ"] == to_string(from_type) do
+      # set the type first because the ttl can depend on the type
+      claims = Map.put(old_claims, "typ", to_string(to_type))
+      claims = reset_claims(mod, claims, options)
+      {:ok, claims}
+    else
+      {:error, :incorrect_token_type}
+    end
+  end
+
+  defp reset_claims(mod, claims, options) do
+    claims
+    |> Map.drop(["jti", "iss", "iat", "nbf", "exp"])
+    |> set_jti()
+    |> set_iat()
+    |> set_iss(mod, options)
+    |> set_ttl(mod, options)
   end
 end
