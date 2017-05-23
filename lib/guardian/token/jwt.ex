@@ -80,6 +80,22 @@ defmodule Guardian.Token.Jwt do
 
   def revoke(_mod, claims, _token, _options), do: {:ok, claims}
 
+  def refresh(mod, old_token, options) do
+    with {:ok, old_claims} <- apply(
+                            mod,
+                            :decode_and_verify,
+                            [old_token, %{}, options]
+                          ),
+         {:ok, claims} <- refresh_claims(mod, old_claims, options),
+         {:ok, token} <- create_token(mod, claims, options)
+    do
+      {:ok, {old_token, old_claims}, {token, claims}}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
+    end
+  end
+
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
     headers = Keyword.get(opts, :headers, %{})
@@ -218,5 +234,17 @@ defmodule Guardian.Token.Jwt do
 
   defp set_jti(claims) do
     Map.put(claims, "jti", token_id())
+  end
+
+  defp refresh_claims(mod, claims, options) do
+    claims =
+      claims
+      |> Map.drop(["jti", "iss", "iat", "nbf", "exp"])
+      |> set_jti()
+      |> set_iat()
+      |> set_iss(mod, options)
+      |> set_ttl(mod, options)
+
+    {:ok, claims}
   end
 end
