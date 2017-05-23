@@ -71,4 +71,20 @@ defmodule Guardian.Support.TokenModule do
       {:ok, claims}
     end
   end
+
+  def refresh(mod, old_token, options) do
+    print_function_call({
+      __MODULE__,
+      :refresh,
+      [mod, old_token, options]
+    })
+
+    if Keyword.get(options, :fail_refresh) do
+      {:error, Keyword.get(options, :fail_refresh)}
+    else
+      old_claims = Poison.decode!(old_token)["claims"]
+      resp = {old_token, old_claims}
+      {:ok, resp, resp}
+    end
+  end
 end
