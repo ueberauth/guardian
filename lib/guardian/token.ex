@@ -44,4 +44,10 @@ defmodule Guardian.Token do
     token :: token(),
     options :: Guardian.options()
   ) :: {:ok, claims() | {:error, any()}}
+
+  @callback refresh(
+    mod :: Module.t,
+    old_token :: token(),
+    options :: Guardian.options()
+  ) :: {:ok, {token(), claims()}, {token(), claims()}} | {:error, any()}
 end
