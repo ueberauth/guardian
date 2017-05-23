@@ -134,7 +134,7 @@ defmodule GuardianTest do
   end
 end
 
-defmodule EncodeAndSign do
+defmodule GuardianTest.EncodeAndSign do
   @moduledoc "Testing Guardian.encode_and_sign"
   use GuardianTest, async: true
   import ExUnit.CaptureIO
@@ -267,7 +267,7 @@ defmodule EncodeAndSign do
   end
 end
 
-defmodule DecodeAndVerify do
+defmodule GuardianTest.DecodeAndVerify do
   @moduledoc "Testing Guardian.decode_and_verify"
   use GuardianTest, async: true
 
@@ -373,7 +373,7 @@ defmodule DecodeAndVerify do
   end
 end
 
-defmodule Revoke do
+defmodule GuardianTest.Revoke do
   @moduledoc "Testing Guardian.revoke"
   use GuardianTest, async: true
 
@@ -425,7 +425,7 @@ defmodule Revoke do
   end
 end
 
-defmodule Refresh do
+defmodule GuardianTest.Refresh do
   @moduledoc "Testing Guardian.refresh"
   use GuardianTest, async: true
 
