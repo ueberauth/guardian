@@ -427,7 +427,6 @@ end
 
 defmodule GuardianTest.Refresh do
   @moduledoc "Testing Guardian.refresh"
-  use GuardianTest, async: true
 
   import ExUnit.CaptureIO
   import Guardian.Support.Utils, only: [filter_function_calls: 1]
