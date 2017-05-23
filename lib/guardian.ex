@@ -55,6 +55,16 @@ defmodule Guardian do
     options :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
 
+  @callback on_refresh(
+    old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
+    new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
+    options :: options()
+  ) :: {
+    :ok,
+    {Guardian.Token.token(), Guardian.Token.claims()},
+    {Guardian.Token.token(), Guardian.Token.claims()}
+  } | {:error, any()}
+
   defmacro __using__(opts \\ []) do
     otp_app = Keyword.get(opts, :otp_app)
 
@@ -89,11 +99,18 @@ defmodule Guardian do
         Guardian.revoke(__MODULE__, token, opts)
       end
 
+      def refresh(old_token, opts \\ []) do
+        Guardian.refresh(__MODULE__, old_token, opts)
+      end
+
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
       def after_sign_in(conn, _location), do: conn
       def before_sign_out(conn, _location), do: conn
       def on_verify(claims, _token, _options), do: {:ok, claims}
       def on_revoke(claims, _token, _options), do: {:ok, claims}
+      def on_refresh(old_stuff, new_stuff, _options) do
+        {:ok, old_stuff, new_stuff}
+      end
 
       def build_claims(c, _, _), do: {:ok, c}
       def verify_claims(claims, _options), do: {:ok, claims}
@@ -105,6 +122,7 @@ defmodule Guardian do
         build_claims: 3,
         default_token_type: 0,
         on_revoke: 3,
+        on_refresh: 3,
         on_verify: 3,
         verify_claims: 2,
       ]
@@ -207,6 +225,25 @@ defmodule Guardian do
          {:ok, claims} <- apply(mod, :on_revoke, [claims, token, options])
     do
       {:ok, claims}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
+    end
+  end
+
+  def refresh(mod, old_token, opts) do
+    with token_mod <- apply(
+           mod,
+           :config,
+           [:token_module, @default_token_module]
+         ),
+         {:ok, old_stuff, new_stuff} <- apply(
+           token_mod,
+           :refresh,
+           [mod, old_token, opts]
+         )
+    do
+      apply(mod, :on_refresh, [old_stuff, new_stuff, opts])
     else
       {:error, _} = err -> err
       err -> {:error, err}
