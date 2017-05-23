@@ -61,4 +61,14 @@ defmodule Guardian.Support.TokenModule do
       {:ok, claims}
     end
   end
+
+  def revoke(mod, claims, token, options) do
+    print_function_call({__MODULE__, :revoke, [mod, claims, token, options]})
+
+    if Keyword.get(options, :fail_revoke) do
+      {:error, Keyword.get(options, :fail_revoke)}
+    else
+      {:ok, claims}
+    end
+  end
 end
