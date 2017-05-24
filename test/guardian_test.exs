@@ -131,6 +131,20 @@ defmodule GuardianTest do
         {:ok, old_stuff, new_stuff}
       end
     end
+
+    def on_exchange(old_stuff, new_stuff, options) do
+      print_function_call({
+        __MODULE__,
+        :on_exchange,
+        [old_stuff, new_stuff, options]
+      })
+
+      if Keyword.get(options, :fail_on_exchange) do
+        {:error, Keyword.get(options, :fail_on_exchange)}
+      else
+        {:ok, old_stuff, new_stuff}
+      end
+    end
   end
 end
 
@@ -472,6 +486,63 @@ defmodule GuardianTest.Refresh do
 
     expected = [
       "Guardian.Support.TokenModule.refresh(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_refresh: :fails])"
+    ]
+
+    assert function_calls == expected
+  end
+end
+
+defmodule GuardianTest.Exchange do
+  @moduledoc "Testing Guardian.exchange"
+  use GuardianTest, async: true
+
+  import ExUnit.CaptureIO
+  import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+  setup do
+    claims = %{
+      "sub" => "freddy",
+      "some" => "other_claim"
+    }
+    {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
+  end
+
+  test "it calls all the right things", ctx do
+    claims = ctx.claims
+    token = ctx.token
+    io = capture_io(fn ->
+      {:ok, {^token, ^claims}, {_new_t, _new_c}} =
+        Guardian.exchange(ctx.impl, token, claims["typ"], "refresh", [])
+    end)
+
+    function_calls = filter_function_calls(io)
+
+    expected = [
+      "Guardian.Support.TokenModule.exchange(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", nil, \"refresh\", [])",
+      "GuardianTest.Impl.on_exchange({\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, {\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, [])"
+    ]
+
+    assert function_calls == expected
+  end
+
+  test "it fails before going to the impl if the token module fails", ctx do
+    claims = ctx.claims
+
+    io = capture_io(fn ->
+      {:error, :fails} =
+        Guardian.exchange(
+          ctx.impl,
+          ctx.token,
+          claims["typ"],
+          "refresh",
+          [fail_exchange: :fails]
+        )
+    end)
+
+    function_calls = filter_function_calls(io)
+
+    expected = [
+      "Guardian.Support.TokenModule.exchange(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", nil, \"refresh\", [fail_exchange: :fails])"
     ]
 
     assert function_calls == expected
