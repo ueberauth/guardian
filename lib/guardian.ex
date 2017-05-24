@@ -65,6 +65,16 @@ defmodule Guardian do
     {Guardian.Token.token(), Guardian.Token.claims()}
   } | {:error, any()}
 
+  @callback on_exchange(
+    old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
+    new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
+    options :: options()
+  ) :: {
+    :ok,
+    {Guardian.Token.token(), Guardian.Token.claims()},
+    {Guardian.Token.token(), Guardian.Token.claims()}
+  } | {:error, any()}
+
   defmacro __using__(opts \\ []) do
     otp_app = Keyword.get(opts, :otp_app)
 
@@ -103,12 +113,19 @@ defmodule Guardian do
         Guardian.refresh(__MODULE__, old_token, opts)
       end
 
+      def exchange(token, from_type, to_type, options \\ []) do
+        Guardian.exchange(__MODULE__, token, from_type, to_type, options)
+      end
+
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
       def after_sign_in(conn, _location), do: conn
       def before_sign_out(conn, _location), do: conn
       def on_verify(claims, _token, _options), do: {:ok, claims}
       def on_revoke(claims, _token, _options), do: {:ok, claims}
       def on_refresh(old_stuff, new_stuff, _options) do
+        {:ok, old_stuff, new_stuff}
+      end
+      def on_exchange(old_stuff, new_stuff, _options) do
         {:ok, old_stuff, new_stuff}
       end
 
@@ -121,6 +138,7 @@ defmodule Guardian do
         before_sign_out: 2,
         build_claims: 3,
         default_token_type: 0,
+        on_exchange: 3,
         on_revoke: 3,
         on_refresh: 3,
         on_verify: 3,
@@ -244,6 +262,25 @@ defmodule Guardian do
          )
     do
       apply(mod, :on_refresh, [old_stuff, new_stuff, opts])
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
+    end
+  end
+
+  def exchange(mod, old_token, from_type, to_type, options) do
+    with token_mod <- apply(
+           mod,
+           :config,
+           [:token_module, @default_token_module]
+         ),
+         {:ok, old_stuff, new_stuff} <- apply(
+           token_mod,
+           :exchange,
+           [mod, old_token, from_type, to_type, options]
+         )
+    do
+      apply(mod, :on_exchange, [old_stuff, new_stuff, options])
     else
       {:error, _} = err -> err
       err -> {:error, err}
