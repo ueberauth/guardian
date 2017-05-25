@@ -14,7 +14,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: "~> 1.4",
+      elixir: "> 1.3.2 and < 1.5.0",
       elixirc_paths: elixirc_paths(Mix.env),
       package: package(),
       source_url: @url,
@@ -51,7 +51,8 @@ defmodule Guardian.Mixfile do
      {:uuid, ">=1.1.1"},
 
      # Dev and Test dependencies
-     {:dialyxir, "~> 0.5.0", only: [:dev, :test]},
+     {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false, override: true},
+     {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
      {:earmark, ">= 0.0.0", only: :dev},
      {:ex_doc, "~> 0.15", only: :dev}]
   end
