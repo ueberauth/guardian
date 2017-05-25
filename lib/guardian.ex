@@ -1,4 +1,8 @@
 defmodule Guardian do
+  @moduledoc """
+  TODO: Fill me in
+  """
+
   @type options :: Keyword.t
 
   @default_token_module Guardian.Token.Jwt
@@ -80,6 +84,8 @@ defmodule Guardian do
 
     quote do
       @behaviour Guardian
+
+      # credo:disable-for-next-line /AliasUsage/
       Guardian.Config.merge_config_options(__MODULE__, unquote(opts))
 
       def default_token_type, do: "access"
@@ -89,9 +95,10 @@ defmodule Guardian do
       end
 
       def config(key, default \\ nil) do
+        alias Guardian.{Config}
         config()
         |> Keyword.get(key, default)
-        |> Guardian.Config.resolve_value()
+        |> Config.resolve_value()
       end
 
       def peek(token), do: Guardian.peek(__MODULE__, token)
@@ -152,7 +159,7 @@ defmodule Guardian do
   end
 
   def stringify_keys(map) when is_map(map) do
-    for {k,v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
+    for {k, v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
   end
   def stringify_keys(list) when is_list(list) do
     for item <- list, into: [], do: stringify_keys(item)
@@ -194,6 +201,8 @@ defmodule Guardian do
   end
 
   def decode_and_verify(mod, token, claims_to_check \\ %{}, opts \\ []) do
+    alias Guardian.Token.{Verify}
+
     claims_to_check =
       claims_to_check
       |> Enum.into(%{})
@@ -203,7 +212,7 @@ defmodule Guardian do
 
     try do
       with {:ok, claims} <- apply(token_mod, :decode_token, [mod, token, opts]),
-           {:ok, claims} <- Guardian.Token.Verify
+           {:ok, claims} <- Verify
                             .verify_literal_claims(
                               claims,
                               claims_to_check,

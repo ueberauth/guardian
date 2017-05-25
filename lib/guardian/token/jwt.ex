@@ -5,7 +5,10 @@ defmodule Guardian.Token.Jwt do
 
   @behaviour Guardian.Token
 
-  alias Guardian.Config
+  alias Guardian.{Config}
+  alias JOSE.{JWT, JWS, JWK}
+  alias Guardian.Token.Jwt.{Verify}
+
   import Guardian, only: [stringify_keys: 1]
 
   @default_algos ["HS512"]
@@ -16,8 +19,8 @@ defmodule Guardian.Token.Jwt do
   def peek(nil), do: nil
   def peek(token) do
     %{
-      headers: JOSE.JWT.peek_protected(token).fields,
-      claims: JOSE.JWT.peek_payload(token).fields
+      headers: JWT.peek_protected(token).fields,
+      claims: JWT.peek_payload(token).fields
     }
   end
 
@@ -29,8 +32,8 @@ defmodule Guardian.Token.Jwt do
     {_, token} =
       secret
       |> jose_jwk()
-      |> JOSE.JWT.sign(jose_jws(mod, options), claims)
-      |> JOSE.JWS.compact()
+      |> JWT.sign(jose_jws(mod, options), claims)
+      |> JWS.compact()
 
     {:ok, token}
   end
@@ -60,7 +63,13 @@ defmodule Guardian.Token.Jwt do
       |> fetch_secret(options)
       |> jose_jwk()
 
-    case JOSE.JWT.verify_strict(secret, fetch_allowed_algos(mod, options), token) do
+    verify_result = JWT.verify_strict(
+      secret,
+      fetch_allowed_algos(mod, options),
+      token
+    )
+
+    case verify_result do
       {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
       {false, _, _} -> {:error, :invalid_token}
     end
@@ -69,7 +78,7 @@ defmodule Guardian.Token.Jwt do
   def verify_claims(mod, claims, options) do
     result =
       mod
-      |> apply(:config, [:token_verify_module, Guardian.Token.Jwt.Verify])
+      |> apply(:config, [:token_verify_module, Verify])
       |> apply(:verify_claims, [mod, claims, options])
     case result do
       {:ok, claims} ->
@@ -119,15 +128,15 @@ defmodule Guardian.Token.Jwt do
     Map.merge(%{"alg" => hd(algos)}, headers)
   end
 
-  defp jose_jwk(the_secret = %JOSE.JWK{}), do: the_secret
-  defp jose_jwk(the_secret) when is_binary(the_secret), do: JOSE.JWK.from_oct(the_secret)
-  defp jose_jwk(the_secret) when is_map(the_secret), do: JOSE.JWK.from_map(the_secret)
+  defp jose_jwk(the_secret = %JWK{}), do: the_secret
+  defp jose_jwk(the_secret) when is_binary(the_secret), do: JWK.from_oct(the_secret)
+  defp jose_jwk(the_secret) when is_map(the_secret), do: JWK.from_map(the_secret)
   defp jose_jwk(value), do: Config.resolve_value(value)
 
   defp fetch_allowed_algos(mod, opts) do
     allowed = Keyword.get(opts, :allowed_algos)
     if allowed do
-      Guardian.Config.resolve_value(allowed)
+      Config.resolve_value(allowed)
     else
       mod
       |> apply(:config, [:allowed_algos, @default_algos])
@@ -137,7 +146,7 @@ defmodule Guardian.Token.Jwt do
   defp fetch_secret(mod, opts) do
     secret = Keyword.get(opts, :secret)
     if secret do
-      Guardian.Config.resolve_value(secret)
+      Config.resolve_value(secret)
     else
       mod
       |> apply(:config, [:secret_key])
