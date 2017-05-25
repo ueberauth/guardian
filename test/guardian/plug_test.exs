@@ -1,317 +1,427 @@
 defmodule Guardian.PlugTest do
   @moduledoc false
   # require Plug.Test
-  use ExUnit.Case, async: true
-#   use Plug.Test
-#   #import Guardian.TestHelper
-#
-#   setup do
-#     {:ok, %{conn: conn(:post, "/")}}
-#   end
-#
-#   @skip "TODO"
-#   test "authenticated?", context do
-#     refute Guardian.Plug.authenticated?(context.conn)
-#     new_conn = Guardian.Plug.set_claims(
-#       context.conn,
-#       {:ok, %{"some" => "claim"}}
-#     )
-#     assert Guardian.Plug.authenticated?(new_conn)
-#   end
-#
-#   @skip "TODO"
-#   test "authenticated? with a location", context do
-#     refute Guardian.Plug.authenticated?(context.conn, :secret)
-#     new_conn = Guardian.Plug.set_claims(
-#       context.conn,
-#       {:ok, %{"some" => "claim"}},
-#       :secret
-#     )
-#     assert Guardian.Plug.authenticated?(new_conn, :secret)
-#   end
-#
-#   @skip "TODO"
-#   test "set_claims with no key", context do
-#     claims = {:ok, %{"some" => "claim"}}
-#     new_conn = Guardian.Plug.set_claims(context.conn, claims)
-#
-#     assert Guardian.Plug.claims(new_conn) == claims
-#   end
-#
-#   @skip "TODO"
-#   test "set_claims with a key", context do
-#     claims = {:ok, %{"some" => "claim"}}
-#     new_conn = Guardian.Plug.set_claims(context.conn, claims, :secret)
-#     assert Guardian.Plug.claims(new_conn, :secret) == claims
-#   end
-#
-#   @skip "TODO"
-#   test "claims with no key and no value", context do
-#     assert Guardian.Plug.claims(context.conn) == {:error, :no_session}
-#   end
-#
-#   @skip "TODO"
-#   test "claims with no key and a value", context do
-#     claims = %{"some" => "claim"}
-#     new_conn = Guardian.Plug.set_claims(context.conn, {:ok, claims})
-#     assert Guardian.Plug.claims(new_conn) == {:ok, claims}
-#   end
-#
-#   @skip "TODO"
-#   test "claims with a key and no value", context do
-#     assert Guardian.Plug.claims(context.conn, :secret) == {:error, :no_session}
-#   end
-#
-#   @skip "TODO"
-#   test "claims with a key and a value", context do
-#     claims = %{"some" => "claim"}
-#     new_conn = Guardian.Plug.set_claims(context.conn, {:ok, claims}, :secret)
-#     assert Guardian.Plug.claims(new_conn, :secret) == {:ok, claims}
-#   end
-#
-#   @skip "TODO"
-#   test "set_current_resource with no key", context do
-#     resource = "thing"
-#     new_conn = Guardian.Plug.set_current_resource(context.conn, resource)
-#     assert Guardian.Plug.current_resource(new_conn) == "thing"
-#   end
-#
-#   @skip "TODO"
-#   test "set_current_resource with key", context do
-#     resource = "thing"
-#     new_conn = Guardian.Plug.set_current_resource(
-#       context.conn,
-#       resource,
-#       :secret
-#     )
-#     assert Guardian.Plug.current_resource(new_conn, :secret) == "thing"
-#   end
-#
-#   @skip "TODO"
-#   test "current_resource with no key and no resource", context do
-#     assert Guardian.Plug.current_resource(context.conn) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "current_resource with no key and resource", context do
-#     resource = "thing"
-#     new_conn = Guardian.Plug.set_current_resource(context.conn, resource)
-#     assert Guardian.Plug.current_resource(new_conn) == resource
-#   end
-#
-#   @skip "TODO"
-#   test "current_resource with key and resource", context do
-#     resource = "thing"
-#     new_conn = Guardian.Plug.set_current_resource(
-#       context.conn,
-#       resource,
-#       :secret
-#     )
-#
-#     assert Guardian.Plug.current_resource(new_conn, :secret) == resource
-#   end
-#
-#   @skip "TODO"
-#   test "current_resource with key and no resource", context do
-#     assert Guardian.Plug.current_resource(context.conn, :secret) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "set_current_token with no key", context do
-#     token = "token"
-#     new_conn = Guardian.Plug.set_current_token(context.conn, token)
-#     assert Guardian.Plug.current_token(new_conn) == "token"
-#   end
-#
-#   @skip "TODO"
-#   test "set_current_token with key", context do
-#     token = "token"
-#     new_conn = Guardian.Plug.set_current_token(context.conn, token, :secret)
-#     assert Guardian.Plug.current_token(new_conn, :secret) == "token"
-#   end
-#
-#   @skip "TODO"
-#   test "current_token with no key and no token", context do
-#     assert Guardian.Plug.current_token(context.conn) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "current_token with no key and token", context do
-#     token = "token"
-#     new_conn = Guardian.Plug.set_current_token(context.conn, token)
-#     assert Guardian.Plug.current_token(new_conn) == token
-#   end
-#
-#   @skip "TODO"
-#   test "current_token with key and token", context do
-#     token = "token"
-#     new_conn = Guardian.Plug.set_current_token(context.conn, token, :secret)
-#     assert Guardian.Plug.current_token(new_conn, :secret) == token
-#   end
-#
-#   @skip "TODO"
-#   test "current_token with key and no token", context do
-#     assert Guardian.Plug.current_token(context.conn, :secret) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "sign_out/1", context do
-#     conn = context.conn
-#            |> conn_with_fetched_session
-#            |> Guardian.Plug.sign_in(%{user: "here"}, :token)
-#
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#
-#     cleared_conn = conn
-#      |> Plug.Conn.put_session(Guardian.Keys.base_key(:default), "default jwt")
-#      |> Plug.Conn.put_session(Guardian.Keys.base_key(:secret), "secret jwt")
-#      |> Guardian.Plug.set_claims(%{claims: "yeah"})
-#      |> Guardian.Plug.set_claims(%{claims: "yeah"}, :secret)
-#      |> Guardian.Plug.set_current_resource("resource")
-#      |> Guardian.Plug.set_current_resource("resource", :secret)
-#      |> Guardian.Plug.set_current_token("token")
-#      |> Guardian.Plug.set_current_token("token", :secret)
-#      |> Guardian.Plug.sign_out
-#
-#     assert Plug.Conn.get_session(
-#       cleared_conn,
-#       Guardian.Keys.base_key(:default)
-#     ) == nil
-#
-#     assert Plug.Conn.get_session(
-#       cleared_conn, Guardian.Keys.base_key(:secret)
-#     ) == nil
-#
-#     assert Guardian.Plug.claims(cleared_conn) == {:error, :no_session}
-#     assert Guardian.Plug.claims(cleared_conn, :secret) == {:error, :no_session}
-#     assert Guardian.Plug.current_resource(cleared_conn) == nil
-#     assert Guardian.Plug.current_resource(cleared_conn, :secret) == nil
-#     assert Guardian.Plug.current_token(cleared_conn) == nil
-#     assert Guardian.Plug.current_token(cleared_conn, :secret) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "sign_out/2", context do
-#     conn = conn_with_fetched_session(context.conn)
-#
-#     cleared_conn = conn
-#      |> Guardian.Plug.set_claims({:ok, %{claims: "admin"}}, :secret)
-#      |> Guardian.Plug.set_claims({:ok, %{claims: "default"}})
-#      |> Guardian.Plug.set_current_resource("admin_resource", :secret)
-#      |> Guardian.Plug.set_current_resource("default_resource")
-#      |> Guardian.Plug.set_current_token("admin_token", :secret)
-#      |> Guardian.Plug.set_current_token("default_token")
-#      |> Guardian.Plug.sign_out(:secret)
-#
-#     assert Guardian.Plug.claims(cleared_conn, :secret) == {:error, :no_session}
-#     assert Guardian.Plug.claims(cleared_conn) == {:ok, %{claims: "default"}}
-#     assert Guardian.Plug.current_resource(cleared_conn, :secret) == nil
-#     assert Guardian.Plug.current_resource(cleared_conn) == "default_resource"
-#     assert Guardian.Plug.current_token(cleared_conn, :secret) == nil
-#     assert Guardian.Plug.current_token(cleared_conn) == "default_token"
-#   end
-#
-#   @skip "TODO"
-#   test "sign_in(object)", context do
-#     conn = context.conn
-#            |> conn_with_fetched_session
-#            |> Guardian.Plug.sign_in(%{user: "here"})
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#   end
-#
-#   @skip "TODO"
-#   test "sign_in(object, type)", context do
-#     conn = context.conn
-#            |> conn_with_fetched_session
-#            |> Guardian.Plug.sign_in(%{user: "here"})
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#
-#     jwt = Guardian.Plug.current_token(conn)
-#     {:ok, claims} = Guardian.decode_and_verify(jwt)
-#
-#     assert claims["sub"]["user"] == "here"
-#
-#     {:ok, claims} = Guardian.Plug.claims(conn)
-#     assert claims
-#   end
-#
-#   @skip "TODO"
-#   test "sign_in(object, type, claims)", context do
-#     conn = context.conn
-#            |> conn_with_fetched_session
-#            |> Guardian.Plug.sign_in(%{user: "here"}, :token, here: "we are")
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#
-#     jwt = Guardian.Plug.current_token(conn)
-#     {:ok, claims} = Guardian.decode_and_verify(jwt)
-#
-#     assert claims["sub"]["user"] == "here"
-#     assert claims["here"] == "we are"
-#     assert claims["typ"] == "token"
-#   end
-#
-#   @skip "TODO"
-#   test "api_sign_in(object) error", context do
-#     conn = context.conn
-#            |> Guardian.Plug.api_sign_in(%{error: :unknown})
-#
-#     claims = Guardian.Plug.claims(conn)
-#
-#     assert {:error, _reason} = claims
-#     assert Guardian.Plug.current_resource(conn) == nil
-#     assert Guardian.Plug.current_token(conn) == nil
-#   end
-#
-#   @skip "TODO"
-#   test "api_sign_in(object)", context do
-#     conn = context.conn
-#            |> Guardian.Plug.api_sign_in(%{user: "here"})
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#   end
-#
-#   @skip "TODO"
-#   test "api_sign_in(object, type)", context do
-#     conn = context.conn
-#            |> Guardian.Plug.api_sign_in(%{user: "here"})
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#
-#     jwt = Guardian.Plug.current_token(conn)
-#     {:ok, claims} = Guardian.decode_and_verify(jwt)
-#
-#     assert claims["sub"]["user"] == "here"
-#
-#     {:ok, claims} = Guardian.Plug.claims(conn)
-#     assert claims
-#   end
-#
-#   @skip "TODO"
-#   test "api_sign_in(object, type, claims)", context do
-#     conn = context.conn
-#      |> Guardian.Plug.api_sign_in(%{user: "here"}, :token, here: "we are")
-#
-#     assert Guardian.Plug.claims(conn) != nil
-#     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
-#     assert Guardian.Plug.current_token(conn) != nil
-#
-#     jwt = Guardian.Plug.current_token(conn)
-#     {:ok, claims} = Guardian.decode_and_verify(jwt)
-#
-#     assert claims["sub"]["user"] == "here"
-#     assert claims["here"] == "we are"
-#   end
+  use ExUnit.CaseTemplate
+  use Plug.Test
+
+  @secret String.duplicate("abcdef0123456789", 8)
+  @cookie_opts [
+    store: :cookie,
+    key: "foobar",
+    encryption_salt: "encrypted cookie salt",
+    signing_salt: "signing salt",
+    log: false
+  ]
+
+  @signing_opts Plug.Session.init(Keyword.put(@cookie_opts, :encrypt, false))
+
+  def sign_conn(conn, secret \\ @secret) do
+    put_in(conn.secret_key_base, secret)
+    |> Plug.Session.call(@signing_opts)
+    |> fetch_session()
+  end
+
+  defmodule Impl do
+    use Guardian, otp_app: :guardian,
+                  token_module: Guardian.Support.TokenModule
+
+    import Guardian.Support.Utils, only: [
+      print_function_call: 1,
+    ]
+
+    def subject_for_token(%{id: id} = r, claims) do
+      print_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
+
+    def subject_for_token(%{"id" => id} = r, claims) do
+      print_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
+
+    def resource_from_claims(%{"sub" => id} = claims) do
+      print_function_call({__MODULE__, :subject_for_token, [claims]})
+      {:ok, %{id: id}}
+    end
+
+    def after_sign_in(conn, resource, token, claims, opts) do
+      print_function_call({
+        __MODULE__,
+        :after_sign_in,
+        [:conn, resource, token, claims, opts]
+      })
+
+      {:ok, conn}
+    end
+
+    def before_sign_out(conn, key, opts) do
+      print_function_call({
+        __MODULE__,
+        :before_sign_out,
+        [:conn, key, opts]
+      })
+      {:ok, conn}
+    end
+  end
+
+  setup do
+    {:ok, %{impl: __MODULE__.Impl, conn: conn(:post, "/")}}
+  end
+end
+
+defmodule Guardian.PlugTest.GettersAndSetters do
+  use Guardian.PlugTest, async: true
+
+  test "set_current_token", ctx do
+    conn = Guardian.Plug.set_current_token(ctx.conn, "ToKen", [])
+    assert conn.private[:guardian_default_token] == "ToKen"
+
+    conn = Guardian.Plug.set_current_token(ctx.conn, "tOkEn", key: :bob)
+    assert conn.private[:guardian_bob_token] == "tOkEn"
+  end
+
+  test "set_current_claims", ctx do
+    conn = Guardian.Plug.set_current_claims(ctx.conn, %{my: "claims"}, [])
+    assert conn.private[:guardian_default_claims] == %{my: "claims"}
+
+    conn = Guardian.Plug.set_current_claims(
+      ctx.conn, %{bob: "claims"}, key: :bob
+    )
+    assert conn.private[:guardian_bob_claims] == %{bob: "claims"}
+  end
+
+  test "set_current_resource", ctx do
+    conn = Guardian.Plug.set_current_resource(ctx.conn, "resource", [])
+    assert conn.private[:guardian_default_resource] == "resource"
+
+    conn = Guardian.Plug.set_current_resource(
+      ctx.conn, "resource2", key: :bob
+    )
+    assert conn.private[:guardian_bob_resource] == "resource2"
+  end
+
+  test "current_token", ctx do
+    assert Guardian.Plug.current_token(ctx.conn, []) == nil
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_default_token, "tOkEn")
+    assert Guardian.Plug.current_token(conn, []) == "tOkEn"
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_token, "token")
+    assert Guardian.Plug.current_token(conn, key: :bob) == "token"
+  end
+
+  test "current_claims", ctx do
+    assert Guardian.Plug.current_claims(ctx.conn, []) == nil
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_default_claims, %{a: "b"})
+    assert Guardian.Plug.current_claims(conn, []) == %{a: "b"}
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_token, %{c: "d"})
+    assert Guardian.Plug.current_token(conn, key: :bob) == %{c: "d"}
+  end
+
+  test "current_resource", ctx do
+    assert Guardian.Plug.current_resource(ctx.conn, []) == nil
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_default_resource, :r1)
+    assert Guardian.Plug.current_resource(conn, []) == :r1
+
+    conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_resource, :r2)
+    assert Guardian.Plug.current_resource(conn, key: :bob) == :r2
+  end
+
+  test "authenticated? is true when there is a token present", ctx do
+    refute Guardian.Plug.authenticated?(ctx.conn, [])
+    refute Guardian.Plug.authenticated?(ctx.conn, key: :bob)
+
+    conn =
+      ctx.conn
+      |> Plug.Conn.put_private(:guardian_default_token, "a")
+      |> Plug.Conn.put_private(:guardian_bob_token, "b")
+
+    assert Guardian.Plug.authenticated?(conn, [])
+    assert Guardian.Plug.authenticated?(conn, key: :bob)
+  end
+end
+
+defmodule Guardian.PlugTest.SignIn do
+  defmodule WithoutSession do
+    use Guardian.PlugTest, async: true
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @resource %{id: "bob"}
+
+    test "it calls the right things", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_in(
+          conn, ctx.impl, @resource, %{}, []
+        )
+
+        %Plug.Conn.Unfetched{} = xconn.req_cookies
+        %{} = xconn.resp_cookies
+        assert Enum.empty?(xconn.resp_cookies)
+
+        assert xconn.private[:guardian_default_token]
+        assert xconn.private[:guardian_default_claims]
+        assert xconn.private[:guardian_default_resource] == @resource
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.subject_for_token(%{id: \"bob\"}, %{})",
+        "Guardian.Support.TokenModule.build_claims(Guardian.PlugTest.Impl, %{id: \"bob\"}, \"bob\", %{}, [])",
+        "Guardian.Support.TokenModule.create_token(Guardian.PlugTest.Impl, %{\"sub\" => \"bob\"}, [])",
+        "Guardian.PlugTest.Impl.after_sign_in(:conn, %{id: \"bob\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"bob\\\"}}\", %{\"sub\" => \"bob\"}, [])"
+      ]
+
+      assert expected == function_calls
+    end
+
+    test "it stores the information in the correct location", ctx do
+      conn = ctx.conn
+      capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_in(
+          conn, ctx.impl, @resource, %{}, [key: :bob]
+        )
+
+        %Plug.Conn.Unfetched{} = xconn.req_cookies
+        %{} = xconn.resp_cookies
+        assert Enum.empty?(xconn.resp_cookies)
+
+        assert xconn.private[:guardian_bob_token]
+        assert xconn.private[:guardian_bob_claims]
+        assert xconn.private[:guardian_bob_resource] == @resource
+      end)
+    end
+  end
+
+  defmodule WithSession do
+    use Guardian.PlugTest, async: true
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @resource %{id: "bob"}
+
+    setup %{conn: conn} do
+      {:ok, %{conn: Guardian.PlugTest.sign_conn(conn)}}
+    end
+
+    test "it calls the right things", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_in(
+          conn, ctx.impl, @resource, %{}, []
+        )
+
+        assert is_map(xconn.req_cookies)
+        %{} = xconn.resp_cookies
+        assert Enum.empty?(xconn.resp_cookies)
+
+        assert xconn.private[:guardian_default_token]
+        assert xconn.private[:guardian_default_claims]
+        assert xconn.private[:guardian_default_resource] == @resource
+
+        assert Plug.Conn.get_session(xconn, :guardian_default_token) ==
+          xconn.private[:guardian_default_token]
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.subject_for_token(%{id: \"bob\"}, %{})",
+        "Guardian.Support.TokenModule.build_claims(Guardian.PlugTest.Impl, %{id: \"bob\"}, \"bob\", %{}, [])",
+        "Guardian.Support.TokenModule.create_token(Guardian.PlugTest.Impl, %{\"sub\" => \"bob\"}, [])",
+        "Guardian.PlugTest.Impl.after_sign_in(:conn, %{id: \"bob\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"bob\\\"}}\", %{\"sub\" => \"bob\"}, [])"
+      ]
+
+      assert expected == function_calls
+    end
+  end
+end
+
+defmodule Guardian.PlugTest.SignOut do
+  defmodule WithSession do
+    use Guardian.PlugTest, async: true
+    use Plug.Test
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @bob %{id: "bobby"}
+    @jane %{id: "jane"}
+
+    setup %{conn: conn} do
+      conn = Guardian.PlugTest.sign_conn(conn)
+      bob_claims = %{"sub" => "User:#{@bob.id}"}
+      bob_token = Poison.encode!(%{claims: bob_claims})
+      jane_claims = %{"sub" => "User:#{@jane.id}"}
+      jane_token = Poison.encode!(%{claims: jane_claims})
+
+      conn =
+        conn
+        |> Plug.Conn.put_session(:guardian_bob_token, bob_token)
+        |> Plug.Conn.put_private(:guardian_bob_token, bob_token)
+        |> Plug.Conn.put_private(:guardian_bob_claims, bob_claims)
+        |> Plug.Conn.put_private(:guardian_bob_resource, @bob)
+        |> Plug.Conn.put_session(:guardian_jane_token, jane_token)
+        |> Plug.Conn.put_private(:guardian_jane_token, jane_token)
+        |> Plug.Conn.put_private(:guardian_jane_claims, jane_claims)
+        |> Plug.Conn.put_private(:guardian_jane_resource, @jane)
+
+      {
+        :ok,
+        %{
+          conn: conn,
+          bob: %{token: bob_token, claims: bob_claims},
+          jane: %{token: jane_token, claims: jane_claims}
+        }
+      }
+    end
+
+    test "it calls the right things", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_out(
+          conn, ctx.impl, [key: :bob]
+        )
+
+        refute xconn.private[:guardian_bob_token]
+        refute xconn.private[:guardian_bob_claims]
+        refute xconn.private[:guardian_bob_resource]
+
+        refute Plug.Conn.get_session(xconn, :guardian_bob_token)
+
+        assert xconn.private[:guardian_jane_token]
+        assert xconn.private[:guardian_jane_claims]
+        assert xconn.private[:guardian_jane_resource]
+
+        assert Plug.Conn.get_session(xconn, :guardian_jane_token)
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :bob, [key: :bob])"
+      ]
+
+      assert expected == function_calls
+    end
+
+    test "is removes all users", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_out(
+          conn, ctx.impl, []
+        )
+
+        refute xconn.private[:guardian_bob_token]
+        refute xconn.private[:guardian_bob_claims]
+        refute xconn.private[:guardian_bob_resource]
+
+        refute Plug.Conn.get_session(xconn, :guardian_bob_token)
+
+        refute xconn.private[:guardian_jane_token]
+        refute xconn.private[:guardian_jane_claims]
+        refute xconn.private[:guardian_jane_resource]
+
+        refute Plug.Conn.get_session(xconn, :guardian_jane_token)
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :bob, [])",
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :jane, [])"
+      ]
+
+      assert expected == function_calls
+    end
+  end
+
+  defmodule WithoutSession do
+    use Guardian.PlugTest, async: true
+    import ExUnit.CaptureIO
+    import Guardian.Support.Utils, only: [filter_function_calls: 1]
+
+    @bob %{id: "bobby"}
+    @jane %{id: "jane"}
+
+    setup %{conn: conn} do
+      bob_claims = %{"sub" => "User:#{@bob.id}"}
+      bob_token = Poison.encode!(%{claims: bob_claims})
+      jane_claims = %{"sub" => "User:#{@jane.id}"}
+      jane_token = Poison.encode!(%{claims: jane_claims})
+
+      conn =
+        conn
+        |> Plug.Conn.put_private(:guardian_bob_token, bob_token)
+        |> Plug.Conn.put_private(:guardian_bob_claims, bob_claims)
+        |> Plug.Conn.put_private(:guardian_bob_resource, @bob)
+        |> Plug.Conn.put_private(:guardian_jane_token, jane_token)
+        |> Plug.Conn.put_private(:guardian_jane_claims, jane_claims)
+        |> Plug.Conn.put_private(:guardian_jane_resource, @jane)
+
+      {
+        :ok,
+        %{
+          conn: conn,
+          bob: %{token: bob_token, claims: bob_claims},
+          jane: %{token: jane_token, claims: jane_claims}
+        }
+      }
+    end
+
+    test "it calls the right things", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_out(
+          conn, ctx.impl, [key: :bob]
+        )
+
+        refute xconn.private[:guardian_bob_token]
+        refute xconn.private[:guardian_bob_claims]
+        refute xconn.private[:guardian_bob_resource]
+
+        assert xconn.private[:guardian_jane_token]
+        assert xconn.private[:guardian_jane_claims]
+        assert xconn.private[:guardian_jane_resource]
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :bob, [key: :bob])"
+      ]
+
+      assert expected == function_calls
+    end
+
+    test "is removes all users", ctx do
+      conn = ctx.conn
+      io = capture_io(fn ->
+        {:ok, %Plug.Conn{} = xconn} = Guardian.Plug.sign_out(
+          conn, ctx.impl, []
+        )
+
+        refute xconn.private[:guardian_bob_token]
+        refute xconn.private[:guardian_bob_claims]
+        refute xconn.private[:guardian_bob_resource]
+
+        refute xconn.private[:guardian_jane_token]
+        refute xconn.private[:guardian_jane_claims]
+        refute xconn.private[:guardian_jane_resource]
+      end)
+
+      function_calls = filter_function_calls(io)
+
+      expected = [
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :bob, [])",
+        "Guardian.PlugTest.Impl.before_sign_out(:conn, :jane, [])"
+      ]
+
+      assert expected == function_calls
+    end
+  end
 end

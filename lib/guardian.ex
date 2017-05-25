@@ -34,13 +34,17 @@ defmodule Guardian do
 
   @callback after_sign_in(
     conn :: Plug.Conn.t,
-    location :: atom() | nil
-  ) :: Plug.Conn.t
+    resource :: any(),
+    token :: Guardian.Token.token(),
+    claims :: Guardian.Token.claims(),
+    options :: Guardian.options()
+  ) :: {:ok, Plug.Conn.t} | {:error, atom()}
 
   @callback before_sign_out(
     conn :: Plug.Conn.t,
-    location :: atom() | nil
-  ) :: Plug.Conn.t
+    location :: atom() | nil,
+    options :: Guardian.options()
+  ) :: {:ok, Plug.Conn.t()} | {:error, atom()}
 
   @callback verify_claims(
     claims :: Guardian.Token.claims(),
@@ -88,6 +92,13 @@ defmodule Guardian do
       # credo:disable-for-next-line /AliasUsage/
       Guardian.Config.merge_config_options(__MODULE__, unquote(opts))
 
+      __MODULE__
+      |> Module.concat(:Plug)
+      |> Module.create(
+        quote do use Guardian.Plug, unquote(__MODULE__) end,
+        Macro.Env.location(__ENV__)
+      )
+
       def default_token_type, do: "access"
 
       def config do
@@ -103,9 +114,8 @@ defmodule Guardian do
 
       def peek(token), do: Guardian.peek(__MODULE__, token)
 
-      def encode_and_sign(resource, token_type \\ nil, claims \\ %{}, opts \\ []) do
-        token_type = token_type || default_token_type()
-        Guardian.encode_and_sign(__MODULE__, resource, token_type, claims, opts)
+      def encode_and_sign(resource, claims \\ %{}, opts \\ []) do
+        Guardian.encode_and_sign(__MODULE__, resource, claims, opts)
       end
 
       def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []) do
@@ -125,8 +135,8 @@ defmodule Guardian do
       end
 
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
-      def after_sign_in(conn, _location), do: conn
-      def before_sign_out(conn, _location), do: conn
+      def after_sign_in(conn, _r, _t, _c, _o), do: {:ok, conn}
+      def before_sign_out(conn, _location, _opts), do: {:ok, conn}
       def on_verify(claims, _token, _options), do: {:ok, claims}
       def on_revoke(claims, _token, _options), do: {:ok, claims}
       def on_refresh(old_stuff, new_stuff, _options) do
@@ -141,8 +151,8 @@ defmodule Guardian do
 
       defoverridable [
         after_encode_and_sign: 4,
-        after_sign_in: 2,
-        before_sign_out: 2,
+        after_sign_in: 5,
+        before_sign_out: 3,
         build_claims: 3,
         default_token_type: 0,
         on_exchange: 3,
