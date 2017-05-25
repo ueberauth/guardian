@@ -1,12 +1,10 @@
 defmodule Guardian.Config do
-  # TODO: Give this a better moduledoc
-
   @moduledoc """
   Working with configuration for guardian? This module can help.
   """
   use Mix.Config
+  alias Mix.Config, as: MixConfig
 
-  # TODO: docs
   def merge_config_options(mod, options) do
     otp_app = Keyword.get(options, :otp_app)
     if !otp_app do
@@ -19,8 +17,8 @@ defmodule Guardian.Config do
 
     if Enum.count(new_configs) do
       [{otp_app, [{mod, mod_config}]}]
-      |> Mix.Config.merge([{otp_app, [{mod, new_configs}]}])
-      |> Mix.Config.persist()
+      |> MixConfig.merge([{otp_app, [{mod, new_configs}]}])
+      |> MixConfig.persist()
     else
       :ok
     end

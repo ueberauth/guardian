@@ -2,9 +2,9 @@ language: elixir
 matrix:
   include:
     - otp_release: 18.3
-      elixir: 1.3.2
+      elixir: 1.3.3
     - otp_release: 19.0
-      elixir: 1.3.2
+      elixir: 1.3.3
     - otp_release: 19.0
       elixir: 1.4.2
 notifications:
