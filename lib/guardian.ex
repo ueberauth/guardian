@@ -1,6 +1,203 @@
 defmodule Guardian do
   @moduledoc """
-  TODO: Fill me in
+  Guardian provides a singular interface for authentication in Elixir applications
+  that is `token` based.
+
+  Tokens should be:
+
+  * tamper proof
+  * include a payload (claims)
+
+  JWT tokens (the default) fit this description.
+
+  When using Guardian, you'll need an Implmentation module.
+
+  ```elixir
+  defmodule MyApp.Tokens do
+    use Guardian, otp_app: :my_app
+
+    def subject_for_token(resource, _claims), do: to_string(resource.id)
+    def resource_from_claims(claims) do
+      find_me_a_resource(claims["sub"])
+    end
+  end
+  ```
+
+  This module is what you will use to interact with tokens in your application.
+
+  When you `use` Guardian, the `:otp_app` option is required.
+  Any other option provided will be merged with the configuration in the config
+  files.
+
+  It contains some generated functions, and some callbacks
+
+  ## Generated function
+
+  #### `default_token_type()`
+
+  Overridable.
+
+  Provides the default token type for the token - `"access"`
+
+  Token types allow a developer to mark a token as having a particular purpose.
+  Different types of tokens can then be used specifically in your app.
+
+  Types may includes (but are not limited to):
+
+  * `"access"`
+  * `"refresh"`
+
+  Access tokens should be short lived.
+  Refresh tokens should be longer lived and whose only purpose is to exchange
+  for a shorter lived access token.
+
+  To specify the type of token, use the `:token_type` option in
+  the `encode_and_sign` function.
+
+  Token type is encoded into the token in the `"typ"` field.
+
+  Return String.
+
+  #### `peek(token)`
+
+  Inspect a tokens payload. Note that this function does no verification.
+
+  Return - A map including the `:claims` key
+
+  #### `config()`, `config(key, default \\ nil)`
+
+  Without argument, `config` will return the full configuration Keyword list.
+
+  When given a `key` and optionally a default, will fetch a resolved value
+  contained in the key.
+
+  See `Guardian.Config.resolve_value`
+
+  #### `encode_and_sign(resource, claims \\ %{}, opts \\ [])`
+
+  Creates a signed token.
+
+  Arguments:
+
+  * `resource` - The resource to represent in the token (i.e. the user)
+  * `claims` - Any custom claims that you want to use in your token
+  * `opts` - Options for the token module and callbacks
+
+  For mor information on options see the documentation for your Token Module.
+
+  ```elixir
+  # Provide a token using the defaults including the default_token_type
+  {:ok, token, full_claims} =
+    MyApp.Tokens.encode_and_sign(user)
+
+  # Provide a token including custom claims
+  {:ok, token, full_claims} =
+    MyApp.Tokens.encode_and_sign(user, %{some: "claim"})
+
+  # Provide a token including custom claims and a different token type/ttl
+  {:ok, token, full_claims} =
+    MyApp.Tokens.encode_and_sign(
+      user,
+      %{some: "claim"},
+      token_type: "refresh"
+      ttl: {4, :weeks}
+    )
+  ```
+
+  The `encode_and_sign` function calls a number of callbacks on
+  your implemntation module. See `Guardian.encode_and_sign`
+
+  #### `decode_and_verify(token, claims_to_check \\ %{}, opts \\ [])`
+
+  Decodes a token and verifies the claims are valid.
+
+  Arguments:
+
+  * `token` - The token to decode
+  * `claims_to_check` - A map of the literal claims that should be matched.
+                        If any of the claims do not literally match
+                        verification fails
+  * `opts` - The options to pass to the token module and callbacks
+
+  Callbacks:
+
+  `decode_and_verify` calls a number of callbacks on your implementation module,
+  See `Guardian.decode_and_verify`
+
+  ```elixir
+  # Decode and verify using the defaults
+  {:ok, claims} = MyApp.Tokens.decode_and_verify(token)
+
+  # Decode and verify with literal claims check.
+  # If the cliams int he token do not match those given verification will fail
+  {:ok, claims} = MyApp.Tokens.decode_and_verify(token, %{match: "claim"})
+
+  # Decode and verify with literal claims check and options.
+  # Options are passed to your Token Module and callbacks
+  {:ok, claims} = MyApp.Tokens.decode_and_verify(
+    token,
+    %{match: "claim"},
+    some: "secret"
+  )
+  ```
+
+  #### `revoke(token, opts \\ [])`
+
+  Revoke a token.
+
+  *Note:* this is entirely dependant on your Token Module and implmentation
+  callbacks.
+
+  ```elixir
+  {:ok, claims} = MyApp.Tokens.revoke(token, some: "option")
+  ```
+
+  #### `refresh(token, opts \\ [])`
+
+  Refreshes the time on a token. This is used to re-issue a token with
+  essentially the same claims but with a different expiry.
+
+  Tokens are verified before performing the refresh to ensure
+  only valid tokens may be refreshed.
+
+  Arguments:
+
+  * `token` - The old token to refresh
+  * `opts` - Options to pass to the TokenModule and callbacks
+
+  Options:
+
+  * `:ttl` - The new ttl. If not specified the default will be used.
+
+  ```elixir
+  {:ok, {old_token, old_claims}, {new_token, new_claims}} =
+    MyApp.Tokens.refresh(old_token, ttl: {1, :hour})
+  ```
+
+  See `Guardian.refresh`
+
+  #### `exchange(old_token, from_type, to_type, options)`
+
+  Exchanges one token for another of a different type.
+  Especially useful to trade in a `refresh` token for an `access` one.
+
+  Tokens are verified before performing the exchange to ensure that
+  only valid tokens may be exchanged.
+
+  Arguments:
+
+  * `old_token` - The existing token you wish to exchange
+  * `from_type` - The type the old token must be. Can be given a list of types.
+  * `to_type` - The new type of token that you want back.
+  * `options` - The options to pass to the token module and callbacks
+
+  Options:
+
+  Options may be used by your token module or callbacks.
+
+  * `ttl` - The ttl for the new token
+
+  See `Guardian.exchange`
   """
 
   @type options :: Keyword.t
@@ -8,23 +205,39 @@ defmodule Guardian do
   @default_token_module Guardian.Token.Jwt
 
   @doc """
-  Encodes the subject into a token in the "sub" field
+  Fetches the subject for a token for the provided resource and claims
+  The subject should be a short identifier that can be used to identify
+  the resource
   """
   @callback subject_for_token(
     resource :: Guardian.Token.resource(),
     claims :: Guardian.Token.claims()
   ) :: {:ok, String.t} | {:error, atom()}
 
+  @doc """
+  Fetches the resource that is represented by claims.
+
+  For JWT this would normally be found in the `sub` field
+  """
   @callback resource_from_claims(
     claims :: Guardian.Token.claims()
   ) :: {:ok, Guardian.Token.resource()} | {:error, atom()}
 
+  @doc """
+  An optional callback that allows the claims to be modified
+  while they're being built.
+  This is useful to hook into the encoding lifecycle
+  """
   @callback build_claims(
     claims :: Guardian.Token.claims(),
     resource :: Guardian.Token.resource(),
     opts :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, atom()}
 
+  @doc """
+  An optional callback invoked after the token has been generated
+  and signed.
+  """
   @callback after_encode_and_sign(
     resource :: any,
     claims :: Guardian.Token.claims(),
@@ -32,6 +245,13 @@ defmodule Guardian do
     options :: options()
   ) :: {:ok, Guardian.Token.token()} | {:error, atom()}
 
+  @doc """
+  An optional callback invoked after sign in has been called
+
+  By returning an error the sign in will be halted
+
+  * Note that if you return an error, a token still may have been generated
+  """
   @callback after_sign_in(
     conn :: Plug.Conn.t,
     resource :: any(),
@@ -40,29 +260,48 @@ defmodule Guardian do
     options :: Guardian.options()
   ) :: {:ok, Plug.Conn.t} | {:error, atom()}
 
+  @doc """
+  An optional callback invoked before sign out has happened
+  """
   @callback before_sign_out(
     conn :: Plug.Conn.t,
     location :: atom() | nil,
     options :: Guardian.options()
   ) :: {:ok, Plug.Conn.t()} | {:error, atom()}
 
+  @doc """
+  An optional callback to add custom verification to claims when
+  decoding a token
+
+  Returning {:ok, claims} will allow the decoding to continue
+  Returning {:error, reason} will stop the decoding and return the error
+  """
   @callback verify_claims(
     claims :: Guardian.Token.claims(),
     options :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, atom()}
 
+  @doc """
+  An optional callback invoked after the claims have been validated
+  """
   @callback on_verify(
     claims :: Guardian.Token.claims(),
     token :: Guardian.Token.token(),
     options :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
 
+  @doc """
+  An optional callback invoked when a token is revoked
+  """
   @callback on_revoke(
     claims :: Guardian.Token.claims(),
     token :: Guardian.Token.token(),
     options :: options()
   ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
 
+  @doc """
+  An optional callback invoked when a token is refreshed
+  """
   @callback on_refresh(
     old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
     new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
@@ -73,6 +312,9 @@ defmodule Guardian do
     {Guardian.Token.token(), Guardian.Token.claims()}
   } | {:error, any()}
 
+  @doc """
+  An optional callback invoked when a token is exchanged
+  """
   @callback on_exchange(
     old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
     new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
@@ -99,12 +341,26 @@ defmodule Guardian do
         Macro.Env.location(__ENV__)
       )
 
+      @spec default_token_type() :: String.t()
+      @doc """
+      The default type of token for this module
+      """
       def default_token_type, do: "access"
 
+      @spec config() :: Keword.t()
+      @doc """
+      Fetches the configuration for this module
+      """
       def config do
         Application.get_env(unquote(otp_app), __MODULE__)
       end
 
+      @spec config(key :: atom() | String.t, default :: any()) :: any()
+      @doc """
+      Returns a resolved value of the configuration found at a key
+
+      See `Guardian.Config.resolve_value`
+      """
       def config(key, default \\ nil) do
         alias Guardian.{Config}
         config()
@@ -112,24 +368,86 @@ defmodule Guardian do
         |> Config.resolve_value()
       end
 
+      @spec peek(token :: String.t()) :: map()
+      @doc """
+      Provides the content of the token but without verification
+      of either the claims or the signature
+
+      Claims will be present at the `:claims` key.
+
+      See the token module used for more information
+      """
       def peek(token), do: Guardian.peek(__MODULE__, token)
 
+      @spec encode_and_sign(
+        resource :: any(),
+        claims :: Guardian.Token.claims(),
+        opts :: Guardian.options()
+      ) :: {:ok, Guardian.Token.token()} | {:error, any()}
+      @doc """
+      Encodes the claims.
+      See `Guardian.encode_and_sign` for more information
+      """
       def encode_and_sign(resource, claims \\ %{}, opts \\ []) do
         Guardian.encode_and_sign(__MODULE__, resource, claims, opts)
       end
 
+      @spec decode_and_verify(
+        token :: Guardian.Token.token(),
+        claims_to_check :: Guardian.Token.claims(),
+        opts :: Guardian.options()
+      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @doc """
+      Decodes and verifies a token using the configuration on the implementation
+      module.
+
+      See `Guardian.decode_and_verify`
+      """
       def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []) do
         Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
       end
 
+      @spec revoke(
+        token :: Guardian.Token.token(),
+        opts :: Guardian.options()
+      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @doc """
+      Revoke a token.
+
+      See `Guardian.revoke`
+      """
       def revoke(token, opts \\ []) do
         Guardian.revoke(__MODULE__, token, opts)
       end
 
+      @spec refresh(
+        old_token :: Guardian.Token.token(),
+        opts :: Guardian.options()
+      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @doc """
+      Refresh a token.
+
+      See `Guardian.refresh`
+      """
       def refresh(old_token, opts \\ []) do
         Guardian.refresh(__MODULE__, old_token, opts)
       end
 
+      @spec exchange(
+        token :: Guardian.Token.token(),
+        from_type :: String.t() | [String.t(), ...],
+        to_type :: String.t(),
+        options :: Guardian.options()
+      ) :: {
+        :ok,
+        {Guardian.Token.token(), Guardian.Token.claims()},
+        {Guardian.Token.token(), Guardian.Token.claims()}
+      } | {:error, any()}
+      @doc """
+      Exchanges a token of one type for another.
+
+      See `Guardian.exchange`
+      """
       def exchange(token, from_type, to_type, options \\ []) do
         Guardian.exchange(__MODULE__, token, from_type, to_type, options)
       end
@@ -164,10 +482,20 @@ defmodule Guardian do
     end
   end
 
+  @spec timestamp() :: pos_integer()
+  @doc """
+  Provides the current system time in seconds
+  """
   def timestamp do
     System.system_time(:seconds)
   end
 
+  @spec stringify_keys(
+    map :: map() | list() | any()
+  ) :: map() | list() | any()
+  @doc """
+  Converts keys in a map or list of maps to strings
+  """
   def stringify_keys(map) when is_map(map) do
     for {k, v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
   end
@@ -176,11 +504,60 @@ defmodule Guardian do
   end
   def stringify_keys(value), do: value
 
+  @spec peek(
+    mod :: Module.t(),
+    token :: Guardian.Token.token()
+  ) :: %{claims: map()}
+  @doc """
+  Returns an inspection of the token (at least claims)
+  without any verification.
+  This should not be relied on since there is no verification
+
+  The implementation is provided by the TokenModule specified.
+  See the documentation for your TokenModule for full details
+  """
   def peek(mod, token) do
-    token_mod = apply(mod, :config, [:token_module, @default_token_module])
-    apply(token_mod, :peek, [token])
+    mod
+    |> apply(:config, [:token_module, @default_token_module])
+    |> apply(:peek, [token])
   end
 
+  @spec encode_and_sign(
+    mod :: Module.t(),
+    resource :: any(),
+    claims :: Guardian.Token.claims(),
+    opts :: Guardian.options()
+  ) :: {:ok, Guardian.Token.token(), Guardian.Token.claims()} |
+       {:error, any()}
+  @doc """
+  Creates a signed token for a resource.
+  The actual encoding depends on the implementation module
+  which should be referenced for specifics
+
+  ### Lifecycle
+  Once called, a number of callbacks will be invoked on the implementation module
+
+  * `subject_for_token` - gets the subject from the resource
+  * `build_claims` - Once the TokenModule has built it's default claims for custom claim building
+  * `after_encode_and_sign`
+
+  ### Options
+  The options will be passed through to both the TokenModule
+  and the appropriate callbacks.
+
+  * `ttl` - How long to keep the token alive for. If not included the default will be used.
+  * `token_type` - The type of token to generate if different from the default
+
+  The `ttl` option should take `{integer, unit}` where unit is one of:
+
+  * `:second` | `:seconds`
+  * `:minute` | `:minutes`
+  * `:hour` | `:hours`
+  * `:week` | `:weeks`
+
+  See the documentation for your TokenModule for more information on
+  which options are available.
+  """
   def encode_and_sign(mod, resource, claims \\ %{}, opts \\ []) do
     claims =
       claims
@@ -210,6 +587,33 @@ defmodule Guardian do
     end
   end
 
+  @spec decode_and_verify(
+    mod :: Module.t(),
+    token :: Guardian.Token.token(),
+    claims_to_check :: Guardian.Token.claims(),
+    opts :: Guardian.options()
+  ) :: {:ok, Guardian.Token.claims()} |
+       {:error, any()}
+  @doc """
+  Decodes a token using the configuration of the implementation module
+  This will, using that configuration delegate to the token module.
+
+  Once the token module has decoded the token, your implementation module
+  has an opportunity to further verify the claims contained in the token
+  using the `verify_claims` callback.
+
+  ### Lifecycle
+  Once called, a number of callbacks will be invoked on the implementation module
+
+  * `verify_claims` - Add your own custom claim verification. An error will mean the claims are not valid
+  * `on_verify` - After a successful verification this function is called
+
+  ### Options
+  The options will be passed through to both the TokenModule
+  and the appropriate callbacks.
+  See the documentation for your TokenModule for more information on
+  which options are available.
+  """
   def decode_and_verify(mod, token, claims_to_check \\ %{}, opts \\ []) do
     alias Guardian.Token.{Verify}
 
@@ -250,6 +654,26 @@ defmodule Guardian do
     end
   end
 
+  @spec revoke(
+    mod :: Module.t(),
+    token :: Guardian.Token.token(),
+    options :: Guardian.options()
+  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+  @doc """
+  Called to revoke a token.
+
+  Note: This is entirely dependant on the token module and callbacks.
+
+  ### Lifecycle
+
+  * `<TokenModule>.revoke`
+  * `<ImplModule>.on_revoke`
+
+  ### Options
+
+  The options are passed through to the TokenModule and callback
+  so check the documentation for your TokenModule
+  """
   def revoke(mod, token, options \\ []) do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
     %{claims: claims} = Guardian.peek(mod, token)
@@ -268,11 +692,41 @@ defmodule Guardian do
     end
   end
 
+  @spec refresh(
+    mod :: Module.t(),
+    old_token :: Guardian.Token.token(),
+    opts :: Guardian.options()
+  ) :: {
+    :ok,
+    {Guardian.Token.token(), Guardian.Token.claims()},
+    {Guardian.Token.token(), Guardian.Token.claims()}
+  } | {:error, any()}
+  @doc """
+  Refreshes a token keeping all main claims intact.
+
+  ### Options
+
+  * `ttl` - How long to keep the token alive for. If not included the default will be used.
+
+  The `ttl` option should take `{integer, unit}` where unit is one of:
+
+  * `:second` | `:seconds`
+  * `:minute` | `:minutes`
+  * `:hour` | `:hours`
+  * `:week` | `:weeks`
+
+  See TokenModule documentation for your token module.
+  """
   def refresh(mod, old_token, opts) do
     with token_mod <- apply(
            mod,
            :config,
            [:token_module, @default_token_module]
+         ),
+         {:ok, _claims} <- apply(
+           mod,
+           :decode_and_verify,
+           [old_token, opts]
          ),
          {:ok, old_stuff, new_stuff} <- apply(
            token_mod,
@@ -287,11 +741,45 @@ defmodule Guardian do
     end
   end
 
+  @spec exchange(
+    mod :: Module.t(),
+    old_token :: Guardian.Token.token(),
+    from_type :: String.t() | [String.t(), ...],
+    to_type :: String.t(),
+    options :: options()
+  ) :: {
+    :ok,
+    {Guardian.Token.token(), Guardian.Token.claims()},
+    {Guardian.Token.token(), Guardian.Token.claims()}
+  } | {:error, any()}
+
+  @doc """
+  Exchanges one token for another with different token types
+
+  The token is first decoded and verified to ensure that there is no escalation
+  Of privelages.
+
+  Tokens must have their type included in the `from_type` argument.
+
+  ### Lifecycle
+  The token module will exchange the token then on the
+  implementation module
+  * `on_exchange` - will be invoked after the exchange happens
+
+  ### Options
+  All options are passed through all calls to the token module and
+  appropriate callbacks
+  """
   def exchange(mod, old_token, from_type, to_type, options) do
     with token_mod <- apply(
            mod,
            :config,
            [:token_module, @default_token_module]
+         ),
+         {:ok, _claims} <- apply(
+           mod,
+           :decode_and_verify,
+           [old_token, options]
          ),
          {:ok, old_stuff, new_stuff} <- apply(
            token_mod,

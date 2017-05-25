@@ -53,7 +53,7 @@ defmodule Guardian.Plug do
 
   @spec set_current_token(
           conn :: Plug.Conn.t(),
-          token :: Guardian.Token.token(),
+          token :: Guardian.Token.token() | nil,
           options :: Guardian.options()
         ) :: Plug.Conn.t()
   def set_current_token(conn, token, options) do
@@ -67,7 +67,7 @@ defmodule Guardian.Plug do
 
   @spec set_current_claims(
           conn :: Plug.Conn.t(),
-          claims :: Guardian.Token.claims(),
+          claims :: Guardian.Token.claims() | nil,
           options :: Guardian.options()
         ) :: Plug.Conn.t()
   def set_current_claims(conn, claims, options) do
@@ -81,7 +81,7 @@ defmodule Guardian.Plug do
 
   @spec set_current_resource(
           conn :: Plug.Conn.t(),
-          resource :: any(),
+          resource :: any() | nil,
           options :: Guardian.options()
         ) :: Plug.Conn.t()
   def set_current_resource(conn, resource, options) do

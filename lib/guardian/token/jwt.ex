@@ -46,15 +46,17 @@ defmodule Guardian.Token.Jwt do
     claims \\ %{},
     options \\ []
   ) do
-    claims
-    |> stringify_keys()
-    |> set_jti()
-    |> set_iat()
-    |> set_iss(mod, options)
-    |> set_aud(mod, options)
-    |> set_type(mod, options)
-    |> set_sub(mod, sub, options)
-    |> set_ttl(mod, options)
+    claims =
+      claims
+      |> stringify_keys()
+      |> set_jti()
+      |> set_iat()
+      |> set_iss(mod, options)
+      |> set_aud(mod, options)
+      |> set_type(mod, options)
+      |> set_sub(mod, sub, options)
+      |> set_ttl(mod, options)
+    {:ok, claims}
   end
 
   def decode_token(mod, token, options \\ []) do

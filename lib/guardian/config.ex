@@ -15,7 +15,7 @@ defmodule Guardian.Config do
 
     new_configs = Keyword.drop(options, [:otp_app])
 
-    if Enum.count(new_configs) do
+    if Enum.count(new_configs) > 0 do
       [{otp_app, [{mod, mod_config}]}]
       |> MixConfig.merge([{otp_app, [{mod, new_configs}]}])
       |> MixConfig.persist()

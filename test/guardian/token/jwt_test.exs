@@ -218,6 +218,7 @@ defmodule Guardian.Token.JwtTest.CreateToken do
 end
 
 defmodule Guardian.Token.JwtTest.DecodeToken do
+  @moduledoc false
   use Guardian.Token.JwtTest, async: true
   alias Guardian.Token.Jwt
 
@@ -259,6 +260,7 @@ defmodule Guardian.Token.JwtTest.DecodeToken do
 end
 
 defmodule Guardian.Token.JwtTest.BuildClaims do
+  @moduledoc false
   use Guardian.Token.JwtTest, async: true
   alias Guardian.Token.Jwt
 
@@ -270,11 +272,12 @@ defmodule Guardian.Token.JwtTest.BuildClaims do
   end
 
   test "it adds some fields", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub
+      )
 
     assert result["jti"]
     assert result["iat"]
@@ -285,30 +288,32 @@ defmodule Guardian.Token.JwtTest.BuildClaims do
   end
 
   test "it keeps other fields that have been added", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{my: "claim"}
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{my: "claim"}
+      )
 
     assert result["my"] == "claim"
   end
 
   test "sets the ttl when specified in seconds", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {5, :seconds}]
-    )
+    {:ok, result} = 
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {5, :seconds}]
+      )
     diff = (Guardian.timestamp + 5) - result["exp"]
     assert diff <= 1
   end
 
   test "sets the ttl when specified in minutes", ctx do
-    result = Jwt.build_claims(
+    {:ok, result} = Jwt.build_claims(
       ctx.impl,
       @resource,
       ctx.sub,
@@ -318,7 +323,7 @@ defmodule Guardian.Token.JwtTest.BuildClaims do
     diff = (Guardian.timestamp + 60) - result["exp"]
     assert diff <= 1
 
-    result = Jwt.build_claims(
+    {:ok, result} = Jwt.build_claims(
       ctx.impl,
       @resource,
       ctx.sub,
@@ -330,113 +335,124 @@ defmodule Guardian.Token.JwtTest.BuildClaims do
   end
 
   test "sets the ttl when specified in hours", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :hour}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :hour}]
+      )
     diff = (Guardian.timestamp + 60 * 60) - result["exp"]
     assert diff <= 1
 
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :hours}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :hours}]
+      )
     diff = (Guardian.timestamp + 60 * 60) - result["exp"]
     assert diff <= 1
   end
 
   test "sets the ttl when specified in days", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :day}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :day}]
+      )
     diff = (Guardian.timestamp + 24 * 60 * 60) - result["exp"]
     assert diff <= 1
 
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :days}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :days}]
+      )
     diff = (Guardian.timestamp + 24 * 60 * 60) - result["exp"]
     assert diff <= 1
   end
 
   test "sets the ttl when specified in weeks", ctx do
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :week}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :week}]
+      )
     diff = (Guardian.timestamp + 7 * 24 * 60 * 60) - result["exp"]
     assert diff <= 1
 
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [ttl: {1, :weeks}]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [ttl: {1, :weeks}]
+      )
     diff = (Guardian.timestamp + 7 * 24 * 60 * 60) - result["exp"]
     assert diff <= 1
   end
 
   test "keeps the expiry when specified", ctx do
     time = Guardian.timestamp + 26
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{exp: time}
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{exp: time}
+      )
     assert result["exp"] == time
   end
 
   test "sets to the default for the token type", ctx do
     expected = Guardian.timestamp + 24 * 60 * 60
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{}
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{}
+      )
     diff = (expected) - result["exp"]
     assert diff <= 1
 
     expected = Guardian.timestamp + 2 * 7 * 24 * 60 * 60
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [token_type: "refresh"]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [token_type: "refresh"]
+      )
     diff = (expected) - result["exp"]
     assert diff <= 1
     assert result["typ"] == "refresh"
 
     expected = Guardian.timestamp + 4 * 7 * 24 * 60 * 60
-    result = Jwt.build_claims(
-      ctx.impl,
-      @resource,
-      ctx.sub,
-      %{},
-      [token_type: "other"]
-    )
+    {:ok, result} =
+      Jwt.build_claims(
+        ctx.impl,
+        @resource,
+        ctx.sub,
+        %{},
+        [token_type: "other"]
+      )
+
     diff = (expected) - result["exp"]
     assert result["typ"] == "other"
     assert diff <= 1
@@ -444,6 +460,7 @@ defmodule Guardian.Token.JwtTest.BuildClaims do
 end
 
 defmodule Guardian.Token.JwtTest.VerifyClaims do
+  @moduledoc false
   use Guardian.Token.JwtTest, async: true
   alias Guardian.Token.Jwt
 
@@ -458,7 +475,12 @@ defmodule Guardian.Token.JwtTest.VerifyClaims do
   end
 
   test "it verifies using the owner module", ctx do
-    result = Jwt.verify_claims(ctx.impl, ctx.claims, [fail_owner_verify_claims: :boo])
+    result =
+      Jwt.verify_claims(
+        ctx.impl,
+        ctx.claims,
+        [fail_owner_verify_claims: :boo]
+      )
     assert result == {:error, :boo}
   end
 
@@ -487,6 +509,7 @@ defmodule Guardian.Token.JwtTest.VerifyClaims do
 end
 
 defmodule Guardian.Token.JwtTest.Refresh do
+  @moduledoc false
   use Guardian.Token.JwtTest, async: true
   alias Guardian.Token.Jwt
 
@@ -530,6 +553,7 @@ defmodule Guardian.Token.JwtTest.Refresh do
 end
 
 defmodule Guardian.Token.JwtTest.Exchange do
+  @moduledoc false
   use Guardian.Token.JwtTest, async: true
   alias Guardian.Token.Jwt
 
