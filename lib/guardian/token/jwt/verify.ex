@@ -3,6 +3,7 @@ defmodule Guardian.Token.Jwt.Verify do
   Verifies standard jwt fields
   """
   use Guardian.Token.Verify
+  alias Guardian.Token.{Verify}
 
   def verify_claim(mod, "iss", %{"iss" => iss} = claims, _opts) do
     issuer = apply(mod, :config, [:issuer])
@@ -18,7 +19,7 @@ defmodule Guardian.Token.Jwt.Verify do
     if nbf == nil do
       {:ok, claims}
     else
-      if Guardian.Token.Verify.time_within_drift?(mod, nbf) ||
+      if Verify.time_within_drift?(mod, nbf) ||
          nbf <= Guardian.timestamp()
       do
         {:ok, claims}
@@ -32,7 +33,7 @@ defmodule Guardian.Token.Jwt.Verify do
     if exp == nil do
       {:ok, claims}
     else
-      if Guardian.Token.Verify.time_within_drift?(mod, exp) ||
+      if Verify.time_within_drift?(mod, exp) ||
          exp >= Guardian.timestamp()
       do
         {:ok, claims}

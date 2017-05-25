@@ -16,7 +16,7 @@ defmodule Guardian.Token.Verify do
         Enum.reduce(
           claims,
           {:ok, claims},
-          fn {k,v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
+          fn {k, v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
              _, {:error, reason} = err -> err
           end
         )
@@ -37,7 +37,7 @@ defmodule Guardian.Token.Verify do
 
   def verify_literal_claims(claims, claims_to_check, _opts) do
     errors =
-      for {k,v} <- claims_to_check,
+      for {k, v} <- claims_to_check,
         into: []
       do
         verify_literal_claim(claims, k, v)

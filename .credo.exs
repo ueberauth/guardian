@@ -10,7 +10,7 @@
   configs: [
     %{
       #
-      # Run any config using `mix credo -C <name>`. If no config name is given
+      # Run any exec using `mix credo -C <name>`. If no exec name is given
       # "default" is used.
       name: "default",
       #
@@ -49,10 +49,7 @@
       checks: [
         {Credo.Check.Consistency.ExceptionNames},
         {Credo.Check.Consistency.LineEndings},
-        {Credo.Check.Consistency.MultiAliasImportRequireUse},
-
-        #needs refactor
-        {Credo.Check.Consistency.ParameterPatternMatching, false},
+        {Credo.Check.Consistency.ParameterPatternMatching},
         {Credo.Check.Consistency.SpaceAroundOperators},
         {Credo.Check.Consistency.SpaceInParentheses},
         {Credo.Check.Consistency.TabsOrSpaces},
@@ -80,40 +77,34 @@
         {Credo.Check.Readability.ModuleAttributeNames},
         {Credo.Check.Readability.ModuleDoc},
         {Credo.Check.Readability.ModuleNames},
-        {Credo.Check.Readability.NoParenthesesWhenZeroArity},
+        {Credo.Check.Readability.ParenthesesOnZeroArityDefs},
         {Credo.Check.Readability.ParenthesesInCondition},
         {Credo.Check.Readability.PredicateFunctionNames},
         {Credo.Check.Readability.PreferImplicitTry},
         {Credo.Check.Readability.RedundantBlankLines},
-        {Credo.Check.Readability.Specs, false},
         {Credo.Check.Readability.StringSigils},
         {Credo.Check.Readability.TrailingBlankLine},
         {Credo.Check.Readability.TrailingWhiteSpace},
         {Credo.Check.Readability.VariableNames},
-        {Credo.Check.Refactor.DoubleBooleanNegation},
+        {Credo.Check.Readability.Semicolons},
+        {Credo.Check.Readability.SpaceAfterCommas},
 
-        # {Credo.Check.Refactor.CaseTrivialMatches}, # deprecated in 0.4.0
-        {Credo.Check.Refactor.ABCSize},
+        {Credo.Check.Refactor.DoubleBooleanNegation},
         {Credo.Check.Refactor.CondStatements},
         {Credo.Check.Refactor.CyclomaticComplexity},
         {Credo.Check.Refactor.FunctionArity},
+        {Credo.Check.Refactor.LongQuoteBlocks},
         {Credo.Check.Refactor.MatchInCondition},
         {Credo.Check.Refactor.NegatedConditionsInUnless},
         {Credo.Check.Refactor.NegatedConditionsWithElse},
         {Credo.Check.Refactor.Nesting},
         {Credo.Check.Refactor.PipeChainStart},
         {Credo.Check.Refactor.UnlessWithElse},
-        
-        #needs refactor
-        {Credo.Check.Refactor.VariableRebinding, false},
 
         {Credo.Check.Warning.BoolOperationOnSameValues},
         {Credo.Check.Warning.IExPry},
         {Credo.Check.Warning.IoInspect},
-        {Credo.Check.Warning.NameRedeclarationByAssignment},
-        {Credo.Check.Warning.NameRedeclarationByCase},
-        {Credo.Check.Warning.NameRedeclarationByDef},
-        {Credo.Check.Warning.NameRedeclarationByFn},
+        {Credo.Check.Warning.LazyLogging},
         {Credo.Check.Warning.OperationOnSameValues},
         {Credo.Check.Warning.OperationWithConstantResult},
         {Credo.Check.Warning.UnusedEnumOperation},
@@ -124,6 +115,21 @@
         {Credo.Check.Warning.UnusedRegexOperation},
         {Credo.Check.Warning.UnusedStringOperation},
         {Credo.Check.Warning.UnusedTupleOperation},
+
+        # Controversial and experimental checks (opt-in, just remove `, false`)
+        #
+        {Credo.Check.Refactor.ABCSize, false},
+        {Credo.Check.Refactor.AppendSingleItem, false},
+        {Credo.Check.Refactor.VariableRebinding, false},
+        {Credo.Check.Warning.MapGetUnsafePass, false},
+        {Credo.Check.Consistency.MultiAliasImportRequireUse, false},
+
+        # Deprecated checks (these will be deleted after a grace period)
+        {Credo.Check.Readability.Specs, false},
+        {Credo.Check.Warning.NameRedeclarationByAssignment, false},
+        {Credo.Check.Warning.NameRedeclarationByCase, false},
+        {Credo.Check.Warning.NameRedeclarationByDef, false},
+        {Credo.Check.Warning.NameRedeclarationByFn, false},
 
         # Custom checks can be created using `mix credo.gen.check`.
         #
