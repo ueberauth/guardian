@@ -1,5 +1,9 @@
 defmodule Guardian.Token do
   @moduledoc """
+  The behaviour module for all token modules.
+
+  Token modules are responsible for all the heavy lifting
+  in Guardian. 
   """
   @type token :: String.t
   @type claims :: map()
