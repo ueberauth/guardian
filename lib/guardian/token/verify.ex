@@ -1,8 +1,21 @@
 defmodule Guardian.Token.Verify do
   @moduledoc """
-  Interface for verifying tokens
+  Interface for verifying tokens.
+
+  This is intended to be used primarily by token modules
+  but allows for a custom verification module to be created
+  if the one that ships with your TokenModule is not quite what you want.
   """
 
+  @doc """
+  Verify a single claim
+
+  You should also include a fallback for claims that you are not validating
+
+  ```elixir
+  def verify_claim(_mod, _key, claims, _opts), do: {:ok, claims}
+  ```
+  """
   @callback verify_claim(
     mod :: Module.t,
     claim_key :: String.t,
@@ -28,6 +41,17 @@ defmodule Guardian.Token.Verify do
     end
   end
 
+  @spec time_within_drift?(
+    mod :: Module.t(), time :: pos_integer()
+  ) :: true | false
+  @doc """
+  Checks that a time value is within the `allowed_drift` as
+  configured for the provided module
+
+  Allowed drift is measured in seconds and represents the maximum amount
+  of time a token may be expired for an still be considered valid.
+  This is to deal with clock skew.
+  """
   def time_within_drift?(mod, time) when is_integer(time) do
     allowed_drift = apply(mod, :config, [:allowed_drift, 0]) / 1000
     diff = abs(time - Guardian.timestamp())
@@ -35,6 +59,16 @@ defmodule Guardian.Token.Verify do
   end
   def time_within_drift?(_), do: true
 
+  @spec verify_literal_claims(
+    claims :: Guardian.Token.claims(),
+    claims_to_check :: Guardian.Token.claims(),
+    opts :: Guardian.options()
+  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+  @doc """
+  For claims, check the values against the values found in
+  `claims_to_check`. If there is a claim to check that does not match
+  verification fails.
+  """
   def verify_literal_claims(claims, claims_to_check, _opts) do
     errors =
       for {k, v} <- claims_to_check,

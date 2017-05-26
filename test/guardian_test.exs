@@ -465,6 +465,10 @@ defmodule GuardianTest.Refresh do
     function_calls = filter_function_calls(io)
 
     expected = [
+      "Guardian.Support.TokenModule.decode_token(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
+      "Guardian.Support.TokenModule.verify_claims(GuardianTest.Impl, %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+      "GuardianTest.Impl.verify_claims(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+      "GuardianTest.Impl.on_verify(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
       "Guardian.Support.TokenModule.refresh(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
       "GuardianTest.Impl.on_refresh({\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, {\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, [])"
     ]
@@ -485,6 +489,10 @@ defmodule GuardianTest.Refresh do
     function_calls = filter_function_calls(io)
 
     expected = [
+      "Guardian.Support.TokenModule.decode_token(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_refresh: :fails])",
+      "Guardian.Support.TokenModule.verify_claims(GuardianTest.Impl, %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [fail_refresh: :fails])",
+      "GuardianTest.Impl.verify_claims(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [fail_refresh: :fails])",
+      "GuardianTest.Impl.on_verify(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_refresh: :fails])",
       "Guardian.Support.TokenModule.refresh(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_refresh: :fails])"
     ]
 
@@ -518,6 +526,10 @@ defmodule GuardianTest.Exchange do
     function_calls = filter_function_calls(io)
 
     expected = [
+      "Guardian.Support.TokenModule.decode_token(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
+      "Guardian.Support.TokenModule.verify_claims(GuardianTest.Impl, %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+      "GuardianTest.Impl.verify_claims(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [])",
+      "GuardianTest.Impl.on_verify(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [])",
       "Guardian.Support.TokenModule.exchange(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", nil, \"refresh\", [])",
       "GuardianTest.Impl.on_exchange({\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, {\"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}}, [])"
     ]
@@ -542,6 +554,10 @@ defmodule GuardianTest.Exchange do
     function_calls = filter_function_calls(io)
 
     expected = [
+      "Guardian.Support.TokenModule.decode_token(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_exchange: :fails])",
+      "Guardian.Support.TokenModule.verify_claims(GuardianTest.Impl, %{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [fail_exchange: :fails])",
+      "GuardianTest.Impl.verify_claims(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, [fail_exchange: :fails])",
+      "GuardianTest.Impl.on_verify(%{\"some\" => \"other_claim\", \"sub\" => \"freddy\"}, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", [fail_exchange: :fails])",
       "Guardian.Support.TokenModule.exchange(GuardianTest.Impl, \"{\\\"claims\\\":{\\\"sub\\\":\\\"freddy\\\",\\\"some\\\":\\\"other_claim\\\"}}\", nil, \"refresh\", [fail_exchange: :fails])"
     ]
 

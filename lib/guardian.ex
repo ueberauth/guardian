@@ -726,7 +726,7 @@ defmodule Guardian do
          {:ok, _claims} <- apply(
            mod,
            :decode_and_verify,
-           [old_token, opts]
+           [old_token, %{}, opts]
          ),
          {:ok, old_stuff, new_stuff} <- apply(
            token_mod,
@@ -779,7 +779,7 @@ defmodule Guardian do
          {:ok, _claims} <- apply(
            mod,
            :decode_and_verify,
-           [old_token, options]
+           [old_token, %{}, options]
          ),
          {:ok, old_stuff, new_stuff} <- apply(
            token_mod,
