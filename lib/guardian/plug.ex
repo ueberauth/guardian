@@ -1,5 +1,41 @@
 defmodule Guardian.Plug do
-  @moduledoc false
+  @moduledoc """
+  Provides functions for the implementation module for dealing with
+  Guardain in a Plug environment
+
+  ```elixir
+  defmodule MyApp.Tokens do
+    use Guardian, otp_app: :my_app
+
+    # ... snip
+  end
+  ```
+
+  Your implementation module will be given a `Plug` module for
+  interacting with plug.
+
+  If you're using Guardian in your application most of the setters will
+  be unintersting. They're mostly for library authors and Guardian itself.
+
+  The usual functions you'd use in your application are:
+
+  ### `sign_in(conn, resource, claims \\ %{}, opts \\ [])`
+
+  Sign in a resource for your application.
+  This will generate a token for your resource according to
+  your TokenModule and `subject_for_token` callback.
+
+  `sign_in` will also cache the `resource`, `claims`, and `token` on the
+  connection.
+
+  ```elixir
+  {:ok, token, claims} =
+    MyApp.Tokens.Plug.sign_in(conn, resource, my_custom_claims)
+  ```
+
+  If there is a session present the token will be stored in the session
+  to provide traditional session based authentication.
+  """
 
   @default_key "default"
 
@@ -51,6 +87,12 @@ defmodule Guardian.Plug do
     end
   end
 
+  @spec default_key() :: String.t()
+  @doc """
+  Provides the default key for the location of a token in the session and connection
+  """
+  def default_key, do: @default_key
+
   @spec set_current_token(
           conn :: Plug.Conn.t(),
           token :: Guardian.Token.token() | nil,
@@ -58,8 +100,8 @@ defmodule Guardian.Plug do
         ) :: Plug.Conn.t()
   def set_current_token(conn, token, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> token_key()
 
     put_private(conn, key, token)
@@ -72,8 +114,8 @@ defmodule Guardian.Plug do
         ) :: Plug.Conn.t()
   def set_current_claims(conn, claims, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> claims_key()
 
     put_private(conn, key, claims)
@@ -86,8 +128,8 @@ defmodule Guardian.Plug do
         ) :: Plug.Conn.t()
   def set_current_resource(conn, resource, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> resource_key()
 
     put_private(conn, key, resource)
@@ -99,8 +141,8 @@ defmodule Guardian.Plug do
         ) :: Guardian.Token.token() | nil
   def current_token(conn, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> token_key()
 
     conn.private[key]
@@ -112,8 +154,8 @@ defmodule Guardian.Plug do
         ) :: Guardian.Token.claims() | nil
   def current_claims(conn, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> claims_key()
 
     conn.private[key]
@@ -125,8 +167,8 @@ defmodule Guardian.Plug do
         ) :: any() | nil
   def current_resource(conn, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> resource_key()
 
     conn.private[key]
@@ -138,8 +180,8 @@ defmodule Guardian.Plug do
         ) :: true | false
   def authenticated?(conn, options) do
     key =
-      options
-      |> key_from_options()
+      conn
+      |> fetch_key(options)
       |> token_key()
 
     conn.private[key] != nil
@@ -172,7 +214,12 @@ defmodule Guardian.Plug do
       case conn.req_cookies do
         %Plug.Conn.Unfetched{} -> {:ok, conn}
         _ ->
-          {:ok, put_session(conn, token_key(key_from_options(options)), token)}
+          key =
+            conn
+            |> fetch_key(options)
+            |> token_key()
+
+          {:ok, put_session(conn, key, token)}
       end
     else
       {:error, _} = err -> err
@@ -246,7 +293,18 @@ defmodule Guardian.Plug do
     {:ok, conn}
   end
 
+  defp fetch_key(conn, options) do
+    alias Guardian.Plug.{Pipeline}
+
+    key = key_from_options(options)
+    if key do
+      key
+    else
+      Pipeline.current_key(conn) || default_key()
+    end
+  end
+
   defp key_from_options(opts) do
-    Keyword.get(opts, :key, @default_key)
+    Keyword.get(opts, :key)
   end
 end
