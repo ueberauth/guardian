@@ -331,9 +331,6 @@ defmodule Guardian do
     quote do
       @behaviour Guardian
 
-      # credo:disable-for-next-line /AliasUsage/
-      Guardian.Config.merge_config_options(__MODULE__, unquote(opts))
-
       __MODULE__
       |> Module.concat(:Plug)
       |> Module.create(
@@ -352,7 +349,7 @@ defmodule Guardian do
       Fetches the configuration for this module
       """
       def config do
-        Application.get_env(unquote(otp_app), __MODULE__)
+        Keyword.merge(Application.get_env(unquote(otp_app), __MODULE__) || [], unquote(opts))
       end
 
       @spec config(key :: atom() | String.t, default :: any()) :: any()
