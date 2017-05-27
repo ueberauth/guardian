@@ -11,41 +11,6 @@ defmodule Guardian.Config do
                         fun() |
                         any()
 
-  @spec merge_config_options(
-    mod :: Module.t(),
-    options :: Keyword.t()
-  ) :: :ok
-  @doc """
-  Merges configuration for a given module
-
-  Arguments:
-
-  * mod - The module to attach the configuration to
-  * options - The configuration to merge.
-
-  The only _required_ option is `:otp_app`.
-  This will not be merged into the configuration but everything else will be.
-  """
-  def merge_config_options(mod, options) do
-    otp_app = Keyword.get(options, :otp_app)
-    if !otp_app do
-      raise "otp_app not defined for #{to_string(mod)}"
-    end
-
-    mod_config = Application.get_env(otp_app, mod, [])
-
-    new_configs = Keyword.drop(options, [:otp_app])
-
-    if Enum.count(new_configs) > 0 do
-      [{otp_app, [{mod, mod_config}]}]
-      |> MixConfig.merge([{otp_app, [{mod, new_configs}]}])
-      |> MixConfig.persist()
-      :ok
-    else
-      :ok
-    end
-  end
-
   @spec resolve_value(value :: config_value()) :: any()
   @doc """
   Resolves possible values from a configuration.

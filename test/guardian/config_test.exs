@@ -1,7 +1,9 @@
 defmodule Guardian.ConfigTest do
+  @moduledoc false
   use ExUnit.Case, async: true
 
   defmodule Impl do
+    @moduledoc false
     use Guardian, otp_app: :guardian,
                   issuer: "FooApp",
                   system_foo: {:system, "FOO"},
@@ -13,15 +15,6 @@ defmodule Guardian.ConfigTest do
 
     def foo, do: "module function foo"
     def foo(args), do: "mod fun args #{inspect(args)}"
-  end
-
-  setup do
-    Guardian.Config.merge_config_options(
-      __MODULE__.Impl,
-      otp_app: :guardian,
-      issuer: "FooApp"
-    )
-    {:ok, %{}}
   end
 
   test "config with a value" do
@@ -54,15 +47,5 @@ defmodule Guardian.ConfigTest do
 
   test "config with a function" do
     assert __MODULE__.Impl.config(:fun) == "blah"
-  end
-
-  test "merges configs for a module" do
-    assert __MODULE__.Impl.config(:issuer) == "FooApp"
-    Guardian.Config.merge_config_options(
-      __MODULE__.Impl,
-      otp_app: :guardian,
-      issuer: "Bob"
-    )
-    assert __MODULE__.Impl.config(:issuer) == "Bob"
   end
 end
