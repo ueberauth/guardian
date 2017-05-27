@@ -2,8 +2,6 @@ defmodule Guardian.Config do
   @moduledoc """
   Working with configuration for guardian.
   """
-  use Mix.Config
-  alias Mix.Config, as: MixConfig
 
   @type config_value :: {:system, String.t()} |
                         {Module.t(), atom()} |
