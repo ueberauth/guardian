@@ -349,7 +349,9 @@ defmodule Guardian do
       Fetches the configuration for this module
       """
       def config do
-        Keyword.merge(Application.get_env(unquote(otp_app), __MODULE__) || [], unquote(opts))
+        unquote(otp_app)
+        |> Application.get_env(__MODULE__, [])
+        |> Keyword.merge(unquote(opts))
       end
 
       @spec config(key :: atom() | String.t, default :: any()) :: any()

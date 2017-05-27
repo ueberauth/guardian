@@ -154,7 +154,10 @@ defmodule Guardian.Plug.Pipeline do
       defp config(opts) do
         case Keyword.get(opts, :otp_app) do
           nil -> opts
-          otp_app -> Keyword.merge(Application.get_env(otp_app, __MODULE__) || [], opts)
+          otp_app ->
+            otp_app
+            |> Application.get_env(opt_app, __MODULE__, [])
+            |> Keyword.merge(opts)
         end
       end
 
