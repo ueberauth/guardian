@@ -122,71 +122,86 @@ defmodule Guardian.Plug.Pipeline do
   handler so that it can be used within your pipeline and downstream.
   """
   defmacro __using__(opts \\ []) do
+    alias Guardian.Plug.Pipeline
+
     quote do
       use Plug.Builder
-      import Guardian.Plug.Pipeline
+      alias Guardian.Config, as: GConfig
+      alias Guardian.Plug, as: GPlug
 
-      def init(opts) do
-        otp_app = Keyword.get(opts, :otp_app) ||
-          Keyword.get(unquote(opts), :otp_app)
-        if !otp_app do
-          raise ":otp_app not specified by #{to_string(__MODULE__)}"
-        end
+      import Pipeline
 
-        config = Application.get_env(otp_app, __MODULE__) || []
+      plug :put_modules
 
+      def init(options) do
         new_opts =
-          config
+          options
           |> Keyword.merge(unquote(opts))
-          |> Keyword.merge(opts)
+          |> config()
 
-        module = Keyword.get(new_opts, :module)
-        error = Keyword.get(new_opts, :error_handler)
+        unless Keyword.get(new_opts, :otp_app),
+          do: raise_error(:otp_app)
 
-        if !module, do: raise ":module not specified for #{to_string(__MODULE__)}"
-        if !error, do: raise ":error_handler not specified for #{to_string(__MODULE__)}"
+        unless Keyword.has_key?(new_opts, :module),
+          do: raise_error(:module)
+
+        unless Keyword.has_key?(new_opts, :error_handler),
+          do: raise_error(:error_handler)
 
         new_opts
       end
 
-      plug :put_modules
+      defp config(opts) do
+        case Keyword.get(opts, :otp_app) do
+          nil -> opts
+          otp_app -> Keyword.merge(Application.get_env(otp_app, __MODULE__) || [], opts)
+        end
+      end
+
+      defp config(opts, key, default \\ nil) do
+        opts
+        |> config()
+        |> Keyword.get(key)
+        |> GConfig.resolve_value()
+      end
 
       defp put_modules(conn, opts) do
-        alias Guardian.Plug, as: GPlug
-        alias GPlug.{Pipeline}
+        pipeline_opts = [
+          module: config(opts, :module),
+          error_handler: config(opts, :error_handler),
+          key: config(opts, :key, GPlug.default_key()),
+        ]
 
-        pipeline_opts = Keyword.take(opts, [:module, :error_handler, :key])
         Pipeline.call(conn, pipeline_opts)
       end
+
+      defp raise_error(key),
+        do: raise "Config `#{key}` is missing for #{__MODULE__}"
     end
   end
 
+  def init(opts), do: opts
+
   def call(conn, opts) do
     conn
-    |> maybe_set_item(:guardian_module, Keyword.get(opts, :module))
-    |> maybe_set_item(
-      :guardian_error_handler,
-      Keyword.get(opts, :error_handler)
-    )
-    |> maybe_set_item(:guardian_key, Keyword.get(opts, :key))
+    |> maybe_put_key(:guardian_module, Keyword.get(opts, :module))
+    |> maybe_put_key(:guardian_error_handler, Keyword.get(opts, :error_handler))
+    |> maybe_put_key(:guardian_key, Keyword.get(opts, :key))
   end
 
-  def set_key(conn, key) do
-    put_private(conn, :guardian_key, key)
-  end
+  def put_key(conn, key),
+    do: put_private(conn, :guardian_key, key)
 
-  def set_module(conn, module) do
-    put_private(conn, :guardian_module, module)
-  end
+  def put_module(conn, module),
+    do: put_private(conn, :guardian_module, module)
 
-  def set_error_handler(conn, module) do
-    put_private(conn, :guardian_error_handler, module)
-  end
+  def put_error_handler(conn, module),
+    do: put_private(conn, :guardian_error_handler, module)
 
   def current_key(conn), do: conn.private[:guardian_key]
   def current_module(conn), do: conn.private[:guardian_module]
   def current_error_handler(conn), do: conn.private[:guardian_error_handler]
 
-  defp maybe_set_item(conn, _key, nil), do: conn
-  defp maybe_set_item(conn, key, val), do: put_private(conn, key, val)
+  defp maybe_put_key(conn, _, nil), do: conn
+  defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
 end
