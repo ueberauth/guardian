@@ -126,6 +126,8 @@ defmodule Guardian.Plug.Pipeline do
 
     quote do
       use Plug.Builder
+      alias Guardian.Config, as: GConfig
+      alias Guardian.Plug, as: GPlug
 
       import Pipeline
 
@@ -135,7 +137,10 @@ defmodule Guardian.Plug.Pipeline do
         new_opts =
           options
           |> Keyword.merge(unquote(opts))
-          |> app_config
+          |> config()
+
+        unless Keyword.get(new_opts, :otp_app),
+          do: raise_error(:otp_app)
 
         unless Keyword.has_key?(new_opts, :module),
           do: raise_error(:module)
@@ -146,15 +151,27 @@ defmodule Guardian.Plug.Pipeline do
         new_opts
       end
 
-      defp app_config(opts) do
+      defp config(opts) do
         case Keyword.get(opts, :otp_app) do
           nil -> opts
-          otp_app -> Application.get_env(otp_app, __MODULE__) ++ opts
+          otp_app -> Keyword.merge(Application.get_env(otp_app, __MODULE__) || [], opts)
         end
       end
 
+      defp config(opts, key, default \\ nil) do
+        opts
+        |> config()
+        |> Keyword.get(key)
+        |> GConfig.resolve_value()
+      end
+
       defp put_modules(conn, opts) do
-        pipeline_opts = Keyword.take(opts, [:module, :error_handler, :key])
+        pipeline_opts = [
+          module: config(opts, :module),
+          error_handler: config(opts, :error_handler),
+          key: config(opts, :key, GPlug.default_key()),
+        ]
+
         Pipeline.call(conn, pipeline_opts)
       end
 
@@ -163,16 +180,13 @@ defmodule Guardian.Plug.Pipeline do
     end
   end
 
-  def call(conn, opts) do
-    [module, error_handler, key] =
-      opts
-      |> Keyword.take([:module, :error_handler, :key])
-      |> Keyword.values
+  def init(opts), do: opts
 
+  def call(conn, opts) do
     conn
-    |> put_module(module)
-    |> put_error_handler(error_handler)
-    |> put_key(key)
+    |> maybe_put_key(:guardian_module, Keyword.get(opts, :module))
+    |> maybe_put_key(:guardian_error_handler, Keyword.get(opts, :error_handler))
+    |> maybe_put_key(:guardian_key, Keyword.get(opts, :key))
   end
 
   def put_key(conn, key),
@@ -187,4 +201,7 @@ defmodule Guardian.Plug.Pipeline do
   def current_key(conn), do: conn.private[:guardian_key]
   def current_module(conn), do: conn.private[:guardian_module]
   def current_error_handler(conn), do: conn.private[:guardian_error_handler]
+
+  defp maybe_put_key(conn, _, nil), do: conn
+  defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
 end

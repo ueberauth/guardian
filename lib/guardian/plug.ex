@@ -83,7 +83,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> token_key
+      |> token_key()
 
     conn.private[key] != nil
   end
@@ -100,7 +100,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> claims_key
+      |> claims_key()
 
     conn.private[key]
   end
@@ -110,7 +110,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> resource_key
+      |> resource_key()
 
     conn.private[key]
   end
@@ -120,7 +120,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> token_key
+      |> token_key()
 
     conn.private[key]
   end
@@ -130,7 +130,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> token_key
+      |> token_key()
 
     put_private(conn, key, token)
   end
@@ -140,7 +140,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> claims_key
+      |> claims_key()
 
     put_private(conn, key, claims)
   end
@@ -150,7 +150,7 @@ defmodule Guardian.Plug do
     key =
       conn
       |> fetch_key(opts)
-      |> resource_key
+      |> resource_key()
 
     put_private(conn, key, resource)
   end
@@ -168,7 +168,7 @@ defmodule Guardian.Plug do
           key =
             conn
             |> fetch_key(opts)
-            |> token_key
+            |> token_key()
 
           {:ok, put_session(conn, key, token)}
       end
@@ -220,12 +220,12 @@ defmodule Guardian.Plug do
 
   defp sign_out(%{private: private} = conn, impl, :all, opts) do
     private
-    |> Map.keys
+    |> Map.keys()
     |> Enum.map(&key_from_other/1)
     |> Enum.filter(&(&1 != nil))
-    |> Enum.uniq
-    |> Enum.reduce({:ok, conn}, &clear_key(&1, &1, impl, opts))
-    |> cleanup_session
+    |> Enum.uniq()
+    |> Enum.reduce({:ok, conn}, &clear_key(&1, &2, impl, opts))
+    |> cleanup_session()
   end
 
   defp sign_out(conn, impl, key, opts) do
