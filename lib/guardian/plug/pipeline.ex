@@ -114,6 +114,8 @@ defmodule Guardian.Plug.Pipeline do
 
   import Plug.Conn
 
+  alias Guardian.Plug, as: GPlug
+
   @doc """
   Create your very own `Guardian.Plug.Pipeline`
 
@@ -202,8 +204,19 @@ defmodule Guardian.Plug.Pipeline do
     do: put_private(conn, :guardian_error_handler, module)
 
   def current_key(conn), do: conn.private[:guardian_key]
+
   def current_module(conn), do: conn.private[:guardian_module]
+
   def current_error_handler(conn), do: conn.private[:guardian_error_handler]
+
+  def fetch_key(conn, opts),
+    do: Keyword.get(opts, :key) || current_key(conn) || GPlug.default_key()
+
+  def fetch_module(conn, opts),
+    do: Keyword.get(opts, :module) || current_module(conn)
+
+  def fetch_error_handler(conn, opts),
+    do: Keyword.get(opts, :error_handler) || current_error_handler(conn)
 
   defp maybe_put_key(conn, _, nil), do: conn
   defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)

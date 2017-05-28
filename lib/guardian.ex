@@ -96,12 +96,7 @@ defmodule Guardian do
 
   # Provide a token including custom claims and a different token type/ttl
   {:ok, token, full_claims} =
-    MyApp.Tokens.encode_and_sign(
-      user,
-      %{some: "claim"},
-      token_type: "refresh"
-      ttl: {4, :weeks}
-    )
+    MyApp.Tokens.encode_and_sign(user, %{some: "claim"}, token_type: "refresh" ttl: {4, :weeks})
   ```
 
   The `encode_and_sign` function calls a number of callbacks on
@@ -134,11 +129,7 @@ defmodule Guardian do
 
   # Decode and verify with literal claims check and options.
   # Options are passed to your Token Module and callbacks
-  {:ok, claims} = MyApp.Tokens.decode_and_verify(
-    token,
-    %{match: "claim"},
-    some: "secret"
-  )
+  {:ok, claims} = MyApp.Tokens.decode_and_verify(token, %{match: "claim"}, some: "secret")
   ```
 
   #### `revoke(token, opts \\ [])`
@@ -210,18 +201,15 @@ defmodule Guardian do
   the resource
   """
   @callback subject_for_token(
-    resource :: Guardian.Token.resource(),
-    claims :: Guardian.Token.claims()
-  ) :: {:ok, String.t} | {:error, atom()}
+    resource :: Guardian.Token.resource, claims :: Guardian.Token.claims
+  ) :: {:ok, String.t} | {:error, atom}
 
   @doc """
   Fetches the resource that is represented by claims.
 
   For JWT this would normally be found in the `sub` field
   """
-  @callback resource_from_claims(
-    claims :: Guardian.Token.claims()
-  ) :: {:ok, Guardian.Token.resource()} | {:error, atom()}
+  @callback resource_from_claims(claims :: Guardian.Token.claims) :: {:ok, Guardian.Token.resource} | {:error, atom}
 
   @doc """
   An optional callback that allows the claims to be modified
@@ -229,21 +217,16 @@ defmodule Guardian do
   This is useful to hook into the encoding lifecycle
   """
   @callback build_claims(
-    claims :: Guardian.Token.claims(),
-    resource :: Guardian.Token.resource(),
-    opts :: options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, atom()}
+    claims :: Guardian.Token.claims, resource :: Guardian.Token.resource, opts :: options
+  ) :: {:ok, Guardian.Token.claims} | {:error, atom}
 
   @doc """
   An optional callback invoked after the token has been generated
   and signed.
   """
   @callback after_encode_and_sign(
-    resource :: any,
-    claims :: Guardian.Token.claims(),
-    token :: Guardian.Token.token(),
-    options :: options()
-  ) :: {:ok, Guardian.Token.token()} | {:error, atom()}
+    resource :: any, claims :: Guardian.Token.claims, token :: Guardian.Token.token, options :: options
+  ) :: {:ok, Guardian.Token.token} | {:error, atom}
 
   @doc """
   An optional callback invoked after sign in has been called
@@ -254,20 +237,18 @@ defmodule Guardian do
   """
   @callback after_sign_in(
     conn :: Plug.Conn.t,
-    resource :: any(),
-    token :: Guardian.Token.token(),
-    claims :: Guardian.Token.claims(),
-    options :: Guardian.options()
-  ) :: {:ok, Plug.Conn.t} | {:error, atom()}
+    resource :: any,
+    token :: Guardian.Token.token,
+    claims :: Guardian.Token.claims,
+    options :: options
+  ) :: {:ok, Plug.Conn.t} | {:error, atom}
 
   @doc """
   An optional callback invoked before sign out has happened
   """
   @callback before_sign_out(
-    conn :: Plug.Conn.t,
-    location :: atom() | nil,
-    options :: Guardian.options()
-  ) :: {:ok, Plug.Conn.t()} | {:error, atom()}
+    conn :: Plug.Conn.t, location :: atom | nil, options :: options
+  ) :: {:ok, Plug.Conn.t} | {:error, atom}
 
   @doc """
   An optional callback to add custom verification to claims when
@@ -276,56 +257,48 @@ defmodule Guardian do
   Returning {:ok, claims} will allow the decoding to continue
   Returning {:error, reason} will stop the decoding and return the error
   """
-  @callback verify_claims(
-    claims :: Guardian.Token.claims(),
-    options :: options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, atom()}
+  @callback verify_claims(claims :: Guardian.Token.claims, options :: options) :: {:ok, Guardian.Token.claims} |
+                                                                                  {:error, atom}
 
   @doc """
   An optional callback invoked after the claims have been validated
   """
   @callback on_verify(
-    claims :: Guardian.Token.claims(),
-    token :: Guardian.Token.token(),
-    options :: options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+    claims :: Guardian.Token.claims, token :: Guardian.Token.token, options :: options
+  ) :: {:ok, Guardian.Token.claims} | {:error, any}
 
   @doc """
   An optional callback invoked when a token is revoked
   """
   @callback on_revoke(
-    claims :: Guardian.Token.claims(),
-    token :: Guardian.Token.token(),
-    options :: options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+    claims :: Guardian.Token.claims, token :: Guardian.Token.token, options :: options
+  ) :: {:ok, Guardian.Token.claims} | {:error, any}
 
   @doc """
   An optional callback invoked when a token is refreshed
   """
   @callback on_refresh(
-    old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
-    new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
-    options :: options()
-  ) :: {
-    :ok,
-    {Guardian.Token.token(), Guardian.Token.claims()},
-    {Guardian.Token.token(), Guardian.Token.claims()}
-  } | {:error, any()}
+    old_token_and_claims :: {Guardian.Token.token, Guardian.Token.claims},
+    new_token_and_claims :: {Guardian.Token.token, Guardian.Token.claims},
+    options :: options
+  ) :: {:ok, {Guardian.Token.token, Guardian.Token.claims}, {Guardian.Token.token, Guardian.Token.claims}} |
+       {:error, any}
 
   @doc """
   An optional callback invoked when a token is exchanged
   """
   @callback on_exchange(
-    old_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
-    new_token_and_claims :: {Guardian.Token.token(), Guardian.Token.claims()},
-    options :: options()
-  ) :: {
-    :ok,
-    {Guardian.Token.token(), Guardian.Token.claims()},
-    {Guardian.Token.token(), Guardian.Token.claims()}
-  } | {:error, any()}
+    old_token_and_claims :: {Guardian.Token.token, Guardian.Token.claims},
+    new_token_and_claims :: {Guardian.Token.token, Guardian.Token.claims},
+    options :: options
+  ) :: {:ok, {Guardian.Token.token, Guardian.Token.claims}, {Guardian.Token.token, Guardian.Token.claims}} |
+       {:error, any}
+
+  alias Guardian.Token.Verify
 
   defmacro __using__(opts \\ []) do
+    alias Guardian.Config, as: GConfig
+
     otp_app = Keyword.get(opts, :otp_app)
 
     quote do
@@ -334,40 +307,43 @@ defmodule Guardian do
       __MODULE__
       |> Module.concat(:Plug)
       |> Module.create(
-        quote do use Guardian.Plug, unquote(__MODULE__) end,
+        quote do
+          use Guardian.Plug, unquote(__MODULE__)
+        end,
         Macro.Env.location(__ENV__)
       )
 
-      @spec default_token_type() :: String.t()
       @doc """
       The default type of token for this module
       """
+
+      @spec default_token_type() :: String.t
       def default_token_type, do: "access"
 
-      @spec config() :: Keword.t()
       @doc """
       Fetches the configuration for this module
       """
+
+      @spec config() :: Keword.t
       def config do
         unquote(otp_app)
         |> Application.get_env(__MODULE__, [])
         |> Keyword.merge(unquote(opts))
       end
 
-      @spec config(key :: atom() | String.t, default :: any()) :: any()
       @doc """
       Returns a resolved value of the configuration found at a key
 
       See `Guardian.Config.resolve_value`
       """
+
+      @spec config(atom | String.t, any) :: any
       def config(key, default \\ nil) do
-        alias Guardian.{Config}
         config()
         |> Keyword.get(key, default)
-        |> Config.resolve_value()
+        |> GConfig.resolve_value()
       end
 
-      @spec peek(token :: String.t()) :: map()
       @doc """
       Provides the content of the token but without verification
       of either the claims or the signature
@@ -376,92 +352,73 @@ defmodule Guardian do
 
       See the token module used for more information
       """
+      @spec peek(String.t) :: map
       def peek(token), do: Guardian.peek(__MODULE__, token)
 
-      @spec encode_and_sign(
-        resource :: any(),
-        claims :: Guardian.Token.claims(),
-        opts :: Guardian.options()
-      ) :: {:ok, Guardian.Token.token()} | {:error, any()}
       @doc """
       Encodes the claims.
       See `Guardian.encode_and_sign` for more information
       """
-      def encode_and_sign(resource, claims \\ %{}, opts \\ []) do
-        Guardian.encode_and_sign(__MODULE__, resource, claims, opts)
-      end
 
-      @spec decode_and_verify(
-        token :: Guardian.Token.token(),
-        claims_to_check :: Guardian.Token.claims(),
-        opts :: Guardian.options()
-      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @spec encode_and_sign(
+        any, Guardian.Token.claims, Guardian.options
+      ) :: {:ok, Guardian.Token.token, Guardian.Token.claims} | {:error, any}
+      def encode_and_sign(resource, claims \\ %{}, opts \\ []),
+        do: Guardian.encode_and_sign(__MODULE__, resource, claims, opts)
+
       @doc """
       Decodes and verifies a token using the configuration on the implementation
       module.
 
       See `Guardian.decode_and_verify`
       """
-      def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []) do
-        Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
-      end
 
-      @spec revoke(
-        token :: Guardian.Token.token(),
-        opts :: Guardian.options()
-      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @spec decode_and_verify(
+        Guardian.Token.token, Guardian.Token.claims, Guardian.options
+      ) :: {:ok, Guardian.Token.claims} | {:error, any}
+      def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []),
+        do: Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
+
       @doc """
       Revoke a token.
 
       See `Guardian.revoke`
       """
-      def revoke(token, opts \\ []) do
-        Guardian.revoke(__MODULE__, token, opts)
-      end
 
-      @spec refresh(
-        old_token :: Guardian.Token.token(),
-        opts :: Guardian.options()
-      ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+      @spec revoke(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
+      def revoke(token, opts \\ []), do: Guardian.revoke(__MODULE__, token, opts)
+
       @doc """
       Refresh a token.
 
       See `Guardian.refresh`
       """
-      def refresh(old_token, opts \\ []) do
-        Guardian.refresh(__MODULE__, old_token, opts)
-      end
+      @spec refresh(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
+      def refresh(old_token, opts \\ []), do: Guardian.refresh(__MODULE__, old_token, opts)
 
-      @spec exchange(
-        token :: Guardian.Token.token(),
-        from_type :: String.t() | [String.t(), ...],
-        to_type :: String.t(),
-        options :: Guardian.options()
-      ) :: {
-        :ok,
-        {Guardian.Token.token(), Guardian.Token.claims()},
-        {Guardian.Token.token(), Guardian.Token.claims()}
-      } | {:error, any()}
       @doc """
       Exchanges a token of one type for another.
 
       See `Guardian.exchange`
       """
-      def exchange(token, from_type, to_type, options \\ []) do
-        Guardian.exchange(__MODULE__, token, from_type, to_type, options)
-      end
+      @spec exchange(
+        token :: Guardian.Token.token, from_type :: String.t | [String.t, ...],
+        to_type :: String.t,
+        options :: Guardian.options
+      ) :: {:ok, {Guardian.Token.token, Guardian.Token.claims}, {Guardian.Token.token, Guardian.Token.claims}} |
+           {:error, any}
+      def exchange(token, from_type, to_type, opts \\ []),
+        do: Guardian.exchange(__MODULE__, token, from_type, to_type, opts)
 
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
       def after_sign_in(conn, _r, _t, _c, _o), do: {:ok, conn}
       def before_sign_out(conn, _location, _opts), do: {:ok, conn}
       def on_verify(claims, _token, _options), do: {:ok, claims}
       def on_revoke(claims, _token, _options), do: {:ok, claims}
-      def on_refresh(old_stuff, new_stuff, _options) do
-        {:ok, old_stuff, new_stuff}
-      end
-      def on_exchange(old_stuff, new_stuff, _options) do
-        {:ok, old_stuff, new_stuff}
-      end
+      def on_refresh(old_stuff, new_stuff, _options),
+        do: {:ok, old_stuff, new_stuff}
+      def on_exchange(old_stuff, new_stuff, _options),
+        do: {:ok, old_stuff, new_stuff}
 
       def build_claims(c, _, _), do: {:ok, c}
       def verify_claims(claims, _options), do: {:ok, claims}
@@ -481,20 +438,17 @@ defmodule Guardian do
     end
   end
 
-  @spec timestamp() :: pos_integer()
   @doc """
   Provides the current system time in seconds
   """
-  def timestamp do
-    System.system_time(:seconds)
-  end
+  @spec timestamp() :: pos_integer
+  def timestamp, do: System.system_time(:seconds)
 
-  @spec stringify_keys(
-    map :: map() | list() | any()
-  ) :: map() | list() | any()
   @doc """
   Converts keys in a map or list of maps to strings
   """
+
+  @spec stringify_keys(map | list | any) :: map | list | any
   def stringify_keys(map) when is_map(map) do
     for {k, v} <- map, into: %{}, do: {to_string(k), stringify_keys(v)}
   end
@@ -503,10 +457,6 @@ defmodule Guardian do
   end
   def stringify_keys(value), do: value
 
-  @spec peek(
-    mod :: Module.t(),
-    token :: Guardian.Token.token()
-  ) :: %{claims: map()}
   @doc """
   Returns an inspection of the token (at least claims)
   without any verification.
@@ -515,19 +465,14 @@ defmodule Guardian do
   The implementation is provided by the TokenModule specified.
   See the documentation for your TokenModule for full details
   """
+
+  @spec peek(Module.t, Guardian.Token.token) :: %{claims: map}
   def peek(mod, token) do
     mod
     |> apply(:config, [:token_module, @default_token_module])
     |> apply(:peek, [token])
   end
 
-  @spec encode_and_sign(
-    mod :: Module.t(),
-    resource :: any(),
-    claims :: Guardian.Token.claims(),
-    opts :: Guardian.options()
-  ) :: {:ok, Guardian.Token.token(), Guardian.Token.claims()} |
-       {:error, any()}
   @doc """
   Creates a signed token for a resource.
   The actual encoding depends on the implementation module
@@ -557,6 +502,10 @@ defmodule Guardian do
   See the documentation for your TokenModule for more information on
   which options are available.
   """
+
+  @spec encode_and_sign(
+    Module.t, any, Guardian.Token.claims, options
+  ) :: {:ok, Guardian.Token.token, Guardian.Token.claims} | {:error, any}
   def encode_and_sign(mod, resource, claims \\ %{}, opts \\ []) do
     claims =
       claims
@@ -566,19 +515,10 @@ defmodule Guardian do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
     with {:ok, subject} <- apply(mod, :subject_for_token, [resource, claims]),
-         {:ok, claims} <- apply(
-           token_mod,
-           :build_claims,
-           [mod, resource, subject, claims, opts]
-         ),
+         {:ok, claims} <- apply(token_mod, :build_claims, [mod, resource, subject, claims, opts]),
          {:ok, claims} <- apply(mod, :build_claims, [claims, resource, opts]),
          {:ok, token} <- apply(token_mod, :create_token, [mod, claims, opts]),
-         {:ok, _} <- apply(
-           mod,
-           :after_encode_and_sign,
-           [resource, claims, token, opts]
-         )
-    do
+         {:ok, _} <- apply(mod, :after_encode_and_sign, [resource, claims, token, opts]) do
       {:ok, token, claims}
     else
       {:error, _} = err -> err
@@ -586,13 +526,6 @@ defmodule Guardian do
     end
   end
 
-  @spec decode_and_verify(
-    mod :: Module.t(),
-    token :: Guardian.Token.token(),
-    claims_to_check :: Guardian.Token.claims(),
-    opts :: Guardian.options()
-  ) :: {:ok, Guardian.Token.claims()} |
-       {:error, any()}
   @doc """
   Decodes a token using the configuration of the implementation module
   This will, using that configuration delegate to the token module.
@@ -613,51 +546,28 @@ defmodule Guardian do
   See the documentation for your TokenModule for more information on
   which options are available.
   """
+
+  @spec decode_and_verify(
+    Module.t, Guardian.Token.token, Guardian.Token.claims, options
+  ) :: {:ok, Guardian.Token.claims} | {:error, any}
   def decode_and_verify(mod, token, claims_to_check \\ %{}, opts \\ []) do
-    alias Guardian.Token.{Verify}
-
-    claims_to_check =
-      claims_to_check
-      |> Enum.into(%{})
-      |> Guardian.stringify_keys()
-
+    claims_to_check = claims_to_check |> Enum.into(%{}) |> Guardian.stringify_keys()
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
-    try do
-      with {:ok, claims} <- apply(token_mod, :decode_token, [mod, token, opts]),
-           {:ok, claims} <- Verify
-                            .verify_literal_claims(
-                              claims,
-                              claims_to_check,
-                              opts
-                            ),
-           {:ok, claims} <- apply(
-             token_mod,
-             :verify_claims,
-             [mod, claims, opts]
-           ),
-           {:ok, claims} <- apply(
-             mod,
-             :verify_claims,
-             [claims, opts]
-           ),
-           {:ok, claims} <- apply(mod, :on_verify, [claims, token, opts])
-      do
-        {:ok, claims}
-      else
-        {:error, _} = err -> err
-        err -> {:error, err}
-      end
-    rescue
-      e -> {:error, e}
+    with {:ok, claims} <- apply(token_mod, :decode_token, [mod, token, opts]),
+         {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
+         {:ok, claims} <- apply(token_mod, :verify_claims, [mod, claims, opts]),
+         {:ok, claims} <- apply(mod, :verify_claims, [claims, opts]),
+         {:ok, claims} <- apply(mod, :on_verify, [claims, token, opts]) do
+      {:ok, claims}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
     end
+  rescue
+    e -> {:error, e}
   end
 
-  @spec revoke(
-    mod :: Module.t(),
-    token :: Guardian.Token.token(),
-    options :: Guardian.options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
   @doc """
   Called to revoke a token.
 
@@ -673,17 +583,13 @@ defmodule Guardian do
   The options are passed through to the TokenModule and callback
   so check the documentation for your TokenModule
   """
-  def revoke(mod, token, options \\ []) do
+  @spec revoke(Module.t, Guardian.Token.token, options) :: {:ok, Guardian.Token.claims} | {:error, any}
+  def revoke(mod, token, opts \\ []) do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
     %{claims: claims} = Guardian.peek(mod, token)
 
-    with {:ok, claims} <- apply(
-                            token_mod,
-                            :revoke,
-                            [mod, claims, token, options]
-                          ),
-         {:ok, claims} <- apply(mod, :on_revoke, [claims, token, options])
-    do
+    with {:ok, claims} <- apply(token_mod, :revoke, [mod, claims, token, opts]),
+         {:ok, claims} <- apply(mod, :on_revoke, [claims, token, opts]) do
       {:ok, claims}
     else
       {:error, _} = err -> err
@@ -691,15 +597,6 @@ defmodule Guardian do
     end
   end
 
-  @spec refresh(
-    mod :: Module.t(),
-    old_token :: Guardian.Token.token(),
-    opts :: Guardian.options()
-  ) :: {
-    :ok,
-    {Guardian.Token.token(), Guardian.Token.claims()},
-    {Guardian.Token.token(), Guardian.Token.claims()}
-  } | {:error, any()}
   @doc """
   Refreshes a token keeping all main claims intact.
 
@@ -716,41 +613,22 @@ defmodule Guardian do
 
   See TokenModule documentation for your token module.
   """
+
+  @spec refresh(Module.t, Guardian.Token.token, options) :: {
+    :ok,
+    {Guardian.Token.token, Guardian.Token.claims},
+    {Guardian.Token.token, Guardian.Token.claims}
+  } | {:error, any}
   def refresh(mod, old_token, opts) do
-    with token_mod <- apply(
-           mod,
-           :config,
-           [:token_module, @default_token_module]
-         ),
-         {:ok, _claims} <- apply(
-           mod,
-           :decode_and_verify,
-           [old_token, %{}, opts]
-         ),
-         {:ok, old_stuff, new_stuff} <- apply(
-           token_mod,
-           :refresh,
-           [mod, old_token, opts]
-         )
-    do
+    with token_mod <- apply(mod, :config, [:token_module, @default_token_module]),
+         {:ok, _claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
+         {:ok, old_stuff, new_stuff} <- apply(token_mod, :refresh, [mod, old_token, opts]) do
       apply(mod, :on_refresh, [old_stuff, new_stuff, opts])
     else
       {:error, _} = err -> err
       err -> {:error, err}
     end
   end
-
-  @spec exchange(
-    mod :: Module.t(),
-    old_token :: Guardian.Token.token(),
-    from_type :: String.t() | [String.t(), ...],
-    to_type :: String.t(),
-    options :: options()
-  ) :: {
-    :ok,
-    {Guardian.Token.token(), Guardian.Token.claims()},
-    {Guardian.Token.token(), Guardian.Token.claims()}
-  } | {:error, any()}
 
   @doc """
   Exchanges one token for another with different token types
@@ -769,24 +647,15 @@ defmodule Guardian do
   All options are passed through all calls to the token module and
   appropriate callbacks
   """
-  def exchange(mod, old_token, from_type, to_type, options) do
-    with token_mod <- apply(
-           mod,
-           :config,
-           [:token_module, @default_token_module]
-         ),
-         {:ok, _claims} <- apply(
-           mod,
-           :decode_and_verify,
-           [old_token, %{}, options]
-         ),
-         {:ok, old_stuff, new_stuff} <- apply(
-           token_mod,
-           :exchange,
-           [mod, old_token, from_type, to_type, options]
-         )
-    do
-      apply(mod, :on_exchange, [old_stuff, new_stuff, options])
+  @spec exchange(
+    Module.t, Guardian.Token.token, String.t | [String.t, ...], String.t, options
+  ) :: {:ok, {Guardian.Token.token, Guardian.Token.claims}, {Guardian.Token.token, Guardian.Token.claims}} |
+       {:error, any}
+  def exchange(mod, old_token, from_type, to_type, opts) do
+    with token_mod <- apply(mod, :config, [:token_module, @default_token_module]),
+         {:ok, _claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
+         {:ok, old_stuff, new_stuff} <- apply(token_mod, :exchange, [mod, old_token, from_type, to_type, opts]) do
+      apply(mod, :on_exchange, [old_stuff, new_stuff, opts])
     else
       {:error, _} = err -> err
       err -> {:error, err}

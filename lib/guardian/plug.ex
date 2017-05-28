@@ -49,14 +49,14 @@ defmodule Guardian.Plug do
     quote do
       def implementation, do: unquote(impl)
 
-      def set_current_token(conn, token, opts \\ []),
-        do: GPlug.set_current_token(conn, token, opts)
+      def put_current_token(conn, token, opts \\ []),
+        do: GPlug.put_current_token(conn, token, opts)
 
-      def set_current_claims(conn, claims, opts \\ []),
-        do: GPlug.set_current_claims(conn, claims, opts)
+      def put_current_claims(conn, claims, opts \\ []),
+        do: GPlug.put_current_claims(conn, claims, opts)
 
-      def set_current_resource(conn, resource, opts \\ []),
-        do: GPlug.set_current_resource(conn, resource, opts)
+      def put_current_resource(conn, resource, opts \\ []),
+        do: GPlug.put_current_resource(conn, resource, opts)
 
       def current_token(conn, opts \\ []),
         do: GPlug.current_token(conn, opts)
@@ -78,6 +78,13 @@ defmodule Guardian.Plug do
     end
   end
 
+  def session_active?(conn) do
+    key = :seconds |> System.os_time() |> to_string()
+    get_session(conn, key) == nil
+  rescue
+    ArgumentError -> false
+  end
+
   @spec authenticated?(Plug.Conn.t, Guardian.opts) :: true | false
   def authenticated?(conn, opts) do
     key =
@@ -96,7 +103,7 @@ defmodule Guardian.Plug do
   def default_key, do: @default_key
 
   @spec current_claims(Plug.Conn.t, Guardian.opts) :: Guardian.Token.claims | nil
-  def current_claims(conn, opts) do
+  def current_claims(conn, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -106,7 +113,7 @@ defmodule Guardian.Plug do
   end
 
   @spec current_resource(Plug.Conn.t, Guardian.opts) :: any | nil
-  def current_resource(conn, opts) do
+  def current_resource(conn, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -116,7 +123,7 @@ defmodule Guardian.Plug do
   end
 
   @spec current_token(Plug.Conn.t, Guardian.opts) :: Guardian.Token.token | nil
-  def current_token(conn, opts) do
+  def current_token(conn, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -125,8 +132,8 @@ defmodule Guardian.Plug do
     conn.private[key]
   end
 
-  @spec set_current_token(Plug.Conn.t, Guardian.Token.token | nil, Guardian.opts) :: Plug.Conn.t
-  def set_current_token(conn, token, opts) do
+  @spec put_current_token(Plug.Conn.t, Guardian.Token.token | nil, Guardian.opts) :: Plug.Conn.t
+  def put_current_token(conn, token, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -135,8 +142,8 @@ defmodule Guardian.Plug do
     put_private(conn, key, token)
   end
 
-  @spec set_current_claims(Plug.Conn.t, Guardian.Token.claims | nil, Guardian.opts) :: Plug.Conn.t
-  def set_current_claims(conn, claims, opts) do
+  @spec put_current_claims(Plug.Conn.t, Guardian.Token.claims | nil, Guardian.opts) :: Plug.Conn.t
+  def put_current_claims(conn, claims, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -145,8 +152,8 @@ defmodule Guardian.Plug do
     put_private(conn, key, claims)
   end
 
-  @spec set_current_resource(Plug.Conn.t, resource :: any | nil, Guardian.opts) :: Plug.Conn.t
-  def set_current_resource(conn, resource, opts) do
+  @spec put_current_resource(Plug.Conn.t, resource :: any | nil, Guardian.opts) :: Plug.Conn.t
+  def put_current_resource(conn, resource, opts \\ []) do
     key =
       conn
       |> fetch_key(opts)
@@ -161,15 +168,15 @@ defmodule Guardian.Plug do
          {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
          {:ok, conn} <- apply(impl, :after_sign_in, [conn, resource, token, full_claims, opts])
     do
-      case conn.req_cookies do
-        %Plug.Conn.Unfetched{} -> {:ok, conn}
-        _ ->
-          key =
-            conn
-            |> fetch_key(opts)
-            |> token_key()
+      if session_active?(conn) do
+        key =
+          conn
+          |> fetch_key(opts)
+          |> token_key()
 
-          {:ok, put_session(conn, key, token)}
+        {:ok, put_session(conn, key, token)}
+      else
+        {:ok, conn}
       end
     else
       {:error, _} = err -> err
@@ -186,17 +193,20 @@ defmodule Guardian.Plug do
   defp add_data_to_conn(conn, resource, token, claims, opts) do
     conn =
       conn
-      |> set_current_token(token, opts)
-      |> set_current_claims(claims, opts)
-      |> set_current_resource(resource, opts)
+      |> put_current_token(token, opts)
+      |> put_current_claims(claims, opts)
+      |> put_current_resource(resource, opts)
 
     {:ok, conn}
   end
 
-  defp cleanup_session({:ok, %{req_cookies: %Plug.Conn.Unfetched{}} = conn}),
-    do: {:ok, conn}
-  defp cleanup_session({:ok, conn}),
-    do: {:ok, configure_session(conn, drop: true)}
+  defp cleanup_session({:ok, conn}) do
+    if session_active?(conn) do
+      {:ok, configure_session(conn, drop: true)}
+    else
+      {:ok, conn}
+    end
+  end
   defp cleanup_session({:error, _} = err), do: err
   defp cleanup_session(err), do: {:error, err}
 
@@ -209,9 +219,9 @@ defmodule Guardian.Plug do
   defp remove_data_from_conn(conn, opts) do
     conn =
       conn
-      |> set_current_token(nil, opts)
-      |> set_current_claims(nil, opts)
-      |> set_current_resource(nil, opts)
+      |> put_current_token(nil, opts)
+      |> put_current_claims(nil, opts)
+      |> put_current_resource(nil, opts)
 
     {:ok, conn}
   end
@@ -230,10 +240,10 @@ defmodule Guardian.Plug do
     with {:ok, conn} <- apply(impl, :before_sign_out, [conn, key, opts]),
          {:ok, conn} <- remove_data_from_conn(conn, key: key)
     do
-      case conn.req_cookies do
-        %Plug.Conn.Unfetched{} -> {:ok, conn}
-        _ ->
-          {:ok, delete_session(conn, token_key(key))}
+      if session_active?(conn) do
+        {:ok, delete_session(conn, token_key(key))}
+      else
+        {:ok, conn}
       end
     end
   end

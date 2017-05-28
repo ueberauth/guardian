@@ -9,6 +9,7 @@ defmodule Guardian.Token.Jwt.Verify do
   def verify_claim(mod, "iss", %{"iss" => iss} = claims, _opts) do
     issuer = apply(mod, :config, [:issuer])
     verify_issuer = apply(mod, :config, [:verify_issuer])
+
     if verify_issuer && issuer == iss do
       {:ok, claims}
     else
