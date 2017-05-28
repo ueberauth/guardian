@@ -3,27 +3,17 @@ defmodule Guardian.Support.Utils do
   Provides some helper functions to help with testing
   """
 
-  @method_regex ~r/^[A-Z][a-z0-9A-Z\.]+\.[a-z][a-z_0-9]+\(.*?\)$/m
-
-  def filter_function_calls(io_calls) when is_binary(io_calls) do
-    io_calls
-    |> String.split("\n")
-    |> filter_function_calls()
+  def send_function_call(call) do
+    send self(), call
   end
 
-  def filter_function_calls(io_calls) do
-    Enum.filter(io_calls, &(String.match?(&1, @method_regex)))
-  end
+  def gather_function_calls, do: gather_function_calls([])
 
-  def args_to_string(args) when is_binary(args), do: args
-  def args_to_string(args) when is_list(args) do
-    args
-    |> Enum.map(&(inspect(&1)))
-    |> Enum.join(", ")
-  end
-
-  def print_function_call({m, f, a}) do
-    args = args_to_string(a)
-    IO.puts("#{inspect(m)}.#{to_string(f)}(#{args})")
+  def gather_function_calls(list) do
+    receive do
+      {_, _, _} = call -> gather_function_calls([call | list])
+    after
+      0 -> Enum.reverse(list)
+    end
   end
 end
