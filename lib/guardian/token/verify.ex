@@ -26,13 +26,10 @@ defmodule Guardian.Token.Verify do
   defmacro __using__(_opts \\ []) do
     quote do
       def verify_claims(mod, claims, opts) do
-        Enum.reduce(
-          claims,
-          {:ok, claims},
-          fn {k, v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
-             _, {:error, reason} = err -> err
-          end
-        )
+        Enum.reduce claims, {:ok, claims}, fn
+          {k, v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
+          _, {:error, reason} = err -> err
+        end
       end
 
       def verify_claim(_mod, _claim_key, claims, _opts), do: {:ok, claims}
@@ -70,19 +67,12 @@ defmodule Guardian.Token.Verify do
   verification fails.
   """
   def verify_literal_claims(claims, claims_to_check, _opts) do
-    errors =
-      for {k, v} <- claims_to_check,
-        into: []
-      do
-        verify_literal_claim(claims, k, v)
-      end
-      |> Enum.filter(&(elem(&1, 0) == :error))
+    results =
+      for {k, v} <- claims_to_check, into: [], do: verify_literal_claim(claims, k, v)
 
-    if Enum.any?(errors) do
-      hd(errors)
-    else
-      {:ok, claims}
-    end
+    errors = Enum.filter(results, &(elem(&1, 0) == :error))
+
+    if Enum.any?(errors), do: hd(errors), else: {:ok, claims}
   end
 
   defp verify_literal_claim(claims, key, v) do
