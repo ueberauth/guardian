@@ -156,7 +156,6 @@ defmodule Guardian.Plug do
   end
 
   @spec sign_in(Plug.Conn.t, Module.t, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
-
   def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
     with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
          {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
@@ -179,10 +178,9 @@ defmodule Guardian.Plug do
   end
 
   @spec sign_out(Plug.Conn.t, Module.t, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
-
   def sign_out(conn, impl, opts) do
     key = Keyword.get(opts, :key, :all)
-    sign_out(conn, impl, key, opts)
+    do_sign_out(conn, impl, key, opts)
   end
 
   defp add_data_to_conn(conn, resource, token, claims, opts) do
@@ -202,7 +200,7 @@ defmodule Guardian.Plug do
   defp cleanup_session({:error, _} = err), do: err
   defp cleanup_session(err), do: {:error, err}
 
-  defp clear_key(key, {:ok, conn}, impl, opts), do: sign_out(conn, impl, key, opts)
+  defp clear_key(key, {:ok, conn}, impl, opts), do: do_sign_out(conn, impl, key, opts)
   defp clear_key(_, err, _, _), do: err
 
   defp fetch_key(conn, opts),
@@ -218,7 +216,7 @@ defmodule Guardian.Plug do
     {:ok, conn}
   end
 
-  defp sign_out(%{private: private} = conn, impl, :all, opts) do
+  defp do_sign_out(%{private: private} = conn, impl, :all, opts) do
     private
     |> Map.keys()
     |> Enum.map(&key_from_other/1)
@@ -228,7 +226,7 @@ defmodule Guardian.Plug do
     |> cleanup_session()
   end
 
-  defp sign_out(conn, impl, key, opts) do
+  defp do_sign_out(conn, impl, key, opts) do
     with {:ok, conn} <- apply(impl, :before_sign_out, [conn, key, opts]),
          {:ok, conn} <- remove_data_from_conn(conn, key: key)
     do
