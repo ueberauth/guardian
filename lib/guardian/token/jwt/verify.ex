@@ -21,9 +21,7 @@ defmodule Guardian.Token.Jwt.Verify do
     if nbf == nil do
       {:ok, claims}
     else
-      if Verify.time_within_drift?(mod, nbf) ||
-         nbf <= Guardian.timestamp()
-      do
+      if Verify.time_within_drift?(mod, nbf) || nbf <= Guardian.timestamp() do
         {:ok, claims}
       else
         {:error, :token_not_yet_valid}
@@ -36,9 +34,7 @@ defmodule Guardian.Token.Jwt.Verify do
     if exp == nil do
       {:ok, claims}
     else
-      if Verify.time_within_drift?(mod, exp) ||
-         exp >= Guardian.timestamp()
-      do
+      if Verify.time_within_drift?(mod, exp) || exp >= Guardian.timestamp() do
         {:ok, claims}
       else
         {:error, :token_expired}
