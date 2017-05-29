@@ -162,7 +162,7 @@ defmodule Guardian.Plug do
     put_private(conn, key, resource)
   end
 
-  @spec sign_in(Plug.Conn.t, Module.t, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
+  @spec sign_in(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
   def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
     with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
          {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
@@ -184,7 +184,7 @@ defmodule Guardian.Plug do
     end
   end
 
-  @spec sign_out(Plug.Conn.t, Module.t, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
+  @spec sign_out(Plug.Conn.t, module, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
   def sign_out(conn, impl, opts) do
     key = Keyword.get(opts, :key, :all)
     do_sign_out(conn, impl, key, opts)

@@ -36,7 +36,7 @@ defmodule Guardian.Token do
   Build the default claims for the token
   """
   @callback build_claims(
-    mod :: Module.t,
+    mod :: module,
     resource :: any,
     sub :: String.t,
     claims :: claims,
@@ -47,7 +47,7 @@ defmodule Guardian.Token do
   Create the token including serializing and signing
   """
   @callback create_token(
-    mod :: Module.t,
+    mod :: module,
     claims :: claims,
     options :: Guardian.options
   ) :: {:ok, token} | signing_error | secret_error | encoding_error
@@ -56,7 +56,7 @@ defmodule Guardian.Token do
   Decode the token. Without verification of the claims within it.
   """
   @callback decode_token(
-    mod :: Module.t,
+    mod :: module,
     token :: token,
     options :: Guadian.options
   ) :: {:ok, token} | secret_error | decoding_error
@@ -65,7 +65,7 @@ defmodule Guardian.Token do
   Verify the claims of a token
   """
   @callback verify_claims(
-    mod :: Module.t,
+    mod :: module,
     claims :: claims,
     options :: Guardian.options
   ) :: {:ok, claims} | {:error, any}
@@ -74,7 +74,7 @@ defmodule Guardian.Token do
   Revoke a token (if appropriate)
   """
   @callback revoke(
-    mod :: Module.t,
+    mod :: module,
     claims :: claims,
     token :: token,
     options :: Guardian.options
@@ -84,7 +84,7 @@ defmodule Guardian.Token do
   Refresh a token
   """
   @callback refresh(
-    mod :: Module.t,
+    mod :: module,
     old_token :: token,
     options :: Guardian.options
   ) :: {:ok, {token, claims}, {token, claims}} | {:error, any}
@@ -93,7 +93,7 @@ defmodule Guardian.Token do
   Exchange a token from one type to another
   """
   @callback exchange(
-    mod :: Module.t,
+    mod :: module,
     old_token :: token,
     from_type :: String.t | [String.t, ...],
     to_type :: String.t,

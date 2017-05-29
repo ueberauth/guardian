@@ -466,7 +466,7 @@ defmodule Guardian do
   See the documentation for your TokenModule for full details
   """
 
-  @spec peek(Module.t, Guardian.Token.token) :: %{claims: map}
+  @spec peek(module, Guardian.Token.token) :: %{claims: map}
   def peek(mod, token) do
     mod
     |> apply(:config, [:token_module, @default_token_module])
@@ -504,7 +504,7 @@ defmodule Guardian do
   """
 
   @spec encode_and_sign(
-    Module.t, any, Guardian.Token.claims, options
+    module, any, Guardian.Token.claims, options
   ) :: {:ok, Guardian.Token.token, Guardian.Token.claims} | {:error, any}
   def encode_and_sign(mod, resource, claims \\ %{}, opts \\ []) do
     claims =
@@ -548,7 +548,7 @@ defmodule Guardian do
   """
 
   @spec decode_and_verify(
-    Module.t, Guardian.Token.token, Guardian.Token.claims, options
+    module, Guardian.Token.token, Guardian.Token.claims, options
   ) :: {:ok, Guardian.Token.claims} | {:error, any}
   def decode_and_verify(mod, token, claims_to_check \\ %{}, opts \\ []) do
     claims_to_check = claims_to_check |> Enum.into(%{}) |> Guardian.stringify_keys()
@@ -583,7 +583,7 @@ defmodule Guardian do
   The options are passed through to the TokenModule and callback
   so check the documentation for your TokenModule
   """
-  @spec revoke(Module.t, Guardian.Token.token, options) :: {:ok, Guardian.Token.claims} | {:error, any}
+  @spec revoke(module, Guardian.Token.token, options) :: {:ok, Guardian.Token.claims} | {:error, any}
   def revoke(mod, token, opts \\ []) do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
     %{claims: claims} = Guardian.peek(mod, token)
@@ -614,7 +614,7 @@ defmodule Guardian do
   See TokenModule documentation for your token module.
   """
 
-  @spec refresh(Module.t, Guardian.Token.token, options) :: {
+  @spec refresh(module, Guardian.Token.token, options) :: {
     :ok,
     {Guardian.Token.token, Guardian.Token.claims},
     {Guardian.Token.token, Guardian.Token.claims}
@@ -648,7 +648,7 @@ defmodule Guardian do
   appropriate callbacks
   """
   @spec exchange(
-    Module.t, Guardian.Token.token, String.t | [String.t, ...], String.t, options
+    module, Guardian.Token.token, String.t | [String.t, ...], String.t, options
   ) :: {:ok, {Guardian.Token.token, Guardian.Token.claims}, {Guardian.Token.token, Guardian.Token.claims}} |
        {:error, any}
   def exchange(mod, old_token, from_type, to_type, opts) do
