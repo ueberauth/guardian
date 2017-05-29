@@ -13,8 +13,8 @@ defmodule Guardian.Config do
   * any other value
   """
   @type config_value :: {:system, String.t} |
-                        {Module.t, atom} |
-                        {Module.t, atom, list(any)} |
+                        {module, atom} |
+                        {module, atom, list(any)} |
                         fun |
                         any
 

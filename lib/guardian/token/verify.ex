@@ -17,7 +17,7 @@ defmodule Guardian.Token.Verify do
   ```
   """
   @callback verify_claim(
-    mod :: Module.t,
+    mod :: module,
     claim_key :: String.t,
     claims :: Guardian.Token.claims(),
     options :: Guardian.options()
@@ -39,7 +39,7 @@ defmodule Guardian.Token.Verify do
   end
 
   @spec time_within_drift?(
-    mod :: Module.t(), time :: pos_integer()
+    mod :: module(), time :: pos_integer()
   ) :: true | false
   @doc """
   Checks that a time value is within the `allowed_drift` as
