@@ -19,9 +19,9 @@ defmodule Guardian.Token.Verify do
   @callback verify_claim(
     mod :: module,
     claim_key :: String.t,
-    claims :: Guardian.Token.claims(),
-    options :: Guardian.options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, atom}
+    claims :: Guardian.Token.claims,
+    options :: Guardian.options
+  ) :: {:ok, Guardian.Token.claims} | {:error, atom}
 
   defmacro __using__(_opts \\ []) do
     quote do
@@ -39,7 +39,7 @@ defmodule Guardian.Token.Verify do
   end
 
   @spec time_within_drift?(
-    mod :: module(), time :: pos_integer()
+    mod :: module, time :: pos_integer
   ) :: true | false
   @doc """
   Checks that a time value is within the `allowed_drift` as
@@ -57,15 +57,16 @@ defmodule Guardian.Token.Verify do
   def time_within_drift?(_), do: true
 
   @spec verify_literal_claims(
-    claims :: Guardian.Token.claims(),
-    claims_to_check :: Guardian.Token.claims(),
-    opts :: Guardian.options()
-  ) :: {:ok, Guardian.Token.claims()} | {:error, any()}
+    claims :: Guardian.Token.claims,
+    claims_to_check :: Guardian.Token.claims | nil,
+    opts :: Guardian.options
+  ) :: {:ok, Guardian.Token.claims} | {:error, any}
   @doc """
   For claims, check the values against the values found in
   `claims_to_check`. If there is a claim to check that does not match
   verification fails.
   """
+  def verify_literal_claims(claims, nil, _opts), do: {:ok, claims}
   def verify_literal_claims(claims, claims_to_check, _opts) do
     results =
       for {k, v} <- claims_to_check, into: [], do: verify_literal_claim(claims, k, v)
