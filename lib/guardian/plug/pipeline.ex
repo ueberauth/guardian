@@ -215,8 +215,26 @@ defmodule Guardian.Plug.Pipeline do
   def fetch_module(conn, opts),
     do: Keyword.get(opts, :module) || current_module(conn)
 
+  def fetch_module!(conn, opts) do
+    module = fetch_module(conn, opts)
+    if module do
+      module
+    else
+      raise "Module not in pipeline"
+    end
+  end
+
   def fetch_error_handler(conn, opts),
     do: Keyword.get(opts, :error_handler) || current_error_handler(conn)
+
+  def fetch_error_handler!(conn, opts) do
+    module = fetch_error_handler(conn, opts)
+    if module do
+      module
+    else
+      raise "Error Handler not in pipeline"
+    end
+  end
 
   defp maybe_put_key(conn, _, nil), do: conn
   defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
