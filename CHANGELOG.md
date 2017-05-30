@@ -1,3 +1,9 @@
+# v 0.14.3
+
+* Fix function specs
+* Renew session on `sign_in`
+* Add a custom claim key from load resource
+
 # v 0.14.2
 
 * __Really_ fix pattern matching error with GuardianDB
