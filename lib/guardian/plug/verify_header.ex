@@ -75,7 +75,7 @@ defmodule Guardian.Plug.VerifyHeader do
   def call(conn, opts) do
     with nil <- GPlug.current_token(conn, opts),
          {:ok, token} <- fetch_token_from_header(conn, opts),
-         module <- fetch_module(conn, opts),
+         module <- Pipeline.fetch_module!(conn, opts),
          claims_to_check <- Keyword.get(opts, :claims, %{}),
          key <- storage_key(conn, opts),
          {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
@@ -87,7 +87,7 @@ defmodule Guardian.Plug.VerifyHeader do
       :no_token_found -> conn
       {:error, reason} ->
         conn
-        |> Pipeline.fetch_error_handler(opts)
+        |> Pipeline.fetch_error_handler!(opts)
         |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
       _ -> conn
     end
@@ -110,16 +110,6 @@ defmodule Guardian.Plug.VerifyHeader do
     case Regex.run(reg, trimmed_token) do
       [_, match] -> {:ok, String.strip(match)}
       _ -> fetch_token_from_header(conn, opts, tail)
-    end
-  end
-
-  @spec fetch_module(Plug.Conn.t, Keyword.t) :: module
-  defp fetch_module(conn, opts) do
-    module = Pipeline.fetch_module(conn, opts)
-    if module do
-      module
-    else
-      raise "Module not in pipeline"
     end
   end
 

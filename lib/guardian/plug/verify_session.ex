@@ -46,7 +46,7 @@ defmodule Guardian.Plug.VerifySession do
   defp verify_session(conn, opts) do
     with nil <- GPlug.current_token(conn, opts),
          {:ok, token} <- find_token_from_session(conn, opts),
-         module <- fetch_module(conn, opts),
+         module <- Pipeline.fetch_module!(conn, opts),
          claims_to_check <- Keyword.get(opts, :claims, %{}),
          key <- storage_key(conn, opts),
          {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
@@ -58,7 +58,7 @@ defmodule Guardian.Plug.VerifySession do
       :no_token_found -> conn
       {:error, reason} ->
         conn
-        |> Pipeline.fetch_error_handler(opts)
+        |> Pipeline.fetch_error_handler!(opts)
         |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
       _ -> conn
     end
@@ -68,15 +68,6 @@ defmodule Guardian.Plug.VerifySession do
     key = conn |> storage_key(opts) |> token_key()
     token = get_session(conn, key)
     if token, do: {:ok, token}, else: :no_token_found
-  end
-
-  defp fetch_module(conn, opts) do
-    module = Pipeline.fetch_module(conn, opts)
-    if module do
-      module
-    else
-      raise "Module not in pipeline"
-    end
   end
 
   defp storage_key(conn, opts), do: Pipeline.fetch_key(conn, opts)
