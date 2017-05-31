@@ -236,6 +236,21 @@ defmodule GuardianTest do
     end
   end
 
+  describe "resource_from_token" do
+    setup %{impl: impl} do
+      claims = %{"sub" => "freddy", "some" => "other_claim"}
+      {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource, claims)
+      gather_function_calls()
+      {:ok, token: token, claims: claims}
+    end
+    
+    test "it finds the resource", ctx do
+      resource = @resource
+      claims = ctx.claims
+      assert {:ok, ^resource, ^claims} = Guardian.resource_from_token(ctx.impl, ctx.token, %{}, [])
+    end
+  end
+
   describe "revoke" do
     setup %{impl: impl} do
       claims = %{"sub" => "freddy", "some" => "other_claim"}
