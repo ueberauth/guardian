@@ -122,7 +122,8 @@ defmodule GuardianTest do
 
     test "encode_and_sign with only a resource", ctx do
       assert {:ok, token, full_claims} = Guardian.encode_and_sign(ctx.impl, @resource, %{}, [])
-      assert full_claims == %{"sub" => "bobby"}
+
+      assert full_claims == %{"sub" => "bobby", "typ" => "access"}
 
       expected = [
         {ctx.impl, :subject_for_token, [%{id: "bobby"}, %{}]},
@@ -139,7 +140,7 @@ defmodule GuardianTest do
       claims = %{"some" => "claim"}
       assert {:ok, token, full_claims} = Guardian.encode_and_sign(ctx.impl, @resource, claims, [])
 
-      assert full_claims == %{"sub" => "bobby", "some" => "claim"}
+      assert full_claims == %{"sub" => "bobby", "some" => "claim", "typ" => "access"}
 
       expected = [
         {ctx.impl, :subject_for_token, [@resource, claims]},
@@ -157,7 +158,7 @@ defmodule GuardianTest do
       options = [some: "option"]
 
       assert {:ok, token, full_claims} = Guardian.encode_and_sign(ctx.impl, @resource, claims, options)
-      assert full_claims == %{"sub" => "bobby", "some" => "claim"}
+      assert full_claims == %{"sub" => "bobby", "some" => "claim", "typ" => "access"}
 
       expected = [
         {ctx.impl, :subject_for_token, [@resource, claims]},
@@ -184,9 +185,11 @@ defmodule GuardianTest do
   end
 
   describe "decode_and_verify" do
-    setup do
+    setup %{impl: impl} do
       claims = %{"sub" => "freddy", "some" => "other_claim"}
-      {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
+      {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource, claims)
+      gather_function_calls()
+      {:ok, token: token, claims: claims}
     end
 
     test "simple decode", ctx do
@@ -234,9 +237,11 @@ defmodule GuardianTest do
   end
 
   describe "revoke" do
-    setup do
+    setup %{impl: impl} do
       claims = %{"sub" => "freddy", "some" => "other_claim"}
-      {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
+      {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource, claims)
+      gather_function_calls()
+      {:ok, token: token, claims: claims}
     end
 
     test "it calls all the right things", ctx do
@@ -261,9 +266,11 @@ defmodule GuardianTest do
   end
 
   describe "refresh" do
-    setup do
+    setup %{impl: impl} do
       claims = %{"sub" => "freddy", "some" => "other_claim"}
-      {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
+      {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource, claims)
+      gather_function_calls()
+      {:ok, token: token, claims: claims}
     end
 
     test "it calls all the right things", ctx do
@@ -272,12 +279,13 @@ defmodule GuardianTest do
       assert {:ok, {^token, ^claims}, {new_t, new_c}} = Guardian.refresh(ctx.impl, ctx.token, [])
 
       expected = [
-        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, token, []]},
-        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        {ctx.impl, :verify_claims, [claims, []]},
-        {ctx.impl, :on_verify, [claims, token, []]},
-        {Guardian.Support.TokenModule, :refresh, [ctx.impl, token, []]},
-        {ctx.impl, :on_refresh, [{token, claims}, {new_t, new_c}, []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, ctx.token, []]},
+        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, ctx.claims, []]},
+        {ctx.impl, :verify_claims, [ctx.claims, []]},
+        {ctx.impl, :on_verify, [ctx.claims, ctx.token, []]},
+        {Guardian.Support.TokenModule, :refresh, [ctx.impl, ctx.token, []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, ctx.token, []]},
+        {ctx.impl, :on_refresh, [{ctx.token, ctx.claims}, {new_t, new_c}, []]}
       ]
 
       assert gather_function_calls() == expected
@@ -299,9 +307,11 @@ defmodule GuardianTest do
   end
 
   describe "exchange" do
-    setup do
+    setup %{impl: impl} do
       claims = %{"sub" => "freddy", "some" => "other_claim"}
-      {:ok, token: Poison.encode!(%{claims: claims}), claims: claims}
+      {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource, claims)
+      gather_function_calls()
+      {:ok, token: token, claims: claims}
     end
 
     test "it calls all the right things", ctx do
@@ -310,12 +320,13 @@ defmodule GuardianTest do
       assert {:ok, {^token, ^claims}, {new_t, new_c}} = Guardian.exchange(ctx.impl, token, claims["typ"], "refresh", [])
 
       expected = [
-        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, token, []]},
-        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        {ctx.impl, :verify_claims, [claims, []]},
-        {ctx.impl, :on_verify, [claims, token, []]},
-        {Guardian.Support.TokenModule, :exchange, [ctx.impl, token, nil, "refresh", []]},
-        {ctx.impl, :on_exchange, [{token, claims}, {new_t, new_c}, []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, ctx.token, []]},
+        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, ctx.claims, []]},
+        {ctx.impl, :verify_claims, [ctx.claims, []]},
+        {ctx.impl, :on_verify, [ctx.claims, ctx.token, []]},
+        {Guardian.Support.TokenModule, :exchange, [ctx.impl, ctx.token, "access", "refresh", []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, ctx.token, []]},
+        {GuardianTest.Impl, :on_exchange, [{ctx.token, ctx.claims}, {new_t, new_c}, []]},
       ]
 
       assert gather_function_calls() == expected
@@ -334,7 +345,7 @@ defmodule GuardianTest do
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, [fail_exchange: :fails]]},
         {ctx.impl, :verify_claims, [claims, [fail_exchange: :fails]]},
         {ctx.impl, :on_verify, [claims, token, [fail_exchange: :fails]]},
-        {Guardian.Support.TokenModule, :exchange, [ctx.impl, token, nil, "refresh", [fail_exchange: :fails]]},
+        {Guardian.Support.TokenModule, :exchange, [ctx.impl, token, "access", "refresh", [fail_exchange: :fails]]},
       ]
 
       assert gather_function_calls() == expected
