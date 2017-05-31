@@ -569,6 +569,24 @@ defmodule Guardian do
   end
 
   @doc """
+  Fetch the resource and claims directly from a token
+  """
+
+  @spec resource_from_token(
+    module, Guardian.Token.token, Guardian.Token.claims, options
+  ) :: {:ok, any, Guardian.Token.claims}
+  def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
+    with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
+         {:ok, resource} <- apply(mod, :resource_from_claims, [claims]) do
+
+      {:ok, resource, claims}
+    else
+      {:error, _} = err -> err
+      err -> {:error, err}
+    end
+  end
+
+  @doc """
   Called to revoke a token.
 
   Note: This is entirely dependant on the token module and callbacks.
