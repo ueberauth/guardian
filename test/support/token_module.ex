@@ -12,14 +12,25 @@ defmodule Guardian.Support.TokenModule do
   end
 
   def peek(token) do
-    %{claims: Poison.decode!(token)["claims"]}
+    claims =
+      token
+      |> Base.decode64!()
+      |> Poison.decode!()
+      |> Map.get("claims")
+
+    %{claims: claims}
   end
 
   def build_claims(mod, resource, sub, claims, opts) do
     args = [mod, resource, sub, claims, opts]
     send_function_call({__MODULE__, :build_claims, args})
+    default_token_type = apply(mod, :default_token_type, [])
+    token_type = Keyword.get(opts, :token_type, default_token_type)
 
-    claims = Map.put(claims, "sub", sub)
+    claims =
+      claims
+      |> Map.put("sub", sub)
+      |> Map.put("typ", token_type)
 
     if Keyword.get(opts, :fail_build_claims) do
       {:error, Keyword.get(opts, :fail_build_claims)}
@@ -34,7 +45,12 @@ defmodule Guardian.Support.TokenModule do
     if Keyword.get(opts, :fail_create_token) do
       {:error, Keyword.get(opts, :fail_create_token)}
     else
-      {:ok, Poison.encode!(%{"claims" => claims})}
+      token =
+        %{"claims" => claims}
+        |> Poison.encode!()
+        |> Base.url_encode64(padding: true)
+
+      {:ok, token}
     end
   end
 
@@ -44,7 +60,17 @@ defmodule Guardian.Support.TokenModule do
     if Keyword.get(opts, :fail_decode_token) do
       {:error, Keyword.get(opts, :fail_decode_token)}
     else
-      {:ok, Poison.decode!(token)["claims"]}
+      try do
+        claims =
+          token
+          |> Base.decode64!()
+          |> Poison.decode!()
+          |> Map.get("claims")
+
+        {:ok, claims}
+      rescue
+        _ -> {:error, :invalid_token}
+      end
     end
   end
 
@@ -74,7 +100,7 @@ defmodule Guardian.Support.TokenModule do
     if Keyword.get(opts, :fail_refresh) do
       {:error, Keyword.get(opts, :fail_refresh)}
     else
-      old_claims = Poison.decode!(old_token)["claims"]
+      {:ok, old_claims} = decode_token(mod, old_token, opts)
       resp = {old_token, old_claims}
       {:ok, resp, resp}
     end
@@ -86,9 +112,10 @@ defmodule Guardian.Support.TokenModule do
     if Keyword.get(opts, :fail_exchange) do
       {:error, Keyword.get(opts, :fail_exchange)}
     else
-      old_claims = Poison.decode!(old_token)["claims"]
-      resp = {old_token, old_claims}
-      {:ok, resp, resp}
+      {:ok, old_claims} = decode_token(mod, old_token, opts)
+      new_c = Map.put(old_claims, "typ", to_type)
+      new_t = Poison.encode!(%{"claims" => new_c})
+      {:ok, {old_token, old_claims}, {new_t, new_c}}
     end
   end
 end
