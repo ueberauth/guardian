@@ -653,12 +653,20 @@ defmodule Guardian do
        {:error, any}
   def exchange(mod, old_token, from_type, to_type, opts) do
     with token_mod <- apply(mod, :config, [:token_module, @default_token_module]),
-         {:ok, _claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
+         {:ok, claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
+         :ok <- validate_exchange_type(claims, from_type),
          {:ok, old_stuff, new_stuff} <- apply(token_mod, :exchange, [mod, old_token, from_type, to_type, opts]) do
       apply(mod, :on_exchange, [old_stuff, new_stuff, opts])
     else
       {:error, _} = err -> err
       err -> {:error, err}
     end
+  end
+
+  defp validate_exchange_type(claims, from_type) when is_binary(from_type),
+    do: validate_exchange_type(claims, [from_type])
+
+  defp validate_exchange_type(claims, from_type) do
+    if Enum.member?(from_type, claims["typ"]), do: :ok, else: {:error, :invalid_token_type}
   end
 end
