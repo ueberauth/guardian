@@ -1,3 +1,7 @@
+# v 0.14.4
+
+* Fix a param issue in sockets
+
 # v 0.14.3
 
 * Fix function specs
