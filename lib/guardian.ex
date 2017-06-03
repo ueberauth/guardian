@@ -573,8 +573,11 @@ defmodule Guardian do
   """
 
   @spec resource_from_token(
-    module, Guardian.Token.token, Guardian.Token.claims, options
-  ) :: {:ok, any, Guardian.Token.claims}
+    mod :: module,
+    token :: Guardian.Token.token,
+    claims_to_check :: Guardian.Token.claims | nil,
+    opts :: options
+  ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
   def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
     with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
          {:ok, resource} <- apply(mod, :resource_from_claims, [claims]) do

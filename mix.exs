@@ -6,7 +6,6 @@ defmodule Guardian.Mixfile do
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
-    "Sean Callan",
   ]
 
   def project do
@@ -25,8 +24,8 @@ defmodule Guardian.Mixfile do
       homepage_url: @url,
       docs: docs(),
       deps: deps(),
-      dialyzer: [plt_file: ".dialyzer/local.plt",
-                 plt_add_deps: :project]
+      xref: [exclude: [:phoenix]],
+      dialyzer: [plt_add_deps: :project]
     ]
   end
 
@@ -46,16 +45,15 @@ defmodule Guardian.Mixfile do
 
   defp deps do
     [{:jose, "~> 1.8"},
-     {:phoenix, "~> 1.2 and < 1.4.0", optional: true},
-     {:plug, "~> 1.3"},
+     {:plug, ">= 1.0.0", optional: true},
      {:poison, ">= 1.3.0 and < 4.0.0"},
-     {:uuid, ">=1.1.1"},
+     {:uuid, ">= 1.1.1"},
+     {:phoenix, ">= 1.0.0 and < 2.0.0", optional: true},
 
      # Dev and Test dependencies
-     {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false, override: true},
-     {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
-     {:earmark, ">= 0.0.0", only: :dev},
-     {:ex_doc, "~> 0.15", only: :dev}]
+     {:credo, "~> 0.8.0-rc6", optional: true, runtime: false},
+     {:dialyxir, "~> 0.5.0", optional: true, only: [:dev, :test], runtime: false},
+     {:ex_doc, "~> 0.15", optional: true, only: :dev}]
   end
 
   defp package do
