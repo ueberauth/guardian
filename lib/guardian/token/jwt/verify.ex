@@ -10,10 +10,14 @@ defmodule Guardian.Token.Jwt.Verify do
     issuer = apply(mod, :config, [:issuer])
     verify_issuer = apply(mod, :config, [:verify_issuer])
 
-    if verify_issuer && issuer == iss do
-      {:ok, claims}
+    if verify_issuer do
+      if issuer == iss do
+        {:ok, claims}
+      else
+        {:error, :invalid_issuer}
+      end
     else
-      {:error, :invalid_issuer}
+      {:ok, claims}
     end
   end
 
