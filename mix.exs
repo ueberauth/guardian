@@ -30,8 +30,11 @@ defmodule Guardian.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :poison, :jose, :uuid]]
+    [applications: _applications(Mix.env)]
   end
+
+  defp _applications(:test), do: [:logger, :poison, :jose, :uuid, :postgrex, :ecto]
+  defp _applications(_), do: [:logger, :poison, :jose, :uuid]
 
   def docs do
     [
@@ -43,6 +46,8 @@ defmodule Guardian.Mixfile do
   defp deps do
     [{:jose, "~> 1.8"},
      {:phoenix, "~> 1.2", optional: true},
+     {:ecto, "~> 2.1", optional: true},         # For Guardian.Encoder.Db
+     {:postgrex, ">= 0.11.1", optional: true},  # For Guardian.Encoder.Db
      {:plug, "~> 1.3"},
      {:poison, ">= 1.3.0"},
      {:uuid, ">=1.1.1"},
