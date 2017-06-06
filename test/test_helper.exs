@@ -4,8 +4,8 @@ defmodule Guardian.TestGuardianSerializer do
   @behaviour Guardian.Serializer
   def for_token(%{error: :unknown}), do: {:error, "Unknown resource type"}
 
-  def for_token(aud), do: {:ok, aud}
-  def from_token(aud), do: {:ok, aud}
+  def for_token(sub), do: {:ok, sub}
+  def from_token(sub), do: {:ok, sub}
 end
 
 defmodule Guardian.TestHelper do
