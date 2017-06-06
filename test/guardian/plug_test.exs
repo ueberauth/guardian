@@ -197,12 +197,21 @@ defmodule Guardian.PlugTest do
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
     assert Guardian.Plug.current_token(conn) != nil
+
+    jwt = Guardian.Plug.current_token(conn)
+    {:ok, claims} = Guardian.decode_and_verify(jwt)
+
+    assert claims["sub"]["user"] == "here"
+    assert claims["typ"] == "access"
+
+    {:ok, claims} = Guardian.Plug.claims(conn)
+    assert claims
   end
 
   test "sign_in(object, type)", context do
     conn = context.conn
            |> conn_with_fetched_session
-           |> Guardian.Plug.sign_in(%{user: "here"})
+           |> Guardian.Plug.sign_in(%{user: "here"}, :token)
 
     assert Guardian.Plug.claims(conn) != nil
     assert Guardian.Plug.current_resource(conn) == %{user: "here"}
@@ -212,6 +221,7 @@ defmodule Guardian.PlugTest do
     {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+    assert claims["typ"] == "token"
 
     {:ok, claims} = Guardian.Plug.claims(conn)
     assert claims
@@ -230,6 +240,49 @@ defmodule Guardian.PlugTest do
     {:ok, claims} = Guardian.decode_and_verify(jwt)
 
     assert claims["sub"]["user"] == "here"
+    assert claims["here"] == "we are"
+    assert claims["typ"] == "token"
+  end
+
+  test "claims_sign_in(object)", context do
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.claims_sign_in(%{user: "here"})
+
+    assert Guardian.Plug.current_resource(conn) == %{user: "here"}
+
+    {:ok, claims} = Guardian.Plug.claims(conn)
+    assert claims == Plug.Conn.get_session(conn, Guardian.Keys.base_key(:default))
+
+    assert claims["sub"][:user] == "here"
+    assert claims["typ"] == "access"
+  end
+
+  test "claims_sign_in(object, type)", context do
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.claims_sign_in(%{user: "here"}, :token)
+
+    assert Guardian.Plug.current_resource(conn) == %{user: "here"}
+
+    {:ok, claims} = Guardian.Plug.claims(conn)
+    assert claims == Plug.Conn.get_session(conn, Guardian.Keys.base_key(:default))
+
+    assert claims["sub"][:user] == "here"
+    assert claims["typ"] == "token"
+  end
+
+  test "claims_sign_in(object, type, claims)", context do
+    conn = context.conn
+           |> conn_with_fetched_session
+           |> Guardian.Plug.claims_sign_in(%{user: "here"}, :token, here: "we are")
+
+    assert Guardian.Plug.current_resource(conn) == %{user: "here"}
+
+    {:ok, claims} = Guardian.Plug.claims(conn)
+    assert claims == Plug.Conn.get_session(conn, Guardian.Keys.base_key(:default))
+
+    assert claims["sub"][:user] == "here"
     assert claims["here"] == "we are"
     assert claims["typ"] == "token"
   end
