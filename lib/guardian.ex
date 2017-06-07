@@ -99,7 +99,17 @@ defmodule Guardian do
   defp encode_from_hooked({:error, _reason} = error), do: error
 
   @doc false
-  def hooks_module, do: config(:hooks, Guardian.Hooks.Default)
+  def hooks_module do
+    case config(:hooks, Guardian.Hooks.Default) do
+      hooks when is_list(hooks) -> Guardian.Multihook
+      hook -> hook
+    end
+  end
+
+  @doc false
+  def hooks_modules do
+    config(:hooks, [Guardian.Hooks.Default])
+  end
 
   @doc """
   Revokes the current token.
