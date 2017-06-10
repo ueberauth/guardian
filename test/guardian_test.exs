@@ -243,7 +243,7 @@ defmodule GuardianTest do
       gather_function_calls()
       {:ok, token: token, claims: claims}
     end
-    
+
     test "it finds the resource", ctx do
       resource = @resource
       claims = ctx.claims

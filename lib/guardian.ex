@@ -304,14 +304,27 @@ defmodule Guardian do
     quote do
       @behaviour Guardian
 
-      __MODULE__
-      |> Module.concat(:Plug)
-      |> Module.create(
-        quote do
-          use Guardian.Plug, unquote(__MODULE__)
-        end,
-        Macro.Env.location(__ENV__)
-      )
+      if Code.ensure_loaded?(Plug) do
+        __MODULE__
+        |> Module.concat(:Plug)
+        |> Module.create(
+          quote do
+            use Guardian.Plug, unquote(__MODULE__)
+          end,
+          Macro.Env.location(__ENV__)
+        )
+      end
+
+      the_otp_app = unquote(otp_app)
+      the_opts = unquote(opts)
+
+      # Provide a way to get at the configuration during compile time
+      # for other macros that may want to use them
+      @config fn -> the_otp_app |> Application.get_env(__MODULE__, []) |> Keyword.merge(the_opts) end
+      @config_with_key fn key -> @config.() |> Keyword.get(key) |> GConfig.resolve_value() end
+      @config_with_key_and_default fn key, default ->
+        @config.() |> Keyword.get(key, default) |> GConfig.resolve_value()
+      end
 
       @doc """
       The default type of token for this module
@@ -325,11 +338,8 @@ defmodule Guardian do
       """
 
       @spec config() :: Keword.t
-      def config do
-        unquote(otp_app)
-        |> Application.get_env(__MODULE__, [])
-        |> Keyword.merge(unquote(opts))
-      end
+      def config,
+        do: unquote(otp_app) |> Application.get_env(__MODULE__, []) |> Keyword.merge(unquote(opts))
 
       @doc """
       Returns a resolved value of the configuration found at a key
@@ -338,11 +348,8 @@ defmodule Guardian do
       """
 
       @spec config(atom | String.t, any) :: any
-      def config(key, default \\ nil) do
-        config()
-        |> Keyword.get(key, default)
-        |> GConfig.resolve_value()
-      end
+      def config(key, default \\ nil),
+        do: config() |> Keyword.get(key, default) |> GConfig.resolve_value()
 
       @doc """
       Provides the content of the token but without verification
