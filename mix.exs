@@ -6,6 +6,7 @@ defmodule Guardian.Mixfile do
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
+    "Sean Callan",
   ]
 
   def project do
