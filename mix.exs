@@ -1,4 +1,5 @@
 defmodule Guardian.Mixfile do
+  @moduledoc false
   use Mix.Project
 
   @version "1.0.0-rc.1"
@@ -6,6 +7,7 @@ defmodule Guardian.Mixfile do
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
+    "Sean Callan",
   ]
 
   def project do

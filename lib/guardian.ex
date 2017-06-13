@@ -357,7 +357,7 @@ defmodule Guardian do
 
       Claims will be present at the `:claims` key.
 
-      See the token module used for more information
+      See `Guardian.peek` for more information
       """
       @spec peek(String.t) :: map
       def peek(token), do: Guardian.peek(__MODULE__, token)
@@ -386,10 +386,25 @@ defmodule Guardian do
       def decode_and_verify(token, claims_to_check \\ %{}, opts \\ []),
         do: Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
 
+
+      @doc """
+      Fetch the resource and claims directly from a token
+
+      See `Guardian.resource_from_token` for more information
+      """
+
+      @spec resource_from_token(
+        token :: Guardian.Token.token,
+        claims_to_check :: Guardian.Token.claims | nil,
+        opts :: Guardian.options
+      ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
+      def resource_from_token(token, claims_to_check \\ %{}, opts \\ []),
+        do: Guardian.resource_from_token(__MODULE__, token, claims_to_check, opts)
+
       @doc """
       Revoke a token.
 
-      See `Guardian.revoke`
+      See `Guardian.revoke` for more information
       """
 
       @spec revoke(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
@@ -398,15 +413,20 @@ defmodule Guardian do
       @doc """
       Refresh a token.
 
-      See `Guardian.refresh`
+      See `Guardian.refresh` for more information
       """
-      @spec refresh(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
+
+      @spec refresh(Guardian.Token.token, Guardian.options) :: {
+        :ok,
+        {Guardian.Token.token, Guardian.Token.claims},
+        {Guardian.Token.token, Guardian.Token.claims}
+      } | {:error, any}
       def refresh(old_token, opts \\ []), do: Guardian.refresh(__MODULE__, old_token, opts)
 
       @doc """
       Exchanges a token of one type for another.
 
-      See `Guardian.exchange`
+      See `Guardian.exchange` for more information
       """
       @spec exchange(
         token :: Guardian.Token.token, from_type :: String.t | [String.t, ...],
@@ -507,7 +527,7 @@ defmodule Guardian do
   * `:week` | `:weeks`
 
   See the documentation for your TokenModule for more information on
-  which options are available.
+  which options are available for your TokenModule.
   """
 
   @spec encode_and_sign(
@@ -576,7 +596,9 @@ defmodule Guardian do
   end
 
   @doc """
-  Fetch the resource and claims directly from a token
+  Fetch the resource and claims directly from a token.
+
+  This is a convenience function that first decodes the token using `decode_and_verify` and then loads the resource.
   """
 
   @spec resource_from_token(
@@ -639,7 +661,7 @@ defmodule Guardian do
   * `:hour` | `:hours`
   * `:week` | `:weeks`
 
-  See TokenModule documentation for your token module.
+  See TokenModule documentation for your token module for other options.
   """
 
   @spec refresh(module, Guardian.Token.token, options) :: {

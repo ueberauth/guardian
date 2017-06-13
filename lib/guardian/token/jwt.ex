@@ -26,10 +26,11 @@ defmodule Guardian.Token.Jwt do
   * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
   * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
   * `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
+  * `verify_issuer` Verify that the token was issued by the configured issuer. Default false
 
   Options:
 
-  These options are available to different functions
+  These options are available to encoding and decoding:
 
   * `secret` The secret key to use for signing
   * `headers` The Jose headers that should be used
