@@ -351,6 +351,25 @@ Please see the documentation for `Guardian.Phoenix.Socket`, `Guardian.Phoenix.Co
 
 ## Permissions
 
+Permissions can be encoded into your token as an optional add-in.
+
+Encoding permissions into a token is useful in some areas of authorization.
+The permissions provided by `Guardian.Permissions` have one level of nesting.  
+
+For example:
+
+* `users -> profile_read`
+* `users -> profile_write`
+* `users -> followers_read`
+* `users -> followers_write`
+* `admin -> all_users_read`
+* `admin -> all_users_write`
+
+Once a permission is granted it is valid for as long as the token is valid.
+Since the permission is valid for the life of a token it is not suitable to encode highly dynamic information into a token. These permissions are similar in intent to OAuth scopes. Very useful as a broad grant to an area of code for 3rd party services / other microservices. If you have a requirement to look up permissions from you database for a particular user on each request, these are not the permissions you're looking for.
+
+Please see `Guardian.Permissions` for more information.
+
 ## Tracking Tokens
 
 When using tokens, depending on the type of token you use, nothing may happen by default when you `revoke` a token.
