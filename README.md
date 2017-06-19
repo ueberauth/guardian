@@ -291,9 +291,9 @@ See the documentation for each Plug for more information.
 
 A pipeline is a way to collect together the various plugs for a particular authentication scheme.
 
-Apart from keeping an authentication flow together, pipelines provide downstream information for error handling and which token module to use.
+Apart from keeping an authentication flow together, pipelines provide downstream information for error handling and which token module to use. You can provide this separately but we recommend creating a pipeline plug.
 
-#### Create a pipeline
+#### Create a custom pipeline
 
 ```elixir
 defmodule MyApp.AuthAccessPipeline do
@@ -341,13 +341,35 @@ defmodule MyApp.AuthErrorHandler do
 end
 ```
 
+### Phoenix
+
+Guardian has great integration with Phoenix. For Controllers, pipelines, sockets or your custom integration points `Guardian` has you covered.
+
+By default `Guardian` does not require Phoenix. If Phoenix is available `Guardian` will load helpers relevant.
+
+Please see the documentation for `Guardian.Phoenix.Socket`, `Guardian.Phoenix.Controller` and `Guardian.Phoenix.Channel`
+
 ## Permissions
 
 ## Tracking Tokens
 
-## Testing
+When using tokens, depending on the type of token you use, nothing may happen by default when you `revoke` a token.
+
+For example, JWT tokens by default are not tracked by the application.
+The fact that they are signed with the correct secret and are not expired is usually how validation of if a token is active or not. Depending on your use-case this may not be enough for your applications needs.
+If you need to track and revoke individual tokens, you may need to use something like
+[GuardianDb](https://github.com/ueberauth/guardian_db)
+
+This will record each token issued in your database, confirm it is still valid on each access and then finally when you `revoke` (called on sign_out or manually) invalidate the token.
+
+For more in-depth documentation please see the [GuardianDb README](https://github.com/ueberauth/guardian_db/blob/master/README.md)
 
 ## Related projects
+
+* [GuardianDb](https://hex.pm/packages/guardian_db) - Token tracking in the database
+* [Sentinal](https://hex.pm/packages/sentinel) - Adds helpful extras to Guardian like default mailer support, as well as out of the box controllers and routes
+* [sans_password](https://hex.pm/packages/sans_password) - A simple, passwordless authentication system based on Guardian.
+* [protego](https://hex.pm/packages/protego) - Flexible authentication solution for Elixir/Phoenix with Guardian.
 
 ## More advanced secrets
 
