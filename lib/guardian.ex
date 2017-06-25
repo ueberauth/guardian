@@ -154,7 +154,7 @@ defmodule Guardian do
   Arguments:
 
   * `token` - The old token to refresh
-  * `opts` - Options to pass to the TokenModule and callbacks
+  * `opts` - Options to pass to the Implementation Module and callbacks
 
   Options:
 
@@ -489,8 +489,8 @@ defmodule Guardian do
   without any verification.
   This should not be relied on since there is no verification
 
-  The implementation is provided by the TokenModule specified.
-  See the documentation for your TokenModule for full details
+  The implementation is provided by the implementation module specified.
+  See the documentation for your implementation / token module for full details
   """
 
   @spec peek(module, Guardian.Token.token) :: %{claims: map}
@@ -509,11 +509,11 @@ defmodule Guardian do
   Once called, a number of callbacks will be invoked on the implementation module
 
   * `subject_for_token` - gets the subject from the resource
-  * `build_claims` - Once the TokenModule has built it's default claims for custom claim building
+  * `build_claims` - Once the implementation module has built it's default claims for custom claim building
   * `after_encode_and_sign`
 
   ### Options
-  The options will be passed through to both the TokenModule
+  The options will be passed through to the implementation / token modules
   and the appropriate callbacks.
 
   * `ttl` - How long to keep the token alive for. If not included the default will be used.
@@ -526,8 +526,8 @@ defmodule Guardian do
   * `:hour` | `:hours`
   * `:week` | `:weeks`
 
-  See the documentation for your TokenModule for more information on
-  which options are available for your TokenModule.
+  See the documentation for your implementation / token module for more information on
+  which options are available for your implementation / token module.
   """
 
   @spec encode_and_sign(
@@ -568,9 +568,9 @@ defmodule Guardian do
   * `on_verify` - After a successful verification this function is called
 
   ### Options
-  The options will be passed through to both the TokenModule
+  The options will be passed through to the implementation / token modules
   and the appropriate callbacks.
-  See the documentation for your TokenModule for more information on
+  See the documentation for your implementation / token modules for more information on
   which options are available.
   """
 
@@ -598,7 +598,7 @@ defmodule Guardian do
   @doc """
   Fetch the resource and claims directly from a token.
 
-  This is a convenience function that first decodes the token using `decode_and_verify` and then loads the resource.
+  This is a convenience function that first decodes the token using `decode_and_verify/4` and then loads the resource.
   """
 
   @spec resource_from_token(

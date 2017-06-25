@@ -19,7 +19,7 @@ By default [JSON Web Tokens](https://jwt.io) are supported out of the box but an
 * Can serialize to a String
 * Has a supporting module that implements the `Guardian.Token` behaviour
 
-Can be used with Guardian.
+By default [JSON Web Tokens](https://jwt.io/) are supported out of the box but any token can be used with Guardian as long as it meets these requirements.
 
 You can use Guardian tokens to authenticate:
 
@@ -35,24 +35,22 @@ Guardian also allows you to configure multiple token types/configurations in a s
 
 ## Installation
 
+Guardian requires that you create an "Implementation Module". This module is your applications implementation for a particular type/configuration of token. You do this by `use`ing Guardian in your module and adding the relevant configuration.
+
 Add Guardian to your application
 
 mix.exs
 
 ```elixir
 defp deps do
-  [
-    # ...
-    {:guardian, "~> 1.0"}
-    # ...
-  ]
+  [{:guardian, "~> 1.0"}]
 end
 ```
 
 Create a module that uses `Guardian`
 
 ```elixir
-defmodule MyApp.AuthTokens do
+defmodule MyApp.Guardian do
   use Guardian, otp_app: :my_app
 
   def subject_for_token(resource, _claims) do
@@ -68,9 +66,9 @@ end
 Add your configuration
 
 ```elixir
-config :my_app, MyApp.AuthTokens,
+config :my_app, MyApp.Guardian,
        issuer: "my_app"
-       secret_key: "Secret key. You can use `mix phx.gen.secret` to get one"
+       secret_key: "Secret key. You can use `mix guardian.gen.secret` to get one"
 ```
 
 With this level of configuration you can have a working installation.
@@ -79,22 +77,22 @@ With this level of configuration you can have a working installation.
 
 ```elixir
 # encode a token for a resource
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource)
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource)
 
 # decode and verify a token
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token)
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token)
 
 # revoke a token (use GuardianDb or something similar if you need revoke to actually track a token)
-{:ok, claims} = MyApp.AuthTokens.revoke(token)
+{:ok, claims} = MyApp.Guardian.revoke(token)
 
 # Refresh a token before it expires
-{:ok, _old_stuff, {new_token, new_claims}} = MyApp.AuthTokens.refresh(token)
+{:ok, _old_stuff, {new_token, new_claims}} = MyApp.Guardian.refresh(token)
 
-# Exchange a token of type "X" for a new token of type "Y"
-{:ok, _old_stuff, {new_token, new_claims}} = MyApp.AuthTokens.exchange(token, "X", "Y")
+# Exchange a token of type "refresh" for a new token of type "access"
+{:ok, _old_stuff, {new_token, new_claims}} = MyApp.Guardian.exchange(token, "refresh", "access")
 
 # Lookup a resource directly from a token
-{:ok, resource, claims} = MyApp.AuthTokens.resource_from_token(token)
+{:ok, resource, claims} = MyApp.Guardian.resource_from_token(token)
 ```
 
 With Plug
@@ -102,56 +100,56 @@ With Plug
 ```elixir
 # If a session is loaded the token/resource/claims will be put into the session and connection
 # If no session is loaded, the token/resource/claims only go onto the connection
-conn = MyApp.AuthTokens.Plug.sign_in(conn, resource)
+conn = MyApp.Guardian.Plug.sign_in(conn, resource)
 
 # remove from session (if fetched) and revoke the token
-conn = MyApp.AuthTokens.Plug.sign_out(conn)
+conn = MyApp.Guardian.Plug.sign_out(conn)
 
 # Set a "refresh" token directly on a cookie.
 # Can be used in conjunction with `Guardian.Plug.VerifyCookie`
-conn = MyApp.AuthTokens.Plug.remember_me(conn, resource)
+conn = MyApp.Guardian.Plug.remember_me(conn, resource)
 
 # Fetch the information from the current connection
-conn = MyApp.AuthTokens.Plug.current_token(conn)
-conn = MyApp.AuthTokens.Plug.current_claims(conn)
-conn = MyApp.AuthTokens.Plug.current_resource(conn)
+conn = MyApp.Guardian.Plug.current_token(conn)
+conn = MyApp.Guardian.Plug.current_claims(conn)
+conn = MyApp.Guardian.Plug.current_resource(conn)
 ```
 
 Creating with custom claims and options
 
 ```elixir
 # Add custom claims to a token
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{some: "claim"})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{some: "claim"})
 
 # Create a specific token type (i.e. "access"/"refresh" etc)
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, token_type: "refresh")
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_type: "refresh")
 
 # Customize the time to live (ttl) of the token
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, token_ttl: {1, :minute})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_ttl: {1, :minute})
 
 # Customize the secret
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, secret: "custom")
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func})
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
-{:ok, token, claims} = MyApp.AuthTokens.encode_and_sign(resource, %{}, secret: fn -> "secret" end)
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: "custom")
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: fn -> "secret" end)
 ```
 
 Decoding tokens
 
 ```elixir
 # Check some literal claims. (i.e. this is an access token)
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token, %{"typ" => "access"})
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{"typ" => "access"})
 
 # Use a custom secret
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token, %{}, secret: "custom")
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token, %{}, secret: {SomeMod, :some_func})
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
-{:ok, claims} = MyApp.AuthTokens.decode_and_verify(token, %{}, secret: fn -> "secret" end)
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: "custom")
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func})
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: fn -> "secret" end)
 ```
 
 ## Configuration
 
-The following configuration is available to all token modules.
+The following configuration is available to all implementation modules.
 
 * `token_module` - The module that implements the functions for dealing with tokens. Default `Guardian.Token.Jwt`
 
@@ -179,13 +177,13 @@ Guardian resolves different types of configuration values. These can be provided
 
 These are evaluated at runtime and any value that you fetch via
 
-`MyApp.AuthTokens.config(key, default)` will be resolved using this scheme.
+`MyApp.Guardian.config(key, default)` will be resolved using this scheme.
 
 See `Guardian.Config.resolve_value/1` for more information.
 
 ### JWT (Configuration)
 
-The default token type of `Guardian` is Jwt. I accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
+The default token type of `Guardian` is JWT. I accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
 
 #### Required configuration (JWT)
 
@@ -207,7 +205,7 @@ The default token type of `Guardian` is Jwt. I accepts many options but you real
 
 Secrets can be simple strings or more complicated `JOSE` secret schemes.
 
-The simplest way to use the JWT module is to provide a simple String. (`mix phx.gen.secret` works great)
+The simplest way to use the JWT module is to provide a simple String. (`mix guardian.gen.secret` works great)
 
 You can provide a system env string value by using `secret_key: {:system, "MY_TOKEN_SECRET"}` and setting the `MY_TOKEN_SECRET` in your environment.
 
@@ -261,8 +259,8 @@ plug Guardian.Plug.EnsureAuthenticated, key: :impersonate
 In your action handler:
 
 ```elixir
-resource = MyApp.AuthTokens.Plug.current_resource(conn, key: :impersonate)
-claims = MyApp.AuthTokens.Plug.current_claims(conn, key: :impersonate)
+resource = MyApp.Guardian.Plug.current_resource(conn, key: :impersonate)
+claims = MyApp.Guardian.Plug.current_claims(conn, key: :impersonate)
 ```
 
 ### Plugs out of the box
@@ -291,36 +289,35 @@ See the documentation for each Plug for more information.
 
 A pipeline is a way to collect together the various plugs for a particular authentication scheme.
 
-Apart from keeping an authentication flow together, pipelines provide downstream information for error handling and which token module to use. You can provide this separately but we recommend creating a pipeline plug.
+Apart from keeping an authentication flow together, pipelines provide downstream information for error handling and which implementation module to use. You can provide this separately but we recommend creating a pipeline plug.
 
 #### Create a custom pipeline
 
 ```elixir
 defmodule MyApp.AuthAccessPipeline do
-  use Guardian.Plug.Pipeline, otp_app: :my_app,
-                              module: MyApp.AuthTokens,
-                              error_handler: MyApp.AuthErrorHandler
+  use Guardian.Plug.Pipeline, otp_app: :my_app
 
-  alias Guardian.Plug.{
-    EnsureAuthenticated,
-    LoadResource,
-    VerifySession,
-    VerifyHeader,
-  }
-
-  plug VerifySession, claims: %{"typ" => "access"}
-  plug VerifyHeader, claims: %{"typ" => "access"}, realm: "Bearer"
-  plug EnsureAuthenticated
-  plug LoadResource, ensure: true
+  plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
+  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}, realm: "Bearer"
+  plug Guardian.Plug.EnsureAuthenticated
+  plug Guardian.Plug.LoadResource, ensure: true
 end
 ```
 
-By using a pipeline, apart from keeping your auth logic together, you're instructing downstream plugs to use a particular token module and error handler.
+Add your implementation module and error handler to your configuration:
+
+```elixir
+config :my_app, MyApp.AuthAccessPipeline,
+  module: MyApp.Guardian,
+  error_handler: MyApp.AuthErrorHandler
+```
+
+By using a pipeline, apart from keeping your auth logic together, you're instructing downstream plugs to use a particular implementation module and error handler.
 
 If you wanted to do that manually:
 
 ```elixir
-plug Guardian.Plug.Pipeline, module: MyApp.AuthTokens,
+plug Guardian.Plug.Pipeline, module: MyApp.Guardian,
                              error_handler: MyApp.AuthErrorHandler
 
 plug Guardian.Plug.VerifySession
@@ -406,7 +403,7 @@ See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from 
 
 To get off the ground quickly, set your `secret_key` in your Guardian config with the output of either:
 
-`$ mix phoenix.gen.secret`
+`$ mix guardian.gen.secret`
 
 or
 
@@ -417,7 +414,7 @@ After running `$ mix deps.get` because JOSE is one of Guardian's dependencies.
 ```elixir
 ## Map ##
 
-config :my_app, MyApp.AuthTokens,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["ES512"],
   secret_key: %{
     "crv" => "P-521",
@@ -444,7 +441,7 @@ defmodule MySecretKey do
   end
 end
 
-config :my_app, MyApp.AuthTokens,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["RS512"],
   secret_key: {MySecretKey, :fetch}
 
@@ -458,7 +455,7 @@ defmodule MySecretKey do
   end
 end
 
-config :my_app, MyApp.AuthTokens,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["Ed25519"],
   secret_key: {MySecretKey, :fetch}
 ```
