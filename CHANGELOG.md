@@ -1,3 +1,7 @@
+# v 0.14.5
+
+Update the poison and phoenix deps to allow a broader version setting
+
 # v 0.14.4
 
 * Fix a param issue in sockets
