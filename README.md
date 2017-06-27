@@ -19,8 +19,6 @@ By default [JSON Web Tokens](https://jwt.io) are supported out of the box but an
 * Can serialize to a String
 * Has a supporting module that implements the `Guardian.Token` behaviour
 
-By default [JSON Web Tokens](https://jwt.io/) are supported out of the box but any token can be used with Guardian as long as it meets these requirements.
-
 You can use Guardian tokens to authenticate:
 
 * Web endpoints (Plug/Phoenix/X)
@@ -183,7 +181,7 @@ See `Guardian.Config.resolve_value/1` for more information.
 
 ### JWT (Configuration)
 
-The default token type of `Guardian` is JWT. I accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
+The default token type of `Guardian` is JWT. It accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
 
 #### Required configuration (JWT)
 
