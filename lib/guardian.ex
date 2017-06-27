@@ -16,9 +16,9 @@ defmodule Guardian do
   defmodule MyApp.Guardian do
     use Guardian, otp_app: :my_app
 
-    def subject_for_token(resource, _claims), do: to_string(resource.id)
+    def subject_for_token(resource, _claims), do: {:ok, to_string(resource.id)}
     def resource_from_claims(claims) do
-      find_me_a_resource(claims["sub"])
+      find_me_a_resource(claims["sub"]) # {:ok, resource} or {:error, reason}
     end
   end
   ```
@@ -47,7 +47,7 @@ defmodule Guardian do
   * `"access"`
   * `"refresh"`
 
-  Access tokens should be short lived.
+  Access tokens should be short lived and are used to access resources on your API.
   Refresh tokens should be longer lived and whose only purpose is to exchange
   for a shorter lived access token.
 
@@ -540,14 +540,19 @@ defmodule Guardian do
 
     with result <- apply(mod, :subject_for_token, [resource, claims]),
          {:ok, subject} <- validate_conditional_tuple(result, {mod, :subject_for_token}),
+
          result <- apply(token_mod, :build_claims, [mod, resource, subject, claims, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :build_claims}),
+
          result <- apply(mod, :build_claims, [claims, resource, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {mod, :build_claims}),
+
          result <- apply(token_mod, :create_token, [mod, claims, opts]),
          {:ok, token} <- validate_conditional_tuple(result, {token_mod, :create_token}),
+
          result <- apply(mod, :after_encode_and_sign, [resource, claims, token, opts]),
          {:ok, _} <- validate_conditional_tuple(result, {mod, :after_encode_and_sign}) do
+
       {:ok, token, claims}
     end
   end
@@ -583,12 +588,16 @@ defmodule Guardian do
     with result <- apply(token_mod, :decode_token, [mod, token, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :decode_token}),
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
+
          result <- apply(token_mod, :verify_claims, [mod, claims, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :verify_claims}),
+
          result <- apply(mod, :verify_claims, [claims, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {mod, :verify_claims}),
+
          result <- apply(mod, :on_verify, [claims, token, opts]),
          {:ok, claims} <- validate_conditional_tuple(result, {mod, :on_verify}) do
+
       {:ok, claims}
     end
   rescue
@@ -609,6 +618,7 @@ defmodule Guardian do
   ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
   def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
     with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
+
          resource_result <- apply(mod, :resource_from_claims, [claims]),
          {:ok, resource} <- validate_conditional_tuple(resource_result, {mod, :resource_from_claims}) do
 
@@ -637,6 +647,7 @@ defmodule Guardian do
     %{claims: claims} = Guardian.peek(mod, token)
 
     with {:ok, claims} <- apply(token_mod, :revoke, [mod, claims, token, opts]),
+
          on_revoke_result <- apply(mod, :on_revoke, [claims, token, opts]),
          {:ok, claims} <- validate_conditional_tuple(on_revoke_result, {mod, :on_revoke}) do
       {:ok, claims}

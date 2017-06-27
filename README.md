@@ -252,7 +252,7 @@ A `key` specifies a label that is used to keep tokens separate so that you can h
 In your plug pipeline you may use something like:
 
 ```elixir
-plug Guardian.Plug.VerifyHeader, realm: "bearer", key: :impersonate
+plug Guardian.Plug.VerifyHeader, key: :impersonate
 plug Guardian.Plug.EnsureAuthenticated, key: :impersonate
 ```
 
@@ -298,7 +298,7 @@ defmodule MyApp.AuthAccessPipeline do
   use Guardian.Plug.Pipeline, otp_app: :my_app
 
   plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
-  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}, realm: "Bearer"
+  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
   plug Guardian.Plug.EnsureAuthenticated
   plug Guardian.Plug.LoadResource, ensure: true
 end
