@@ -90,7 +90,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   end
 
   test "with no module", ctx do
-    assert_raise RuntimeError, "Module not in pipeline", fn ->
+    assert_raise RuntimeError, "`module` not set in Guardian pipeline", fn ->
       :get
       |> conn("/")
       |> put_req_header("authorization", ctx.token)

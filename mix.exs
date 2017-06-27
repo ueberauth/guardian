@@ -27,7 +27,10 @@ defmodule Guardian.Mixfile do
       docs: docs(),
       deps: deps(),
       xref: [exclude: [:phoenix]],
-      dialyzer: [plt_add_deps: :project]
+      dialyzer: [plt_add_deps: :transitive,
+                 plt_add_apps: [:mix],
+                 flags: [:race_conditions, :no_opaque],
+      ]
     ]
   end
 
@@ -50,7 +53,7 @@ defmodule Guardian.Mixfile do
      {:plug, ">= 1.0.0", optional: true},
      {:poison, ">= 1.3.0 and < 4.0.0"},
      {:uuid, ">= 1.1.1"},
-     {:phoenix, ">= 1.0.0 and < 2.0.0", optional: true},
+     {:phoenix, ">= 1.0.0 and < 2.0.0 or ~> 1.3-rc", optional: true},
 
      # Dev and Test dependencies
      {:credo, "~> 0.8.0-rc6", optional: true, runtime: false},

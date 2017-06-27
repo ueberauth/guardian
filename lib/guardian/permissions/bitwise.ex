@@ -39,8 +39,10 @@ defmodule Guardian.Permissions.Bitwise do
     # snip
 
     def build_claims(claims, _resource, opts) do
-      claims
-      |> encode_permissions_into_claims!(Keyword.get(opts, :permissions))
+      claims =
+        claims
+        |> encode_permissions_into_claims!(Keyword.get(opts, :permissions))
+      {:ok, claims}
     end
   end
   ```
@@ -306,7 +308,7 @@ defmodule Guardian.Permissions.Bitwise do
         do: do_validate_permissions!({to_string(type), value})
 
       defp do_validate_permissions!({type, map}) when is_map(map) do
-        list = map |> Map.keys(map) |> Enum.map(&to_string/1)
+        list = map |> Map.keys() |> Enum.map(&to_string/1)
         do_validate_permissions!({type, list})
       end
 
