@@ -723,6 +723,11 @@ defmodule Guardian do
     end
   end
 
+  @doc """
+  Provides a way to track an invalid return tuple via a nicer reason
+  """
+
+  @spec validate_conditional_tuple({:ok, any} | {:error, any} | any) :: {:ok, any} | {:error, any}
   def validate_conditional_tuple({:ok, _} = resp, _),
     do: resp
   def validate_conditional_tuple({:error, _} = resp, _),
