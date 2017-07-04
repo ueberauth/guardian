@@ -727,7 +727,7 @@ defmodule Guardian do
   Provides a way to track an invalid return tuple via a nicer reason
   """
 
-  @spec validate_conditional_tuple({:ok, any} | {:error, any} | any, tuple) :: {:ok, any} | {:error, any}
+  @spec validate_conditional_tuple({:ok, any} | {:error, any} | any, {module, atom}) :: {:ok, any} | {:error, any}
   def validate_conditional_tuple({:ok, _} = resp, _),
     do: resp
   def validate_conditional_tuple({:error, _} = resp, _),
