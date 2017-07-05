@@ -311,7 +311,11 @@ defmodule Guardian.Token.Jwt do
   end
 
   defp fetch_secret(mod, opts) do
-    opts |> Keyword.get(:secret) |> Config.resolve_value() || apply(mod, :config, [:secret_key])
+    (opts |> Keyword.get(:secret) |> Config.resolve_value() || apply(mod, :config, [:secret_key]))
+    |> case do
+      nil -> raise "No secret key configured for JWT"
+      val -> val
+    end
   end
 
   defp set_type(%{"typ" => typ} = claims, _mod, _opts) when not is_nil(typ), do: claims
