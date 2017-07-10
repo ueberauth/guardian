@@ -538,20 +538,20 @@ defmodule Guardian do
 
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
-    with result <- apply(mod, :subject_for_token, [resource, claims]),
-         {:ok, subject} <- validate_conditional_tuple(result, {mod, :subject_for_token}),
+    with {:ok, subject} <-
+           returning_tuple({mod, :subject_for_token, [resource, claims]}),
 
-         result <- apply(token_mod, :build_claims, [mod, resource, subject, claims, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :build_claims}),
+         {:ok, claims} <-
+           returning_tuple({token_mod, :build_claims, [mod, resource, subject, claims, opts]}),
 
-         result <- apply(mod, :build_claims, [claims, resource, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {mod, :build_claims}),
+         {:ok, claims} <-
+           returning_tuple({mod, :build_claims, [claims, resource, opts]}),
 
-         result <- apply(token_mod, :create_token, [mod, claims, opts]),
-         {:ok, token} <- validate_conditional_tuple(result, {token_mod, :create_token}),
+         {:ok, token} <-
+           returning_tuple({token_mod, :create_token, [mod, claims, opts]}),
 
-         result <- apply(mod, :after_encode_and_sign, [resource, claims, token, opts]),
-         {:ok, _} <- validate_conditional_tuple(result, {mod, :after_encode_and_sign}) do
+         {:ok, _} <-
+           returning_tuple({mod, :after_encode_and_sign, [resource, claims, token, opts]}) do
 
       {:ok, token, claims}
     end
@@ -585,19 +585,11 @@ defmodule Guardian do
     claims_to_check = claims_to_check |> Enum.into(%{}) |> Guardian.stringify_keys()
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
-    with result <- apply(token_mod, :decode_token, [mod, token, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :decode_token}),
+    with {:ok, claims} <- returning_tuple({token_mod, :decode_token, [mod, token, opts]}),
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
-
-         result <- apply(token_mod, :verify_claims, [mod, claims, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :verify_claims}),
-
-         result <- apply(mod, :verify_claims, [claims, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {mod, :verify_claims}),
-
-         result <- apply(mod, :on_verify, [claims, token, opts]),
-         {:ok, claims} <- validate_conditional_tuple(result, {mod, :on_verify}) do
-
+         {:ok, claims} <- returning_tuple({token_mod, :verify_claims, [mod, claims, opts]}),
+         {:ok, claims} <- returning_tuple({mod, :verify_claims, [claims, opts]}),
+         {:ok, claims} <- returning_tuple({mod, :on_verify, [claims, token, opts]}) do
       {:ok, claims}
     end
   rescue
@@ -618,9 +610,7 @@ defmodule Guardian do
   ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
   def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
     with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-
-         resource_result <- apply(mod, :resource_from_claims, [claims]),
-         {:ok, resource} <- validate_conditional_tuple(resource_result, {mod, :resource_from_claims}) do
+         {:ok, resource} <- returning_tuple({mod, :resource_from_claims, [claims]}) do
 
       {:ok, resource, claims}
     end
@@ -646,10 +636,9 @@ defmodule Guardian do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
     %{claims: claims} = Guardian.peek(mod, token)
 
-    with {:ok, claims} <- apply(token_mod, :revoke, [mod, claims, token, opts]),
+    with {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
+         {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
 
-         on_revoke_result <- apply(mod, :on_revoke, [claims, token, opts]),
-         {:ok, claims} <- validate_conditional_tuple(on_revoke_result, {mod, :on_revoke}) do
       {:ok, claims}
     else
       {:error, _} = err -> err
@@ -724,16 +713,22 @@ defmodule Guardian do
   end
 
   @doc """
-  Provides a way to track an invalid return tuple via a nicer reason
+  Ensures the return result of calling `{mod, func, args}`
+  is a 2 element tuple with `{:ok, any}`  or `{:error, any}`
+  If not, it will return an error with a message detailing
+  the module, function and return that was received
   """
 
-  @spec validate_conditional_tuple({:ok, any} | {:error, any} | any, {module, atom}) :: {:ok, any} | {:error, any}
-  def validate_conditional_tuple({:ok, _} = resp, _),
-    do: resp
-  def validate_conditional_tuple({:error, _} = resp, _),
-    do: resp
-  def validate_conditional_tuple(resp, {m, f}),
-   do: {:error, "Invalid return for #{m}##{f} - #{inspect(resp)}"}
+  @spec returning_tuple(mfa) :: {:ok, any} | {:error, any}
+  def returning_tuple({mod, func, args}) do
+    result = apply(mod, func, args)
+    case result do
+      {:ok, _} -> result
+      {:error, _} -> result
+      resp ->
+        {:error, "Invalid return for #{mod}#{func} - #{inspect(resp)}"}
+    end
+  end
 
   defp validate_exchange_type(claims, from_type) when is_binary(from_type),
     do: validate_exchange_type(claims, [from_type])

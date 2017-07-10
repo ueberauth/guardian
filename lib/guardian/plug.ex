@@ -41,8 +41,13 @@ if Code.ensure_loaded?(Plug) do
     to provide traditional session based authentication.
     """
 
+    defmodule UnauthenticatedError do
+      defexception message: "Unauthenticated", status: 401
+    end
+
     @default_key "default"
 
+    import Guardian, only: [returning_tuple: 1]
     import Guardian.Plug.Keys
     import Plug.Conn
 
@@ -186,10 +191,14 @@ if Code.ensure_loaded?(Plug) do
 
     @spec sign_in(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
-      with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
-           {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
-           result <- apply(impl, :after_sign_in, [conn, resource, token, full_claims, opts]),
-           {:ok, conn} <- Guardian.validate_conditional_tuple(result, {impl, :after_sign_in}) do
+      with {:ok, token, full_claims} <-
+             Guardian.encode_and_sign(impl, resource, claims, opts),
+
+           {:ok, conn} <-
+             add_data_to_conn(conn, resource, token, full_claims, opts),
+           {:ok, conn} <-
+             returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
+
         if session_active?(conn) do
           key =
             conn
@@ -330,10 +339,9 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp do_sign_out(conn, impl, key, opts) do
-      with result <- apply(impl, :before_sign_out, [conn, key, opts]),
-           {:ok, conn} <- Guardian.validate_conditional_tuple(result, {impl, :before_sign_out}),
-           {:ok, conn} <- remove_data_from_conn(conn, key: key)
-      do
+      with {:ok, conn} <- returning_tuple({impl, :before_sign_out, [conn, key, opts]}),
+           {:ok, conn} <- remove_data_from_conn(conn, key: key) do
+
         if session_active?(conn) do
           {:ok, delete_session(conn, token_key(key))}
         else
