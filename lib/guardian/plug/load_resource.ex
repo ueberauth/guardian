@@ -50,8 +50,7 @@ if Code.ensure_loaded?(Plug) do
         result = apply(module, :resource_from_claims, [claims])
         case result do
           {:ok, resource} ->
-            conn
-            |> GPlug.put_current_resource(resource, opts)
+            GPlug.put_current_resource(conn, resource, opts)
           {:error, reason} ->
             if allow_blank?, do: conn, else: return_error(conn, reason, opts)
           _ ->

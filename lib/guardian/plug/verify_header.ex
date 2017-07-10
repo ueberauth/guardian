@@ -30,7 +30,7 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
-    * `realm` - The prefix for the token in the Authorization header.
+    * `realm` - The prefix for the token in the Authorization header. Defaults to `bearer`. `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `deafult`
 
     ### Example
@@ -39,7 +39,7 @@ if Code.ensure_loaded?(Plug) do
 
     # setup the upstream pipeline
 
-    plug Guardian.Plug.VerifyHeader, realm: "Bearer", claims: %{typ: "access"}
+    plug Guardian.Plug.VerifyHeader, claims: %{typ: "access"}
 
     ```
 
@@ -62,13 +62,14 @@ if Code.ensure_loaded?(Plug) do
 
     @spec init(Keyword.t) :: Keyword.t
     def init(opts \\ []) do
-      realm = Keyword.get(opts, :realm)
+      realm = Keyword.get(opts, :realm, "bearer")
 
-      if realm do
-        {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
-        Keyword.put(opts, :realm_reg, reg)
-      else
-        opts
+      case realm do
+        "" -> opts
+        :none -> opts
+        str ->
+          {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
+          Keyword.put(opts, :realm_reg, reg)
       end
     end
 
