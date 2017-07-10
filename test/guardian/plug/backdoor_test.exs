@@ -36,7 +36,8 @@ defmodule Guardian.Plug.BackdoorTest do
   test "sets the current resource with the given serializer" do
     conn = conn(:get, "/?as=User:15")
 
-    current_resource = conn
+    current_resource =
+      conn
       |> conn_with_fetched_session
       |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer)
       |> Guardian.Plug.current_resource
@@ -45,18 +46,42 @@ defmodule Guardian.Plug.BackdoorTest do
     assert current_resource == deserialized_resource
   end
 
-  test "allows the backdoor param to be overridden" do
+  test "allows the backdoor token field to be overridden" do
     conn = conn(:get, "/?impersonate=User:15")
 
     current_resource =
       conn
       |> conn_with_fetched_session
       |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer,
-          param_name: "impersonate")
+          token_field: "impersonate")
       |> Guardian.Plug.current_resource
 
     {:ok, deserialized_resource} = SampleSerializer.from_token("User:15")
     assert current_resource == deserialized_resource
+  end
+
+  test "sets the type of token for sign in" do
+    conn = conn(:get, "/?as=User:15")
+    token_type = "access"
+
+    conn =
+      conn
+      |> conn_with_fetched_session
+      |> run_plug(Guardian.Plug.Backdoor, type: token_type)
+
+    assert {:ok, %{"typ" => ^token_type}} = Guardian.Plug.claims(conn)
+  end
+
+  test "sets new claims during sign in" do
+    conn = conn(:get, "/?as=User:15")
+
+    conn =
+      conn
+      |> conn_with_fetched_session
+      |> run_plug(Guardian.Plug.Backdoor, new_claims: [key: :special])
+
+    assert {:ok, _claims} = Guardian.Plug.claims(conn, :special)
+    assert {:error, :no_session} == Guardian.Plug.claims(conn)
   end
 
   test "does nothing if the param is not given" do

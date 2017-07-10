@@ -32,84 +32,64 @@ defmodule Guardian.Plug.Backdoor do
   When the `Guardian.Plug.Backdoor` plug runs, it passes along the value
   of the `as` parameter directly to your application's Guardian serializer.
 
-  ```
-  defmodule MyGuardianSerializer do
-    @behaviour Guardian.Serializer
-
-    def from_token("User:" <> user_id) do
-      # Find and return the user object
-      {:ok, %{id: user_id}}
-    end
-    def from_token(_token) do
-      {:error, "Invalid token"}
-    end
-
-    def for_token(user) do
-      # Serialize the user into a single token
-    end
-  end
-  ```
-
-  In this example, all further requests will be made as User 5.
-
   ## Options
 
   The following options can be set when instantiating the plug.
 
-  * `param_name` - The query string parameter that is used to load the
-    current resource. Defaults to `as`.
-  * `serializer` - The serializer to be used to load the current
-    resource. Defaults to the serializer configured in your app's
-    Guardian config.
-
+  * `serializer` - The serializer to be used to load the current resource.
+    Defaults to the serializer configured in your app's Guardian config.
+  * `token_field` - Query string field used to load the current resource.
+    Defaults to `as`.
+  * `type` - Type of token, passed directly to Guardian.Plug.sign_in/4.
+  * `new_claims` - New claims to be encoded in the JWT, passed directly to
+    Guardian.Plug.sign_in/4.
 
   [hound]: https://github.com/HashNuke/hound
   """
   import Plug.Conn
 
   @doc false
-  def init(opts \\ %{}) do
-    opts = Enum.into(opts, %{})
-
-    serializer = Map.get(opts, :serializer, Guardian.serializer)
-    param_name = Map.get(opts, :param_name, "as")
+  def init(opts \\ []) do
+    serializer = Keyword.get(opts, :serializer, Guardian.serializer())
+    token_field = Keyword.get(opts, :token_field, "as")
+    type = Keyword.get(opts, :type)
+    new_claims = Keyword.get(opts, :new_claims, [])
 
     %{
       serializer: serializer,
-      param_name: param_name
+      token_field: token_field,
+      type: type,
+      new_claims: new_claims,
     }
   end
 
   @doc false
-  def call(conn, %{serializer: serializer, param_name: param_name}) do
-    resource_token = get_backdoor_param_value(conn, param_name)
-
-    if resource_token do
-      conn = case load_resource(resource_token, serializer) do
-        {:ok, obj} -> Guardian.Plug.sign_in(conn, obj)
-        {:error, reason} -> handle_error(conn, reason, param_name)
-      end
+  def call(conn, %{token_field: token_field} = opts) do
+    case get_backdoor_token(conn, token_field) do
+      nil ->
+        conn
+      backdoor_token ->
+        handle_backdoor_token(conn, backdoor_token, opts)
     end
-
-    conn
   end
 
-  defp load_resource(token, serializer) do
-    serializer.from_token(token)
+  defp handle_backdoor_token(conn, token,
+       %{serializer: serializer, type: type, new_claims: new_claims}) do
+    case serializer.from_token(token) do
+      {:ok, resource} ->
+        Guardian.Plug.sign_in(conn, resource, type, new_claims)
+      {:error, reason} ->
+        conn
+        |> send_resp(500, "Guardian.Plug.Backdoor plug cannot deserialize " <>
+        "\"#{token}\" with #{serializer}:\n#{reason}")
+        |> halt()
+    end
   end
 
-  defp get_backdoor_param_value(conn, param_name) do
+  defp get_backdoor_token(conn, token_field) do
     conn
-    |> fetch_query_params
+    |> fetch_query_params()
     |> Map.get(:params)
-    |> Map.get(param_name)
-  end
-
-  defp handle_error(conn, reason, param_name) do
-    conn
-    |> send_resp(500,
-      "Error while decoding \"#{param_name}\" parameter with the " <>
-      "Guardian.Plug.Backdoor plug:\n#{reason}")
-    |> halt
+    |> Map.get(token_field)
   end
 end

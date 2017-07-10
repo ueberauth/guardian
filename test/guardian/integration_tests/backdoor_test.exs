@@ -31,10 +31,11 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
     plug Guardian.Plug.LoadResource
   end
 
-  test "request with backdoor param set to exactly what serializer expects" do
+  test "request with backdoor token set to exactly what serializer expects" do
     conn = conn(:get, "/?as=User:15")
 
-    conn = conn
+    conn =
+      conn
       |> conn_with_fetched_session
       |> BackdoorVerifySessionPipeline.call(%{})
 
@@ -44,10 +45,11 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
     assert Guardian.Plug.authenticated?(conn)
   end
 
-  test "request with backdoor param set to something unexpected" do
+  test "request with backdoor token set to something unexpected" do
     conn = conn(:get, "/?as=invalid")
 
-    conn = conn
+    conn =
+      conn
       |> conn_with_fetched_session
       |> BackdoorVerifySessionPipeline.call(%{})
 
@@ -76,7 +78,7 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
     plug Guardian.Plug.LoadResource
   end
 
-  test "VerifyHeader request with backdoor param set to exactly what serializer expects" do
+  test "VerifyHeader request with backdoor token set to exactly what serializer expects" do
     conn = conn(:get, "/?as=User:15")
 
     conn =
