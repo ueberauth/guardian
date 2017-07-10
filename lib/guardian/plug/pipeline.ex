@@ -145,12 +145,6 @@ if Code.ensure_loaded?(Plug) do
           unless Keyword.get(new_opts, :otp_app),
             do: raise_error(:otp_app)
 
-          unless Keyword.has_key?(new_opts, :module),
-            do: raise_error(:module)
-
-          unless Keyword.has_key?(new_opts, :error_handler),
-            do: raise_error(:error_handler)
-
           new_opts
         end
 
@@ -159,13 +153,14 @@ if Code.ensure_loaded?(Plug) do
             nil -> opts
             otp_app ->
               otp_app
-              |> Application.get_env(opt_app, __MODULE__, [])
+              |> Application.get_env(__MODULE__, [])
               |> Keyword.merge(opts)
           end
         end
 
         defp config(opts, key, default \\ nil) do
-          opts
+          unquote(opts)
+          |> Keyword.merge(opts)
           |> config()
           |> Keyword.get(key)
           |> GConfig.resolve_value()
@@ -221,7 +216,7 @@ if Code.ensure_loaded?(Plug) do
       if module do
         module
       else
-        raise "Module not in pipeline"
+        raise_error(:module)
       end
     end
 
@@ -233,11 +228,14 @@ if Code.ensure_loaded?(Plug) do
       if module do
         module
       else
-        raise "Error Handler not in pipeline"
+        raise_error(:error_handler)
       end
     end
 
     defp maybe_put_key(conn, _, nil), do: conn
     defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
+
+    defp raise_error(key),
+      do: raise "`#{key}` not set in Guardian pipeline"
   end
 end

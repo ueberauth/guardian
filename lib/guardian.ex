@@ -13,12 +13,12 @@ defmodule Guardian do
   When using Guardian, you'll need an Implmentation module.
 
   ```elixir
-  defmodule MyApp.Tokens do
+  defmodule MyApp.Guardian do
     use Guardian, otp_app: :my_app
 
-    def subject_for_token(resource, _claims), do: to_string(resource.id)
+    def subject_for_token(resource, _claims), do: {:ok, to_string(resource.id)}
     def resource_from_claims(claims) do
-      find_me_a_resource(claims["sub"])
+      find_me_a_resource(claims["sub"]) # {:ok, resource} or {:error, reason}
     end
   end
   ```
@@ -47,7 +47,7 @@ defmodule Guardian do
   * `"access"`
   * `"refresh"`
 
-  Access tokens should be short lived.
+  Access tokens should be short lived and are used to access resources on your API.
   Refresh tokens should be longer lived and whose only purpose is to exchange
   for a shorter lived access token.
 
@@ -87,16 +87,14 @@ defmodule Guardian do
 
   ```elixir
   # Provide a token using the defaults including the default_token_type
-  {:ok, token, full_claims} =
-    MyApp.Tokens.encode_and_sign(user)
+  {:ok, token, full_claims} = MyApp.Guardian.encode_and_sign(user)
 
   # Provide a token including custom claims
-  {:ok, token, full_claims} =
-    MyApp.Tokens.encode_and_sign(user, %{some: "claim"})
+  {:ok, token, full_claims} = MyApp.Guardian.encode_and_sign(user, %{some: "claim"})
 
   # Provide a token including custom claims and a different token type/ttl
   {:ok, token, full_claims} =
-    MyApp.Tokens.encode_and_sign(user, %{some: "claim"}, token_type: "refresh" ttl: {4, :weeks})
+    MyApp.Guardian.encode_and_sign(user, %{some: "claim"}, token_type: "refresh" ttl: {4, :weeks})
   ```
 
   The `encode_and_sign` function calls a number of callbacks on
@@ -121,15 +119,15 @@ defmodule Guardian do
 
   ```elixir
   # Decode and verify using the defaults
-  {:ok, claims} = MyApp.Tokens.decode_and_verify(token)
+  {:ok, claims} = MyApp.Guardian.decode_and_verify(token)
 
   # Decode and verify with literal claims check.
   # If the cliams int he token do not match those given verification will fail
-  {:ok, claims} = MyApp.Tokens.decode_and_verify(token, %{match: "claim"})
+  {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"})
 
   # Decode and verify with literal claims check and options.
   # Options are passed to your Token Module and callbacks
-  {:ok, claims} = MyApp.Tokens.decode_and_verify(token, %{match: "claim"}, some: "secret")
+  {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"}, some: "secret")
   ```
 
   #### `revoke(token, opts \\ [])`
@@ -140,7 +138,7 @@ defmodule Guardian do
   callbacks.
 
   ```elixir
-  {:ok, claims} = MyApp.Tokens.revoke(token, some: "option")
+  {:ok, claims} = MyApp.Guardian.revoke(token, some: "option")
   ```
 
   #### `refresh(token, opts \\ [])`
@@ -154,7 +152,7 @@ defmodule Guardian do
   Arguments:
 
   * `token` - The old token to refresh
-  * `opts` - Options to pass to the TokenModule and callbacks
+  * `opts` - Options to pass to the Implementation Module and callbacks
 
   Options:
 
@@ -162,7 +160,7 @@ defmodule Guardian do
 
   ```elixir
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.refresh(old_token, ttl: {1, :hour})
+    MyApp.Guardian.refresh(old_token, ttl: {1, :hour})
   ```
 
   See `Guardian.refresh`
@@ -357,7 +355,7 @@ defmodule Guardian do
 
       Claims will be present at the `:claims` key.
 
-      See the token module used for more information
+      See `Guardian.peek` for more information
       """
       @spec peek(String.t) :: map
       def peek(token), do: Guardian.peek(__MODULE__, token)
@@ -387,9 +385,23 @@ defmodule Guardian do
         do: Guardian.decode_and_verify(__MODULE__, token, claims_to_check, opts)
 
       @doc """
+      Fetch the resource and claims directly from a token
+
+      See `Guardian.resource_from_token` for more information
+      """
+
+      @spec resource_from_token(
+        token :: Guardian.Token.token,
+        claims_to_check :: Guardian.Token.claims | nil,
+        opts :: Guardian.options
+      ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
+      def resource_from_token(token, claims_to_check \\ %{}, opts \\ []),
+        do: Guardian.resource_from_token(__MODULE__, token, claims_to_check, opts)
+
+      @doc """
       Revoke a token.
 
-      See `Guardian.revoke`
+      See `Guardian.revoke` for more information
       """
 
       @spec revoke(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
@@ -398,15 +410,20 @@ defmodule Guardian do
       @doc """
       Refresh a token.
 
-      See `Guardian.refresh`
+      See `Guardian.refresh` for more information
       """
-      @spec refresh(Guardian.Token.token, Guardian.options) :: {:ok, Guardian.Token.claims} | {:error, any}
+
+      @spec refresh(Guardian.Token.token, Guardian.options) :: {
+        :ok,
+        {Guardian.Token.token, Guardian.Token.claims},
+        {Guardian.Token.token, Guardian.Token.claims}
+      } | {:error, any}
       def refresh(old_token, opts \\ []), do: Guardian.refresh(__MODULE__, old_token, opts)
 
       @doc """
       Exchanges a token of one type for another.
 
-      See `Guardian.exchange`
+      See `Guardian.exchange` for more information
       """
       @spec exchange(
         token :: Guardian.Token.token, from_type :: String.t | [String.t, ...],
@@ -469,8 +486,8 @@ defmodule Guardian do
   without any verification.
   This should not be relied on since there is no verification
 
-  The implementation is provided by the TokenModule specified.
-  See the documentation for your TokenModule for full details
+  The implementation is provided by the implementation module specified.
+  See the documentation for your implementation / token module for full details
   """
 
   @spec peek(module, Guardian.Token.token) :: %{claims: map}
@@ -489,11 +506,11 @@ defmodule Guardian do
   Once called, a number of callbacks will be invoked on the implementation module
 
   * `subject_for_token` - gets the subject from the resource
-  * `build_claims` - Once the TokenModule has built it's default claims for custom claim building
+  * `build_claims` - Once the implementation module has built it's default claims for custom claim building
   * `after_encode_and_sign`
 
   ### Options
-  The options will be passed through to both the TokenModule
+  The options will be passed through to the implementation / token modules
   and the appropriate callbacks.
 
   * `ttl` - How long to keep the token alive for. If not included the default will be used.
@@ -506,8 +523,8 @@ defmodule Guardian do
   * `:hour` | `:hours`
   * `:week` | `:weeks`
 
-  See the documentation for your TokenModule for more information on
-  which options are available.
+  See the documentation for your implementation / token module for more information on
+  which options are available for your implementation / token module.
   """
 
   @spec encode_and_sign(
@@ -521,15 +538,22 @@ defmodule Guardian do
 
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
-    with {:ok, subject} <- apply(mod, :subject_for_token, [resource, claims]),
-         {:ok, claims} <- apply(token_mod, :build_claims, [mod, resource, subject, claims, opts]),
-         {:ok, claims} <- apply(mod, :build_claims, [claims, resource, opts]),
-         {:ok, token} <- apply(token_mod, :create_token, [mod, claims, opts]),
-         {:ok, _} <- apply(mod, :after_encode_and_sign, [resource, claims, token, opts]) do
+    with result <- apply(mod, :subject_for_token, [resource, claims]),
+         {:ok, subject} <- validate_conditional_tuple(result, {mod, :subject_for_token}),
+
+         result <- apply(token_mod, :build_claims, [mod, resource, subject, claims, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :build_claims}),
+
+         result <- apply(mod, :build_claims, [claims, resource, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {mod, :build_claims}),
+
+         result <- apply(token_mod, :create_token, [mod, claims, opts]),
+         {:ok, token} <- validate_conditional_tuple(result, {token_mod, :create_token}),
+
+         result <- apply(mod, :after_encode_and_sign, [resource, claims, token, opts]),
+         {:ok, _} <- validate_conditional_tuple(result, {mod, :after_encode_and_sign}) do
+
       {:ok, token, claims}
-    else
-      {:error, _} = err -> err
-      err -> {:error, err}
     end
   end
 
@@ -548,9 +572,9 @@ defmodule Guardian do
   * `on_verify` - After a successful verification this function is called
 
   ### Options
-  The options will be passed through to both the TokenModule
+  The options will be passed through to the implementation / token modules
   and the appropriate callbacks.
-  See the documentation for your TokenModule for more information on
+  See the documentation for your implementation / token modules for more information on
   which options are available.
   """
 
@@ -561,22 +585,29 @@ defmodule Guardian do
     claims_to_check = claims_to_check |> Enum.into(%{}) |> Guardian.stringify_keys()
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
 
-    with {:ok, claims} <- apply(token_mod, :decode_token, [mod, token, opts]),
+    with result <- apply(token_mod, :decode_token, [mod, token, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :decode_token}),
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
-         {:ok, claims} <- apply(token_mod, :verify_claims, [mod, claims, opts]),
-         {:ok, claims} <- apply(mod, :verify_claims, [claims, opts]),
-         {:ok, claims} <- apply(mod, :on_verify, [claims, token, opts]) do
+
+         result <- apply(token_mod, :verify_claims, [mod, claims, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {token_mod, :verify_claims}),
+
+         result <- apply(mod, :verify_claims, [claims, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {mod, :verify_claims}),
+
+         result <- apply(mod, :on_verify, [claims, token, opts]),
+         {:ok, claims} <- validate_conditional_tuple(result, {mod, :on_verify}) do
+
       {:ok, claims}
-    else
-      {:error, _} = err -> err
-      err -> {:error, err}
     end
   rescue
     e -> {:error, e}
   end
 
   @doc """
-  Fetch the resource and claims directly from a token
+  Fetch the resource and claims directly from a token.
+
+  This is a convenience function that first decodes the token using `decode_and_verify/4` and then loads the resource.
   """
 
   @spec resource_from_token(
@@ -587,12 +618,11 @@ defmodule Guardian do
   ) :: {:ok, Guardian.Token.resource, Guardian.Token.claims}
   def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
     with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-         {:ok, resource} <- apply(mod, :resource_from_claims, [claims]) do
+
+         resource_result <- apply(mod, :resource_from_claims, [claims]),
+         {:ok, resource} <- validate_conditional_tuple(resource_result, {mod, :resource_from_claims}) do
 
       {:ok, resource, claims}
-    else
-      {:error, _} = err -> err
-      err -> {:error, err}
     end
   end
 
@@ -617,7 +647,9 @@ defmodule Guardian do
     %{claims: claims} = Guardian.peek(mod, token)
 
     with {:ok, claims} <- apply(token_mod, :revoke, [mod, claims, token, opts]),
-         {:ok, claims} <- apply(mod, :on_revoke, [claims, token, opts]) do
+
+         on_revoke_result <- apply(mod, :on_revoke, [claims, token, opts]),
+         {:ok, claims} <- validate_conditional_tuple(on_revoke_result, {mod, :on_revoke}) do
       {:ok, claims}
     else
       {:error, _} = err -> err
@@ -639,7 +671,7 @@ defmodule Guardian do
   * `:hour` | `:hours`
   * `:week` | `:weeks`
 
-  See TokenModule documentation for your token module.
+  See TokenModule documentation for your token module for other options.
   """
 
   @spec refresh(module, Guardian.Token.token, options) :: {
@@ -690,6 +722,18 @@ defmodule Guardian do
       err -> {:error, err}
     end
   end
+
+  @doc """
+  Provides a way to track an invalid return tuple via a nicer reason
+  """
+
+  @spec validate_conditional_tuple({:ok, any} | {:error, any} | any, {module, atom}) :: {:ok, any} | {:error, any}
+  def validate_conditional_tuple({:ok, _} = resp, _),
+    do: resp
+  def validate_conditional_tuple({:error, _} = resp, _),
+    do: resp
+  def validate_conditional_tuple(resp, {m, f}),
+   do: {:error, "Invalid return for #{m}##{f} - #{inspect(resp)}"}
 
   defp validate_exchange_type(claims, from_type) when is_binary(from_type),
     do: validate_exchange_type(claims, [from_type])

@@ -26,10 +26,11 @@ defmodule Guardian.Token.Jwt do
   * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
   * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
   * `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
+  * `verify_issuer` Verify that the token was issued by the configured issuer. Default false
 
   Options:
 
-  These options are available to different functions
+  These options are available to encoding and decoding:
 
   * `secret` The secret key to use for signing
   * `headers` The Jose headers that should be used
@@ -310,7 +311,11 @@ defmodule Guardian.Token.Jwt do
   end
 
   defp fetch_secret(mod, opts) do
-    opts |> Keyword.get(:secret) |> Config.resolve_value() || apply(mod, :config, [:secret_key])
+    (opts |> Keyword.get(:secret) |> Config.resolve_value() || apply(mod, :config, [:secret_key]))
+    |> case do
+      nil -> raise "No secret key configured for JWT"
+      val -> val
+    end
   end
 
   defp set_type(%{"typ" => typ} = claims, _mod, _opts) when not is_nil(typ), do: claims

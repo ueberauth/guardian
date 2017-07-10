@@ -36,7 +36,7 @@ if Code.ensure_loaded?(Phoenix) do
       import Guardian.Phoenix.Socket
 
       def connect(%{"guardian_token" => token} = params, socket) do
-        case sign_in(socket, MyApp.AuthTokens, token) do
+        case sign_in(socket, MyApp.Guardian, token) do
           {:ok, authed_socket, guardian_params} ->
             {:ok, authed_socket}
           _ -> :error

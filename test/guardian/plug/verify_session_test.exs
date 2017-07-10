@@ -96,7 +96,7 @@ defmodule Guardian.Plug.VerifySessionTest do
   end
 
   test "with no module", ctx do
-    assert_raise RuntimeError, "Module not in pipeline", fn ->
+    assert_raise RuntimeError, "`module` not set in Guardian pipeline", fn ->
       :get
       |> conn("/")
       |> init_test_session(%{guardian_default_token: ctx.token})

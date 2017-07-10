@@ -30,8 +30,11 @@ if Code.ensure_loaded?(Plug) do
     connection.
 
     ```elixir
-    {:ok, token, claims} =
-      MyApp.Tokens.Plug.sign_in(conn, resource, my_custom_claims)
+    {:ok, conn} = MyApp.Guardian.Plug.sign_in(conn, resource, my_custom_claims)
+
+    # OR
+
+    conn = MyApp.Guardian.Plug.sign_in!(conn, resource, my_custom_claims)
     ```
 
     If there is a session present the token will be stored in the session
@@ -74,15 +77,26 @@ if Code.ensure_loaded?(Plug) do
         def sign_in(conn, resource, claims \\ %{}, opts \\ []),
           do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
 
+        def sign_in!(conn, resource, claims \\ %{}, opts \\ []),
+          do: GPlug.sign_in!(conn, implementation(), resource, claims, opts)
+
         def sign_out(conn, opts \\ []),
           do: GPlug.sign_out(conn, implementation(), opts)
 
-        @spec remember_me(Plug.Conn.t, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t | {:error, atom}
+        def sign_out!(conn, opts \\ []),
+          do: GPlug.sign_out!(conn, implementation(), opts)
+
         def remember_me(conn, resource, claims, opts),
           do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
 
+        def remember_me!(conn, resource, claims, opts),
+          do: GPlug.remember_me!(conn, implementation(), resource, claims, opts)
+
         def remember_me_from_token(conn, token, claims_to_check \\ %{}, opts \\ []),
           do: GPlug.remember_me_from_token(conn, implementation(), token, claims_to_check, opts)
+
+        def remember_me_from_token!(conn, token, claims_to_check \\ %{}, opts \\ []),
+          do: GPlug.remember_me_from_token!(conn, implementation(), token, claims_to_check, opts)
       end
     end
 
@@ -174,8 +188,8 @@ if Code.ensure_loaded?(Plug) do
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
       with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
            {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
-           {:ok, conn} <- apply(impl, :after_sign_in, [conn, resource, token, full_claims, opts])
-      do
+           result <- apply(impl, :after_sign_in, [conn, resource, token, full_claims, opts]),
+           {:ok, conn} <- Guardian.validate_conditional_tuple(result, {impl, :after_sign_in}) do
         if session_active?(conn) do
           key =
             conn
@@ -191,9 +205,15 @@ if Code.ensure_loaded?(Plug) do
         else
           {:ok, conn}
         end
-      else
-        {:error, _} = err -> err
-        err -> {:error, err}
+      end
+    end
+
+    @spec sign_in!(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
+    def sign_in!(conn, impl, resource, claims \\ %{}, opts \\ []) do
+      result = __MODULE__.sign_in(conn, impl, resource, claims, opts)
+      case result do
+        {:ok, conn} -> conn
+        {:error, reason} -> raise inspect(reason)
       end
     end
 
@@ -203,31 +223,63 @@ if Code.ensure_loaded?(Plug) do
       do_sign_out(conn, impl, key, opts)
     end
 
-    @spec remember_me(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t | {:error, atom}
+    @spec sign_out!(Plug.Conn.t, module, Guardian.opts) :: Plug.Conn.t
+    def sign_out!(conn, impl, opts) do
+      result = __MODULE__.sign_out(conn, impl, opts)
+      case result do
+        {:ok, conn} -> conn
+        {:error, reason} -> raise inspect(reason)
+      end
+    end
+
+    @spec remember_me(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} |
+                                                                                         {:error, atom}
     def remember_me(conn, mod, resource, claims, opts) do
       with type <- Keyword.get(opts, :token_type, "refresh"),
            opts <- Keyword.put(opts, :token_type, type),
            key <- Pipeline.fetch_key(conn, opts),
            {:ok, token, _claims} <- Guardian.encode_and_sign(mod, resource, claims, opts) do
 
-        put_resp_cookie(conn, key, token)
+        {:ok, put_resp_cookie(conn, key, token)}
       else
         {:error, _} = err -> err
       end
     end
 
+    @spec remember_me!(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
+    def remember_me!(conn, mod, resource, claims, opts) do
+      result = __MODULE__.remember_me(conn, mod, resource, claims, opts)
+      case result do
+        {:ok, conn} -> conn
+        {:error, reason} ->
+          raise inspect(reason)
+      end
+    end
+
     @spec remember_me_from_token(
       Plug.Conn.t, module, Guardian.Token.token, Guardian.Token.claims, Guardian.opts
-    ) :: Plug.Conn.t | {:error, atom}
+    ) :: {:ok, Plug.Conn.t} | {:error, atom}
     def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
       with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
            type <- Keyword.get(opts, :token_type, "refresh"),
            key <- Pipeline.fetch_key(conn, opts),
            {:ok, _old, {new_t, _new_c}} <- Guardian.exchange(mod, token, claims["typ"], type, opts) do
 
-        put_resp_cookie(conn, key, new_t)
+        {:ok, put_resp_cookie(conn, key, new_t)}
       else
         {:error, _} = err -> err
+      end
+    end
+
+    @spec remember_me_from_token!(
+      Plug.Conn.t, module, Guardian.Token.token, Guardian.Token.claims, Guardian.opts
+    ) :: Plug.Conn.t
+    def remember_me_from_token!(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
+      result = __MODULE__.remember_me_from_token(conn, mod, token, claims_to_check, opts)
+      case result do
+        {:ok, conn} -> conn
+        {:error, reason} ->
+          raise inspect(reason)
       end
     end
 
@@ -278,7 +330,8 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp do_sign_out(conn, impl, key, opts) do
-      with {:ok, conn} <- apply(impl, :before_sign_out, [conn, key, opts]),
+      with result <- apply(impl, :before_sign_out, [conn, key, opts]),
+           {:ok, conn} <- Guardian.validate_conditional_tuple(result, {impl, :before_sign_out}),
            {:ok, conn} <- remove_data_from_conn(conn, key: key)
       do
         if session_active?(conn) do
