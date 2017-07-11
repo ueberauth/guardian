@@ -22,7 +22,8 @@ defmodule Guardian.Plug.Test.Backdoor do
   If you're using [Hound][hound], you can write the following code.
 
   ```
-  navigate_to "/?as=User:5"
+  {:ok, token, _} = Guardian.encode_and_sign(user, :access, new_claims)
+  navigate_to "/?token=\#{token}"
   ```
 
   If you aren't using [Hound][hound], a simple `GET /?as=User:5` request will
@@ -35,13 +36,8 @@ defmodule Guardian.Plug.Test.Backdoor do
 
   The following options can be set when instantiating the plug.
 
-  * `serializer` - The serializer to be used to load the current resource.
-    Defaults to the serializer configured in your app's Guardian config.
   * `token_field` - Query string field used to load the current resource.
-    Defaults to `as`.
-  * `type` - Type of token, passed directly to Guardian.Plug.sign_in/4.
-  * `new_claims` - New claims to be encoded in the JWT, passed directly to
-    Guardian.Plug.sign_in/4.
+    Defaults to `token`.
 
   [hound]: https://github.com/HashNuke/hound
   """
@@ -50,15 +46,11 @@ defmodule Guardian.Plug.Test.Backdoor do
   @doc false
   def init(opts \\ []) do
     serializer = Keyword.get(opts, :serializer, Guardian.serializer())
-    token_field = Keyword.get(opts, :token_field, "as")
-    type = Keyword.get(opts, :type)
-    new_claims = Keyword.get(opts, :new_claims, [])
+    token_field = Keyword.get(opts, :token_field, "token")
 
     %{
       serializer: serializer,
       token_field: token_field,
-      type: type,
-      new_claims: new_claims,
     }
   end
 
@@ -76,23 +68,24 @@ defmodule Guardian.Plug.Test.Backdoor do
     end
   end
 
-  defp handle_backdoor_token(conn, token,
-       %{serializer: serializer, type: type, new_claims: new_claims}) do
-    case serializer.from_token(token) do
-      {:ok, resource} ->
-        Guardian.Plug.sign_in(conn, resource, type, new_claims)
-      {:error, reason} ->
-        conn
-        |> send_resp(500, "Guardian.Plug.Backdoor plug cannot deserialize " <>
-        "\"#{token}\" with #{serializer}:\n#{reason}")
-        |> halt()
-    end
-  end
-
   defp get_backdoor_token(conn, token_field) do
     conn
     |> fetch_query_params()
     |> Map.get(:params)
     |> Map.get(token_field)
+  end
+
+  defp handle_backdoor_token(conn, encoded_token, %{serializer: serializer}) do
+    with {:ok, claims} <- Guardian.decode_and_verify(encoded_token),
+         %{"sub" => decoded_token, "typ" => type} <- claims,
+         {:ok, resource} <- serializer.from_token(decoded_token) do
+      Guardian.Plug.sign_in(conn, resource, type)
+    else
+      {:error, _reason} ->
+        conn
+        |> send_resp(500, "Guardian.Plug.Test.Backdoor plug cannot " <>
+        "deserialize \"#{encoded_token}\" with #{serializer}")
+        |> halt()
+    end
   end
 end

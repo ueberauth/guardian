@@ -32,7 +32,8 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
   end
 
   test "request with backdoor token set to exactly what serializer expects" do
-    conn = conn(:get, "/?as=User:15")
+    {:ok, token, _} = Guardian.encode_and_sign("User:15")
+    conn = conn(:get, "/?token=#{token}")
 
     conn =
       conn
@@ -46,7 +47,7 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
   end
 
   test "request with backdoor token set to something unexpected" do
-    conn = conn(:get, "/?as=invalid")
+    conn = conn(:get, "/?token=invalid")
 
     conn =
       conn
@@ -79,7 +80,8 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
   end
 
   test "VerifyHeader request with backdoor token set to exactly what serializer expects" do
-    conn = conn(:get, "/?as=User:15")
+    {:ok, token, _} = Guardian.encode_and_sign("User:15")
+    conn = conn(:get, "/?token=#{token}")
 
     conn =
       conn
