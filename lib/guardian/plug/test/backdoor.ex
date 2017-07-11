@@ -9,9 +9,8 @@ defmodule Guardian.Plug.Test.Backdoor do
   Add the following to your Phoenix router before any other Guardian plugs.
 
   ```
-  if Mix.env == :test do
-    plug Guardian.Plug.Test.Backdoor
-  end
+  plug Guardian.Plug.Test.Backdoor
+  plug Guardian.Plug.VerifySession
   ```
 
   ***This plug is designed for acceptance testing scenarios and should
@@ -64,12 +63,16 @@ defmodule Guardian.Plug.Test.Backdoor do
   end
 
   @doc false
-  def call(conn, %{token_field: token_field} = opts) do
-    case get_backdoor_token(conn, token_field) do
-      nil ->
-        conn
-      backdoor_token ->
-        handle_backdoor_token(conn, backdoor_token, opts)
+  if Mix.env() == :prod do
+    def call(conn, _opts), do: conn
+  else
+    def call(conn, %{token_field: token_field} = opts) do
+      case get_backdoor_token(conn, token_field) do
+        nil ->
+          conn
+        backdoor_token ->
+          handle_backdoor_token(conn, backdoor_token, opts)
+      end
     end
   end
 
