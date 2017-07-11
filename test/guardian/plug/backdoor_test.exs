@@ -1,4 +1,4 @@
-defmodule Guardian.Plug.BackdoorTest do
+defmodule Guardian.Plug.Test.BackdoorTest do
   @moduledoc false
   use ExUnit.Case, async: true
   use Plug.Test
@@ -10,7 +10,7 @@ defmodule Guardian.Plug.BackdoorTest do
     current_resource =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor)
+      |> run_plug(Guardian.Plug.Test.Backdoor)
       |> Guardian.Plug.current_resource
 
     {:ok, deserialized_resource} = Guardian.serializer.from_token("User:15")
@@ -39,7 +39,7 @@ defmodule Guardian.Plug.BackdoorTest do
     current_resource =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer)
+      |> run_plug(Guardian.Plug.Test.Backdoor, serializer: SampleSerializer)
       |> Guardian.Plug.current_resource
 
     {:ok, deserialized_resource} = SampleSerializer.from_token("User:15")
@@ -52,7 +52,7 @@ defmodule Guardian.Plug.BackdoorTest do
     current_resource =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer,
+      |> run_plug(Guardian.Plug.Test.Backdoor, serializer: SampleSerializer,
           token_field: "impersonate")
       |> Guardian.Plug.current_resource
 
@@ -67,7 +67,7 @@ defmodule Guardian.Plug.BackdoorTest do
     conn =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, type: token_type)
+      |> run_plug(Guardian.Plug.Test.Backdoor, type: token_type)
 
     assert {:ok, %{"typ" => ^token_type}} = Guardian.Plug.claims(conn)
   end
@@ -78,7 +78,7 @@ defmodule Guardian.Plug.BackdoorTest do
     conn =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, new_claims: [key: :special])
+      |> run_plug(Guardian.Plug.Test.Backdoor, new_claims: [key: :special])
 
     assert {:ok, _claims} = Guardian.Plug.claims(conn, :special)
     assert {:error, :no_session} == Guardian.Plug.claims(conn)
@@ -90,7 +90,7 @@ defmodule Guardian.Plug.BackdoorTest do
     conn =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer)
+      |> run_plug(Guardian.Plug.Test.Backdoor, serializer: SampleSerializer)
 
     current_resource = Guardian.Plug.current_resource(conn)
 
@@ -105,7 +105,7 @@ defmodule Guardian.Plug.BackdoorTest do
     conn =
       conn
       |> conn_with_fetched_session
-      |> run_plug(Guardian.Plug.Backdoor, serializer: SampleSerializer)
+      |> run_plug(Guardian.Plug.Test.Backdoor, serializer: SampleSerializer)
 
     {status, _, _body} = sent_resp(conn)
 

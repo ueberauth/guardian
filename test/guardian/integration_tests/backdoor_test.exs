@@ -26,7 +26,7 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
     @moduledoc false
     use Plug.Builder
 
-    plug Guardian.Plug.Backdoor, serializer: SampleSerializer
+    plug Guardian.Plug.Test.Backdoor, serializer: SampleSerializer
     plug Guardian.Plug.VerifySession
     plug Guardian.Plug.LoadResource
   end
@@ -73,7 +73,7 @@ defmodule Guardian.IntegrationTests.BackdoorTest do
     @moduledoc false
     use Plug.Builder
 
-    plug Guardian.Plug.Backdoor, serializer: SampleSerializer
+    plug Guardian.Plug.Test.Backdoor, serializer: SampleSerializer
     plug Guardian.Plug.VerifyHeader
     plug Guardian.Plug.LoadResource
   end

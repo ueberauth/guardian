@@ -1,4 +1,4 @@
-defmodule Guardian.Plug.Backdoor do
+defmodule Guardian.Plug.Test.Backdoor do
   @moduledoc """
   This plug allows you to bypass authentication in acceptance tests
   by passing the token needed to load the current resource directly to your
@@ -10,7 +10,7 @@ defmodule Guardian.Plug.Backdoor do
 
   ```
   if Mix.env == :test do
-    plug Guardian.Plug.Backdoor
+    plug Guardian.Plug.Test.Backdoor
   end
   ```
 
@@ -29,7 +29,7 @@ defmodule Guardian.Plug.Backdoor do
   If you aren't using [Hound][hound], a simple `GET /?as=User:5` request will
   work.
 
-  When the `Guardian.Plug.Backdoor` plug runs, it passes along the value
+  When the `Guardian.Plug.Test.Backdoor` plug runs, it passes along the value
   of the `as` parameter directly to your application's Guardian serializer.
 
   ## Options
