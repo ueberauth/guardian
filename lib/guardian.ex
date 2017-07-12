@@ -190,6 +190,7 @@ defmodule Guardian do
   """
 
   @type options :: Keyword.t
+  @type conditional_tuple :: {:ok, any} | {:error, any}
 
   @default_token_module Guardian.Token.Jwt
 
@@ -642,7 +643,6 @@ defmodule Guardian do
       {:ok, claims}
     else
       {:error, _} = err -> err
-      err -> {:error, err}
     end
   end
 
@@ -719,14 +719,12 @@ defmodule Guardian do
   the module, function and return that was received
   """
 
-  @spec returning_tuple(mfa) :: {:ok, any} | {:error, any}
   def returning_tuple({mod, func, args}) do
     result = apply(mod, func, args)
     case result do
       {:ok, _} -> result
       {:error, _} -> result
-      resp ->
-        {:error, "Invalid return for #{mod}#{func} - #{inspect(resp)}"}
+      resp -> {:error, "Invalid return for #{mod}#{func} - #{inspect(resp)}"}
     end
   end
 

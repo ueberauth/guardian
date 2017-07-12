@@ -30,11 +30,7 @@ if Code.ensure_loaded?(Plug) do
     connection.
 
     ```elixir
-    {:ok, conn} = MyApp.Guardian.Plug.sign_in(conn, resource, my_custom_claims)
-
-    # OR
-
-    conn = MyApp.Guardian.Plug.sign_in!(conn, resource, my_custom_claims)
+    conn = MyApp.Guardian.Plug.sign_in(conn, resource, my_custom_claims)
     ```
 
     If there is a session present the token will be stored in the session
@@ -53,6 +49,7 @@ if Code.ensure_loaded?(Plug) do
 
     alias Guardian.Plug, as: GPlug
     alias GPlug.Pipeline
+    alias __MODULE__.UnauthenticatedError
 
     defmacro __using__(impl) do
       quote do
@@ -82,26 +79,14 @@ if Code.ensure_loaded?(Plug) do
         def sign_in(conn, resource, claims \\ %{}, opts \\ []),
           do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
 
-        def sign_in!(conn, resource, claims \\ %{}, opts \\ []),
-          do: GPlug.sign_in!(conn, implementation(), resource, claims, opts)
-
         def sign_out(conn, opts \\ []),
           do: GPlug.sign_out(conn, implementation(), opts)
-
-        def sign_out!(conn, opts \\ []),
-          do: GPlug.sign_out!(conn, implementation(), opts)
 
         def remember_me(conn, resource, claims, opts),
           do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
 
-        def remember_me!(conn, resource, claims, opts),
-          do: GPlug.remember_me!(conn, implementation(), resource, claims, opts)
-
         def remember_me_from_token(conn, token, claims_to_check \\ %{}, opts \\ []),
           do: GPlug.remember_me_from_token(conn, implementation(), token, claims_to_check, opts)
-
-        def remember_me_from_token!(conn, token, claims_to_check \\ %{}, opts \\ []),
-          do: GPlug.remember_me_from_token!(conn, implementation(), token, claims_to_check, opts)
       end
     end
 
@@ -189,13 +174,10 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, resource)
     end
 
-    @spec sign_in(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
+    @spec sign_in(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
-      with {:ok, token, full_claims} <-
-             Guardian.encode_and_sign(impl, resource, claims, opts),
-
-           {:ok, conn} <-
-             add_data_to_conn(conn, resource, token, full_claims, opts),
+      with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
+           {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
            {:ok, conn} <-
              returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
 
@@ -205,90 +187,52 @@ if Code.ensure_loaded?(Plug) do
             |> fetch_key(opts)
             |> token_key()
 
-          conn =
-            conn
-            |> put_session(key, token)
-            |> configure_session(renew: true)
-
-          {:ok, conn}
+          conn
+          |> put_session(key, token)
+          |> configure_session(renew: true)
         else
-          {:ok, conn}
+          conn
         end
+      else
+        err -> handle_unauthenticated(conn, err, opts)
       end
     end
 
-    @spec sign_in!(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
-    def sign_in!(conn, impl, resource, claims \\ %{}, opts \\ []) do
-      result = __MODULE__.sign_in(conn, impl, resource, claims, opts)
-      case result do
-        {:ok, conn} -> conn
-        {:error, reason} -> raise inspect(reason)
-      end
-    end
-
-    @spec sign_out(Plug.Conn.t, module, Guardian.opts) :: {:ok, Plug.Conn.t} | {:error, atom}
+    @spec sign_out(Plug.Conn.t, module, Guardian.opts) :: Plug.Conn.t
     def sign_out(conn, impl, opts) do
       key = Keyword.get(opts, :key, :all)
-      do_sign_out(conn, impl, key, opts)
-    end
-
-    @spec sign_out!(Plug.Conn.t, module, Guardian.opts) :: Plug.Conn.t
-    def sign_out!(conn, impl, opts) do
-      result = __MODULE__.sign_out(conn, impl, opts)
+      result = do_sign_out(conn, impl, key, opts)
       case result do
         {:ok, conn} -> conn
-        {:error, reason} -> raise inspect(reason)
+        {:error, reason} -> handle_unauthenticated(conn, reason, opts)
       end
     end
 
-    @spec remember_me(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: {:ok, Plug.Conn.t} |
-                                                                                         {:error, atom}
+    @spec remember_me(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
     def remember_me(conn, mod, resource, claims, opts) do
       with type <- Keyword.get(opts, :token_type, "refresh"),
            opts <- Keyword.put(opts, :token_type, type),
            key <- Pipeline.fetch_key(conn, opts),
            {:ok, token, _claims} <- Guardian.encode_and_sign(mod, resource, claims, opts) do
 
-        {:ok, put_resp_cookie(conn, key, token)}
+        put_resp_cookie(conn, key, token)
       else
-        {:error, _} = err -> err
-      end
-    end
-
-    @spec remember_me!(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
-    def remember_me!(conn, mod, resource, claims, opts) do
-      result = __MODULE__.remember_me(conn, mod, resource, claims, opts)
-      case result do
-        {:ok, conn} -> conn
-        {:error, reason} ->
-          raise inspect(reason)
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
       end
     end
 
     @spec remember_me_from_token(
       Plug.Conn.t, module, Guardian.Token.token, Guardian.Token.claims, Guardian.opts
-    ) :: {:ok, Plug.Conn.t} | {:error, atom}
+    ) :: Plug.Conn.t
     def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
       with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
            type <- Keyword.get(opts, :token_type, "refresh"),
            key <- Pipeline.fetch_key(conn, opts),
            {:ok, _old, {new_t, _new_c}} <- Guardian.exchange(mod, token, claims["typ"], type, opts) do
 
-        {:ok, put_resp_cookie(conn, key, new_t)}
+        put_resp_cookie(conn, key, new_t)
       else
-        {:error, _} = err -> err
-      end
-    end
-
-    @spec remember_me_from_token!(
-      Plug.Conn.t, module, Guardian.Token.token, Guardian.Token.claims, Guardian.opts
-    ) :: Plug.Conn.t
-    def remember_me_from_token!(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
-      result = __MODULE__.remember_me_from_token(conn, mod, token, claims_to_check, opts)
-      case result do
-        {:ok, conn} -> conn
-        {:error, reason} ->
-          raise inspect(reason)
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
       end
     end
 
@@ -309,6 +253,7 @@ if Code.ensure_loaded?(Plug) do
         {:ok, conn}
       end
     end
+
     defp cleanup_session({:error, _} = err), do: err
     defp cleanup_session(err), do: {:error, err}
 
@@ -347,6 +292,17 @@ if Code.ensure_loaded?(Plug) do
         else
           {:ok, conn}
         end
+      end
+    end
+
+    defp handle_unauthenticated(conn, reason, opts) do
+      error_handler = Pipeline.current_error_handler(conn)
+      if error_handler do
+        conn
+        |> halt()
+        |> error_handler.auth_error({:unauthenticated, reason}, opts)
+      else
+        raise UnauthenticatedError, inspect(reason)
       end
     end
   end
