@@ -712,19 +712,13 @@ defmodule Guardian do
     end
   end
 
-  @doc """
-  Ensures the return result of calling `{mod, func, args}`
-  is a 2 element tuple with `{:ok, any}`  or `{:error, any}`
-  If not, it will return an error with a message detailing
-  the module, function and return that was received
-  """
-
+  @doc false
   def returning_tuple({mod, func, args}) do
     result = apply(mod, func, args)
     case result do
       {:ok, _} -> result
       {:error, _} -> result
-      resp -> {:error, "Invalid return for #{mod}#{func} - #{inspect(resp)}"}
+      resp -> {:error, "Invalid return for #{mod}##{func} - #{inspect(resp)}"}
     end
   end
 
