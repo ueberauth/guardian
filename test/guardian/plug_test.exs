@@ -133,7 +133,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
 
       refute GPlug.session_active?(xconn)
 
@@ -156,7 +156,7 @@ defmodule Guardian.PlugTest do
 
     test "it stores the information in the correct location", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [key: :bob])
 
       refute GPlug.session_active?(conn)
 
@@ -175,7 +175,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
 
       assert GPlug.session_active?(xconn)
 
@@ -233,7 +233,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_out(conn, ctx.impl, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [key: :bob])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -254,7 +254,7 @@ defmodule Guardian.PlugTest do
 
     test "is removes all users", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_out(conn, ctx.impl, [])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -308,7 +308,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_out(conn, ctx.impl, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [key: :bob])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -324,7 +324,7 @@ defmodule Guardian.PlugTest do
 
     test "is removes all users", ctx do
       conn = ctx.conn
-      assert {:ok, %Plug.Conn{} = xconn} = GPlug.sign_out(conn, ctx.impl, [])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
