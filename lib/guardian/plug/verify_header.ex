@@ -67,7 +67,7 @@ if Code.ensure_loaded?(Plug) do
       case realm do
         "" -> opts
         :none -> opts
-        str ->
+        _realm ->
           {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
           Keyword.put(opts, :realm_reg, reg)
       end
