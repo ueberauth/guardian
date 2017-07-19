@@ -66,26 +66,26 @@ defmodule Guardian.Plug.Test.Backdoor do
           handle_backdoor_token(conn, backdoor_token, opts)
       end
     end
-  end
 
-  defp get_backdoor_token(conn, token_field) do
-    conn
-    |> fetch_query_params()
-    |> Map.get(:params)
-    |> Map.get(token_field)
-  end
+    defp get_backdoor_token(conn, token_field) do
+      conn
+      |> fetch_query_params()
+      |> Map.get(:params)
+      |> Map.get(token_field)
+    end
 
-  defp handle_backdoor_token(conn, encoded_token, %{serializer: serializer}) do
-    with {:ok, claims} <- Guardian.decode_and_verify(encoded_token),
-         %{"sub" => decoded_token, "typ" => type} <- claims,
-         {:ok, resource} <- serializer.from_token(decoded_token) do
-      Guardian.Plug.sign_in(conn, resource, type)
-    else
-      {:error, _reason} ->
-        conn
-        |> send_resp(500, "Guardian.Plug.Test.Backdoor plug cannot " <>
-        "deserialize \"#{encoded_token}\" with #{serializer}")
-        |> halt()
+    defp handle_backdoor_token(conn, encoded_token, %{serializer: serializer}) do
+      with {:ok, claims} <- Guardian.decode_and_verify(encoded_token),
+           %{"sub" => decoded_token, "typ" => type} <- claims,
+           {:ok, resource} <- serializer.from_token(decoded_token) do
+        Guardian.Plug.sign_in(conn, resource, type)
+      else
+        {:error, _reason} ->
+          conn
+          |> send_resp(500, "Guardian.Plug.Test.Backdoor plug cannot " <>
+          "deserialize \"#{encoded_token}\" with #{serializer}")
+          |> halt()
+      end
     end
   end
 end
