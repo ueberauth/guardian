@@ -15,7 +15,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: ">= 1.3.2 or ~> 1.4",
+      elixir: ">= 1.3.2 or ~> 1.4 or ~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env),
       package: package(),
       source_url: @url,
