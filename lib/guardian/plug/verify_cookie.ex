@@ -54,7 +54,7 @@ if Code.ensure_loaded?(Plug) do
            module <- Pipeline.fetch_module!(conn, opts),
            key <- storage_key(conn, opts),
            exchange_from <- Keyword.get(opts, :exchange_from, "refresh"),
-           default_type <- apply(module, :default_token_type, []),
+           default_type <- module.default_token_type(),
            exchange_to <- Keyword.get(opts, :exchange_to, default_type),
            active_session? <- GPlug.session_active?(conn),
            {:ok, _old, {new_t, new_c}} <- Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
