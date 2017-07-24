@@ -1,31 +1,39 @@
 Guardian
 ========
 
-> An authentication framework for use with Elixir applications.
+> An authentication library for use with Elixir applications.
 
 [![Build Status](https://travis-ci.org/ueberauth/guardian.svg?branch=master)](https://travis-ci.org/ueberauth/guardian)
 
-Guardian is based on similar ideas to Warden but is re-imagined
-for modern systems where Elixir manages the authentication requirements.
+> Looking for [Guardian pre 1.0](https://github.com/ueberauth/guardian/tree/v0.14.x)?
 
-Guardian remains a functional system. It integrates with Plug, but can be used
-outside of it. If you're implementing a TCP/UDP protocol directly, or want to
-utilize your authentication via channels, Guardian is your friend.
+Guardian is a token based authentication library for use with Elixir applications.
 
-The core currency of authentication in Guardian is [JSON Web Tokens](https://jwt.io/) (JWT). You can use the JWT to
-authenticate web endpoints, channels, and TCP sockets and it can contain any
-authenticated assertions that the issuer wants to include.
+Guardian remains a functional system. It integrates with Plug, but can be used outside of it. If you're implementing a TCP/UDP protocol directly, or want to utilize your authentication via channels in Phoenix, Guardian is your friend.
+
+The core currency of authentication in Guardian is the _token_.
+By default [JSON Web Tokens](https://jwt.io) are supported out of the box but any token that:
+
+* Has the concept of a key-value payload
+* Is tamper proof
+* Can serialize to a String
+* Has a supporting module that implements the `Guardian.Token` behaviour
+
+You can use Guardian tokens to authenticate:
+
+* Web endpoints (Plug/Phoenix/X)
+* Channels/Sockets (Phoenix - optional)
+* Any other system you can imagine. If you can attach an authentication token you can authenticate it.
+
+Tokens should be able to contain any assertions (claims) that a developer wants to make and may contain both standard and application specific information encoded within them.
+
+Guardian also allows you to configure multiple token types/configurations in a single application.
 
 ## Useful articles
 
-If you are very new to Guardian, you'll find the "Simple Guardian" series of articles useful:
-
-* [Simple Guardian - Browser login](http://blog.overstuffedgorilla.com/simple-guardian/)
-* [Simple Guardian - API authentication](http://blog.overstuffedgorilla.com/simple-guardian-api-authentication/)
-* [Simple Guardian - Permissions](http://blog.overstuffedgorilla.com/simple-guardian-permissions/)
-* [Simple Guardian - Multiple Sessions](http://blog.overstuffedgorilla.com/simple-guardian-multiple-sessions/)
-
 ## Installation
+
+Guardian requires that you create an "Implementation Module". This module is your applications implementation for a particular type/configuration of token. You do this by `use`ing Guardian in your module and adding the relevant configuration.
 
 Add Guardian to your application
 
@@ -33,51 +41,367 @@ mix.exs
 
 ```elixir
 defp deps do
-  [
-    # ...
-    {:guardian, "~> 0.14"}
-    # ...
-  ]
+  [{:guardian, "~> 1.0"}]
 end
 ```
 
-config.exs
+Create a module that uses `Guardian`
 
 ```elixir
-config :guardian, Guardian,
-  allowed_algos: ["HS512"], # optional
-  verify_module: Guardian.JWT,  # optional
-  issuer: "MyApp",
-  ttl: { 30, :days },
-  allowed_drift: 2000,
-  verify_issuer: true, # optional
-  secret_key: <guardian secret key>,
-  serializer: MyApp.GuardianSerializer
+defmodule MyApp.Guardian do
+  use Guardian, otp_app: :my_app
+
+  def subject_for_token(resource, _claims) do
+    to_string(resource.id)
+  end
+
+  def resource_from_claims(claims) do
+    find_me_a_resource(claims["sub"])
+  end
+end
 ```
 
-The items in the configuration allow you to tailor how the JWT generation behaves.
+Add your configuration
 
-* `allowed_algos` - The list of algorithms (must be compatible with JOSE). The first is used as the encoding key. Default is: ["HS512"]
-* `verify_module` - Provides a mechanism to setup your own validations for items
-  in the token. Default is `Guardian.JWT`
-* `issuer` - The entry to put into the token as the issuer. This can be used in conjunction with `verify_issuer`
-* `ttl` - The default ttl of a token
-* `allowed_drift` - The allowable drift in miliseconds to allow for time fields. Allows for dealing with clock skew
-* `verify_issuer` - If set to true, the issuer will be verified to be the same issuer as specified in the `issuer` field
-* `secret_key` - The key to sign the tokens. See below for examples.
-* `serializer` The serializer that serializes the 'sub' (Subject) field into and out of the token.
+```elixir
+config :my_app, MyApp.Guardian,
+       issuer: "my_app"
+       secret_key: "Secret key. You can use `mix guardian.gen.secret` to get one"
+```
 
-## Secret Key
+With this level of configuration you can have a working installation.
+
+## Basics
+
+```elixir
+# encode a token for a resource
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource)
+
+# decode and verify a token
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token)
+
+# revoke a token (use GuardianDb or something similar if you need revoke to actually track a token)
+{:ok, claims} = MyApp.Guardian.revoke(token)
+
+# Refresh a token before it expires
+{:ok, _old_stuff, {new_token, new_claims}} = MyApp.Guardian.refresh(token)
+
+# Exchange a token of type "refresh" for a new token of type "access"
+{:ok, _old_stuff, {new_token, new_claims}} = MyApp.Guardian.exchange(token, "refresh", "access")
+
+# Lookup a resource directly from a token
+{:ok, resource, claims} = MyApp.Guardian.resource_from_token(token)
+```
+
+With Plug
+
+```elixir
+# If a session is loaded the token/resource/claims will be put into the session and connection
+# If no session is loaded, the token/resource/claims only go onto the connection
+conn = MyApp.Guardian.Plug.sign_in(conn, resource)
+
+# remove from session (if fetched) and revoke the token
+conn = MyApp.Guardian.Plug.sign_out(conn)
+
+# Set a "refresh" token directly on a cookie.
+# Can be used in conjunction with `Guardian.Plug.VerifyCookie`
+conn = MyApp.Guardian.Plug.remember_me(conn, resource)
+
+# Fetch the information from the current connection
+conn = MyApp.Guardian.Plug.current_token(conn)
+conn = MyApp.Guardian.Plug.current_claims(conn)
+conn = MyApp.Guardian.Plug.current_resource(conn)
+```
+
+Creating with custom claims and options
+
+```elixir
+# Add custom claims to a token
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{some: "claim"})
+
+# Create a specific token type (i.e. "access"/"refresh" etc)
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_type: "refresh")
+
+# Customize the time to live (ttl) of the token
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_ttl: {1, :minute})
+
+# Customize the secret
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: "custom")
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: fn -> "secret" end)
+```
+
+Decoding tokens
+
+```elixir
+# Check some literal claims. (i.e. this is an access token)
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{"typ" => "access"})
+
+# Use a custom secret
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: "custom")
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func})
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: fn -> "secret" end)
+```
+
+## Configuration
+
+The following configuration is available to all implementation modules.
+
+* `token_module` - The module that implements the functions for dealing with tokens. Default `Guardian.Token.Jwt`
+
+Guardian can handle tokens of any type that implement the `Guardian.Token` behaviour.
+Each token module will have it's own configuration requirements. Please see below for the JWT configuration.
+
+All configuration values may be provided in two ways.
+
+1. In your config files
+2. As a Keyword list to your call to `use Guardian` in you implementation module.
+
+Any options given to `use Guardian` have precedence over config values found in the config files.
+
+Some configuration may be required by your `token_module`
+
+### Configuration values
+
+Guardian resolves different types of configuration values. These can be provided in the config or options as:
+
+* `{:system, "FOO"}` - Read from the system environment
+* `{MyModule, :function_name}` - To call a function and use the result
+* `{MyModule, :func, [:some, :args]}` Calls the function on the module with args
+* `fn -> :some_value end` - an anonymous function whose result will be used
+* any other value
+
+These are evaluated at runtime and any value that you fetch via
+
+`MyApp.Guardian.config(key, default)` will be resolved using this scheme.
+
+See `Guardian.Config.resolve_value/1` for more information.
+
+### JWT (Configuration)
+
+The default token type of `Guardian` is JWT. It accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
+
+#### Required configuration (JWT)
+
+* `issuer` - The issuer of the token. Your application name/id
+* `secret_key` - The secret key to use for the implementation module.
+                 This may be any resolvable value for `Guardian.Config`
+
+#### Optional configuration (JWT)
+
+* `token_verify_module` - default `Guardian.Token.Jwt.Verify`. The module that verifies the claims
+* `allowed_algos` - The allowed algos to use for encoding and decoding.
+                    See `JOSE` for available. Default ["HS512"]
+* `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
+* `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
+* `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
+* `verify_issuer` Default false
+
+## Secrets (JWT)
+
+Secrets can be simple strings or more complicated `JOSE` secret schemes.
+
+The simplest way to use the JWT module is to provide a simple String. (`mix guardian.gen.secret` works great)
+
+You can provide a system env string value by using `secret_key: {:system, "MY_TOKEN_SECRET"}` and setting the `MY_TOKEN_SECRET` in your environment.
+
+Alternatively you can use a module and function by adding `secret_key: {MyModule, :function_name}`.
+
+More advanced secret information can be found below.
+
+## Using options in calls
+
+Almost all of the functions provided by `Guardian` utilize options as the last argument.
+These options are passed from the initiating call through to the `token_module` and also your `callbacks`. See the documentation for your `token_module` (`Guardian.Token.Jwt` by default) for more information.
+
+## Hooks
+
+Each implementation module (modules that `use Guardian`) implement callbacks for the `Guardian` behaviour. By default these are just pass-through but you can implement your own version to tweak the behaviour of your tokens.
+
+The callbacks are:
+
+* `after_encode_and_sign`
+* `after_sign_in`
+* `before_sign_out`
+* `build_claims` - Use this to tweak the claims that you include in your token
+* `default_token_type` - default is `"access"`
+* `on_exchange`
+* `on_revoke`
+* `on_refresh`
+* `on_verify`
+* `verify_claims` - You can add custom validations for your tokens in this callback
+
+## Plugs
+
+Guardian provides various plugs to help work with web requests in Elixir.
+Guardians plugs are optional and will not be compiled if you're not using Plug in your application.
+
+All plugs need to be in a `pipeline`.
+A pipeline is just a way to get the implementation module and error handler
+into the connection for use downstream. More information can be found in the `Pipelines` section.
+
+### Plugs and keys (advanced usage)
+
+All Plugs and related functions provided by `Guardian` have the concept of a `key`.
+A `key` specifies a label that is used to keep tokens separate so that you can have multiple token/resource/claims active in a single request.
+
+In your plug pipeline you may use something like:
+
+```elixir
+plug Guardian.Plug.VerifyHeader, key: :impersonate
+plug Guardian.Plug.EnsureAuthenticated, key: :impersonate
+```
+
+In your action handler:
+
+```elixir
+resource = MyApp.Guardian.Plug.current_resource(conn, key: :impersonate)
+claims = MyApp.Guardian.Plug.current_claims(conn, key: :impersonate)
+```
+
+### Plugs out of the box
+
+#### `Guardian.Plug.VerifyHeader`
+Look for a token in the header and verify it
+
+#### `Guardian.Plug.VerifySession`
+Look for a token in the session and verify it
+
+#### `Guardian.Plug.VerifyCookie`
+Look for a token in cookies and exchange it for an access token
+
+#### `Guardian.Plug.EnsureAuthenticated`
+Make sure that a token was found and is valid
+
+#### `Guardian.Plug.EnsureNotAuthenticated`
+Make sure no one is logged in
+
+#### `Guardian.Plug.LoadResource`
+If a token was found, load the resource for it
+
+See the documentation for each Plug for more information.
+
+### Pipelines
+
+A pipeline is a way to collect together the various plugs for a particular authentication scheme.
+
+Apart from keeping an authentication flow together, pipelines provide downstream information for error handling and which implementation module to use. You can provide this separately but we recommend creating a pipeline plug.
+
+#### Create a custom pipeline
+
+```elixir
+defmodule MyApp.AuthAccessPipeline do
+  use Guardian.Plug.Pipeline, otp_app: :my_app
+
+  plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
+  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
+  plug Guardian.Plug.EnsureAuthenticated
+  plug Guardian.Plug.LoadResource, ensure: true
+end
+```
+
+Add your implementation module and error handler to your configuration:
+
+```elixir
+config :my_app, MyApp.AuthAccessPipeline,
+  module: MyApp.Guardian,
+  error_handler: MyApp.AuthErrorHandler
+```
+
+By using a pipeline, apart from keeping your auth logic together, you're instructing downstream plugs to use a particular implementation module and error handler.
+
+If you wanted to do that manually:
+
+```elixir
+plug Guardian.Plug.Pipeline, module: MyApp.Guardian,
+                             error_handler: MyApp.AuthErrorHandler
+
+plug Guardian.Plug.VerifySession
+```
+
+### Plug Error handlers
+
+The error handler is a module that implements an `auth_error` function.
+
+```elixir
+defmodule MyApp.AuthErrorHandler do
+  import Plug.Conn
+
+  def auth_error(conn, {type, reason}, _opts) do
+    body = Poison.encode!(%{message: to_string(type)})
+    send_resp(conn, 401, body)
+  end
+end
+```
+
+### Phoenix
+
+Guardian has great integration with Phoenix. For Controllers, pipelines, sockets or your custom integration points `Guardian` has you covered.
+
+By default `Guardian` does not require Phoenix. If Phoenix is available `Guardian` will load helpers relevant.
+
+Please see the documentation for `Guardian.Phoenix.Socket`, `Guardian.Phoenix.Controller` and `Guardian.Phoenix.Channel`
+
+## Permissions
+
+Permissions can be encoded into your token as an optional add-in.
+
+Encoding permissions into a token is useful in some areas of authorization.
+The permissions provided by `Guardian.Permissions` have one level of nesting.  
+
+For example:
+
+* `users -> profile_read`
+* `users -> profile_write`
+* `users -> followers_read`
+* `users -> followers_write`
+* `admin -> all_users_read`
+* `admin -> all_users_write`
+
+Once a permission is granted it is valid for as long as the token is valid.
+Since the permission is valid for the life of a token it is not suitable to encode highly dynamic information into a token. These permissions are similar in intent to OAuth scopes. Very useful as a broad grant to an area of code for 3rd party services / other microservices. If you have a requirement to look up permissions from you database for a particular user on each request, these are not the permissions you're looking for.
+
+Please see `Guardian.Permissions` for more information.
+
+## Tracking Tokens
+
+When using tokens, depending on the type of token you use, nothing may happen by default when you `revoke` a token.
+
+For example, JWT tokens by default are not tracked by the application.
+The fact that they are signed with the correct secret and are not expired is usually how validation of if a token is active or not. Depending on your use-case this may not be enough for your applications needs.
+If you need to track and revoke individual tokens, you may need to use something like
+[GuardianDb](https://github.com/ueberauth/guardian_db)
+
+This will record each token issued in your database, confirm it is still valid on each access and then finally when you `revoke` (called on sign_out or manually) invalidate the token.
+
+For more in-depth documentation please see the [GuardianDb README](https://github.com/ueberauth/guardian_db/blob/master/README.md)
+
+## Related projects
+
+* [GuardianDb](https://hex.pm/packages/guardian_db) - Token tracking in the database
+* [Sentinal](https://hex.pm/packages/sentinel) - Adds helpful extras to Guardian like default mailer support, as well as out of the box controllers and routes
+* [sans_password](https://hex.pm/packages/sans_password) - A simple, passwordless authentication system based on Guardian.
+* [protego](https://hex.pm/packages/protego) - Flexible authentication solution for Elixir/Phoenix with Guardian.
+
+## More advanced secrets
 
 By specifying a binary, the default behavior is to treat the key as an [`"oct"`](https://tools.ietf.org/html/rfc7518#section-6.4) key type (short for octet sequence). This key type may be used with the `"HS256"`, `"HS384"`, and `"HS512"` signature algorithms.
 
-Alternatively, a `Map`, `Function`, or `%JOSE.JWK{} Struct` may be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
+Alternatively, a configuration value that resolves to:
+
+* `Map`
+* `Function`
+* `%JOSE.JWK{} Struct`
+
+may be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
 
 See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from jose for how to generate your own keys.
 
-To get off the ground quickly, simply replace `<guardian secret key>` in your Guardian config with the output of either:
+To get off the ground quickly, set your `secret_key` in your Guardian config with the output of either:
 
-`$ mix phoenix.gen.secret`
+`$ mix guardian.gen.secret`
 
 or
 
@@ -88,7 +412,7 @@ After running `$ mix deps.get` because JOSE is one of Guardian's dependencies.
 ```elixir
 ## Map ##
 
-config :guardian, Guardian,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["ES512"],
   secret_key: %{
     "crv" => "P-521",
@@ -115,7 +439,7 @@ defmodule MySecretKey do
   end
 end
 
-config :guardian, Guardian,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["RS512"],
   secret_key: {MySecretKey, :fetch}
 
@@ -129,592 +453,7 @@ defmodule MySecretKey do
   end
 end
 
-config :guardian, Guardian,
+config :my_app, MyApp.Guardian,
   allowed_algos: ["Ed25519"],
   secret_key: {MySecretKey, :fetch}
 ```
-
-## Serializer
-
-The serializer knows how to encode and decode your resource into and out of the
-token. A simple serializer:
-
-```elixir
-defmodule MyApp.GuardianSerializer do
-  @behaviour Guardian.Serializer
-
-  alias MyApp.Repo
-  alias MyApp.User
-
-  def for_token(user = %User{}), do: { :ok, "User:#{user.id}" }
-  def for_token(_), do: { :error, "Unknown resource type" }
-
-  def from_token("User:" <> id), do: { :ok, Repo.get(User, id) }
-  def from_token(_), do: { :error, "Unknown resource type" }
-end
-```
-
-## Plug API
-
-Guardian ships with some plugs to help integrate into your application.
-
-### Guardian.Plug.VerifySession
-
-Looks for a token in the session. Useful for browser sessions.
-If one is not found, this does nothing.
-
-### Guardian.Plug.VerifyHeader
-
-Looks for a token in the Authorization header. Useful for apis.
-If one is not found, this does nothing.
-
-### Guardian.Plug.EnsureAuthenticated
-
-Looks for a previously verified token. If one is found, continues, otherwise it
-will call the `:unauthenticated` function of your handler.
-
-When you ensure a session, you must declare an error handler. This can be done
-as part of a pipeline or inside a Phoenix controller.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-
-  plug Guardian.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler
-end
-```
-
-The failure function must receive the connection, and the connection params.
-
-### Guardian.Plug.LoadResource
-
-Up to now the other plugs have been just looking for valid tokens in various
-places or making sure that the token has the correct permissions.
-
-The `LoadResource` plug looks in the `sub` field of the token, fetches the
-resource from the Serializer and makes it available via
-`Guardian.Plug.current_resource(conn)`.
-
-Note that this does _not ensure_ a resource will be loaded.
-If there is no available resource (because it could not be found)
-`current_resource` will return nil. You can ensure it's loaded with
-`Guardian.Plug.EnsureResource`
-
-### Guardian.Plug.EnsureResource
-
-Looks for a previously loaded resource. If not found, the `:no_resource`
-function is called on your handler.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-
-  plug Guardian.Plug.EnsureResource, handler: MyApp.MyAuthErrorHandler
-end
-```
-
-### Guardian.Plug.EnsurePermissions
-
-Looks for a previously verified token. If one is found, confirms that all listed
-permissions are present in the token. If not, the `:unauthorized` function is called on your handler.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-
-  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler, default: [:read, :write]
-end
-```
-
-When permissions' sets are specified through a `:one_of` map, the token is searched for at least one
-matching permissions set to allow the request. The first set that matches will allow the request.
-If no set matches, the `:unauthorized` function is called.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-
-  plug Guardian.Plug.EnsurePermissions, handler: MyApp.MyAuthErrorHandler,
-    one_of: [%{default: [:read, :write]}, %{other: [:read]}]
-end
-```
-
-### Pipelines
-
-These plugs can be used to construct pipelines in Phoenix.
-
-```elixir
-pipeline :browser_session do
-  plug Guardian.Plug.VerifySession
-  plug Guardian.Plug.LoadResource
-end
-
-pipeline :api do
-  plug :accepts, ["json"]
-  plug Guardian.Plug.VerifyHeader
-  plug Guardian.Plug.LoadResource
-end
-
-scope "/", MyApp do
-  pipe_through [:browser, :browser_session] # Use the default browser stack
-  # ...
-end
-
-scope "/api", MyApp.Api do
-  pipe_through [:api] # Use the default browser stack
-end
-```
-
-From here, you can either EnsureAuthenticated in your pipeline, or on a per-controller basis.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-
-  plug Guardian.Plug.EnsureAuthenticated, handler: MyApp.MyAuthHandler
-end
-```
-
-## Sign in and Sign out
-
-It's up to you how you generate the claims to encode into the token Guardian uses.
-As an example, here are the important parts of a SessionController
-
-```elixir
-defmodule MyApp.SessionController do
-  use MyApp.Web, :controller
-
-  alias MyApp.User
-  alias MyApp.UserQuery
-
-  plug :scrub_params, "user" when action in [:create]
-
-  def create(conn, params = %{}) do
-    conn
-    |> put_flash(:info, "Logged in.")
-    |> Guardian.Plug.sign_in(verified_user) # verify your logged in resource
-    |> redirect(to: user_path(conn, :index))
-  end
-
-  def delete(conn, _params) do
-    Guardian.Plug.sign_out(conn)
-    |> put_flash(:info, "Logged out successfully.")
-    |> redirect(to: "/")
-  end
-end
-```
-
-### Guardian.Plug.sign\_in
-
-You can sign in with a resource (that the serializer knows about)
-
-```elixir
-Guardian.Plug.sign_in(conn, user) # Sign in with the default storage
-```
-
-```elixir
-Guardian.Plug.sign_in(conn, user, :access, claims)  # give some claims to used for the token jwt
-
-Guardian.Plug.sign_in(conn, user, :access, key: :secret)  # create a token in the :secret location
-```
-
-To attach permissions to the token, use the `:perms` key and pass it a map.
-Note. To add permissions, you should configure them in your guardian config.
-
-```elixir
-Guardian.Plug.sign_in(conn, user, :access, perms: %{ default: [:read, :write], admin: [:all] })
-
-Guardian.Plug.sign_in(conn, user, :access, key: :secret, perms: %{ default: [:read, :write], admin: [:all]})  # create a token in the :secret location
-```
-
-### Guardian.Plug.sign\_out
-
-```elixir
-Guardian.Plug.sign_out(conn) # Sign out everything (clear session)
-```
-
-```elixir
-Guardian.Plug.sign_out(conn, :secret) # Clear the token and associated user from the 'secret' location
-```
-
-### Current resource, token and claims
-
-Access to the current resource, token and claims is useful. Note, you'll need to
-have run the VerifySession/Header for token and claim access, and LoadResource to access the resource.
-
-```elixir
-Guardian.Plug.claims(conn) # Access the claims in the default location
-Guardian.Plug.claims(conn, :secret) # Access the claims in the secret location
-```
-
-```elixir
-Guardian.Plug.current_token(conn) # access the token in the default location
-Guardian.Plug.current_token(conn, :secret) # access the token in the secret location
-```
-
-For the resource
-
-```elixir
-Guardian.Plug.current_resource(conn) # Access the loaded resource in the default location
-Guardian.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
-```
-
-### Without Plug
-
-There are many instances where Plug might not be in use. Channels, and raw
-sockets for e.g. If you need to do things your own way.
-
-```elixir
-{ :ok, jwt, encoded_claims } = Guardian.encode_and_sign(resource, <token_type>, claims_map)
-```
-
-This will give you a new JWT to use with the claims ready to go.
-The token type is encoded into the JWT as the 'typ' field and is intended to be
-used as the _type_ of "access".
-
-```elixir
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access)
-```
-
-Add some permissions
-
-```elixir
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access, perms: %{ default: [:read, :write], admin: Guardian.Permissions.max})
-```
-
-Currently suggested token types are:
-
-* `"access"` - Use for API or CORS access. These are basic tokens.
-
-You can also customize the claims you're asserting.
-
-```elixir
-claims = Guardian.Claims.app_claims
-         |> Map.put("some_claim", some_value)
-         |> Guardian.Claims.ttl({3, :days})
-
-{ :ok, jwt, full_claims } = Guardian.encode_and_sign(resource, :access, claims)
-```
-
-To verify the token:
-
-```elixir
-case Guardian.decode_and_verify(jwt) do
-  { :ok, claims } -> do_things_with_claims(claims)
-  { :error, reason } -> do_things_with_an_error(reason)
-end
-```
-
-Accessing the resource from a set of claims:
-
-```elixir
-case Guardian.serializer.from_token(claims["sub"]) do
-  { :ok, resource } -> do_things_with_resource(resource)
-  { :error, reason } -> do_things_without_a_resource(reason)
-end
-```
-
-### Permissions
-
-Guardian includes support for including permissions. Declare your permissions in
-your configuration. All known permissions must be included.
-
-```elixir
-config :guardian, Guardian,
-       permissions: %{
-         default: [:read, :write],
-         admin: [:dashboard, :reconcile]
-       }
-```
-
-JWTs need to be kept reasonably small so that they can fit into an authorization
-header. For this reason, permissions are encoded as bits (an integer) in the
-token. You can have up to 64 permissions per set, and as many sets as you like.
-In the example above, we have the `:default` set, and the `:admin` set.
-
-The bit value of the permissions within a set is determined by it's position in
-the config.
-
-```elixir
-# Fetch permissions from the claims map
-
-Guardian.Permissions.from_claims(claims, :default)
-Guardian.Permissions.from_claims(claims, :admin)
-
-# Check the permissions for all present
-
-Guardian.Permissions.from_claims(claims, :default) |> Guardian.Permissions.all?([:read, :write], :default)
-Guardian.Permissions.from_claims(claims, :admin) |> Guardian.Permissions.all?([:reconcile], :admin)
-
-# Check for any permissions
-Guardian.Permissions.from_claims(claims, :default) |> Guardian.Permissions.any?([:read, :write], :default)
-Guardian.Permissions.from_claims(claims, :admin) |> Guardian.Permissions.any?([:reconcile, :dashboard], :admin)
-```
-
-You can use a plug to ensure permissions are present. See Guardian.Plug.EnsurePermissions
-
-#### Setting permissions
-
-When you generate (or sign in) a token, you can inject permissions into it.
-
-```elixir
-Guardian.encode_and_sign(resource, :access, perms: %{ admin: [:dashboard], default: Guardian.Permissions.max}})
-```
-
-By setting a permission using Guardian.Permission.max you're setting all the bits, so even if new permissions are added, they will be set.
-
-You can similarly pass a `:perms` key to the sign\_in method to have the
-permissions encoded into the token.
-
-### Hooks
-
-Often you'll need to take action on some event within the lifecycle of
-authentication. Recording logins etc. Guardian provides hooks to allow you to do
-this. Use the Guardian.Hooks module to setup. Default implementations are
-available for all callbacks.
-
-```elixir
-defmodule MyApp.GuardianHooks do
-  use Guardian.Hooks
-
-  def after_sign_in(conn, location) do
-    user = Guardian.Plug.current_resource(conn, location)
-    IO.puts("SIGNED INTO LOCATION WITH: #{user.email}")
-    conn
-  end
-end
-```
-
-By default, JWTs are not tracked. This means that after 'logout' the token can
-still be used if it is stored outside the system. This is because Guardian does
-not track tokens and only interprets them live. When using Guardian in this
-way, be sure you consider the expiry time as this is one of the few options you
-have to make your tokens invalid.
-
-If you want more control over this you should implement a hook that tracks the
-tokens in some storage. When calling `Guardian.revoke!` (called automatically
-with sign\_out).
-
-To keep track of all tokens and ensure they're revoked on sign out you can use
-[GuardianDb](https://github.com/hassox/guardian_db). This is a simple
-Guardian.Hooks module that implements database integration.
-
-    config :guardian, Guardian,
-           hooks: GuardianDb
-
-    config :guardian_db, GuardianDb, repo: MyRepo
-
-Configure Guardian to know which module to use.
-
-```elixir
-config :guardian, Guardian,
-       hooks: MyApp.GuardianHooks,
-       #…
-```
-
-### Refreshing Tokens
-
-You can use Guardian to refresh tokens. This keeps most of the information in
-the token intact, but changes the `iat`, `exp`, `jti` and `nbf` fields.
-A valid token must be used in order to be refreshed,
-see [Refresh Tokens](###Refresh Tokens) for information on how to refresh invalid tokens
-
-```elixir
-case Guardian.refresh!(existing_jwt, existing_claims, %{ttl: {15, :days}}) do
-  {:ok, new_jwt, new_claims} -> do_things(new_jwt)
-  {:error, reason} -> handle_error(reason)
-end
-```
-
-Once the new token is created, the old one is revoked before returning the new
-token.
-
-### Exchange Tokens
-
-You can exchange one type of token to an other given that the first is valid
-This can be used to issue long living tokens that can be exchanged for shorter living ones
-
-```elixir
-    # issue a long living refresh token
-    {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
-    # exchange the refresh token for a access token
-    {:ok, access_jwt, new_claims} = Guardian.exchange(jwt, "refresh", "access")
-```
-
-
-The old token wont be revoked after the exchange
-
-```elixir
-    # issue a long living refresh token
-    {:ok, jwt, claims} = Guardian.encode_and_sign(resource, "refresh")
-    # exchange the refresh token for a access token
-    {:ok, new_jwt, new_claims} = Guardian.exchange!(jwt)
-```
-
-
-### Phoenix Controllers
-
-Guardian provides some helpers for you to use with your controllers.
-
-Provides a simple helper to provide easier access to the current user and their claims.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-  use Guardian.Phoenix.Controller
-
-  def index(conn, params, user, claims) do
-    # do stuff in here
-  end
-end
-```
-
-You can specify the key location of the user if you're using multiple locations to store users.
-
-```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
-  use Guardian.Phoenix.Controller, key: :secret
-
-  def index(conn, params, user, claims) do
-  # do stuff with the secret user
-  end
-end
-```
-
-### Phoenix Sockets
-
-Guardian provides integration into the Phoenix channels API to provide
-authentication. You can choose to authenticate either on `connect` or every time
-someone joins a topic.
-
-To authenticate the initial connect there's a couple of options.
-
-1. Automatically authenticate
-2. Authenticate with more control manually.
-
-To automatically authenticate `use` the Guardian.Phoenix.Socket module in your
-socket.
-
-```elixir
-defmodule MyApp.UsersSocket do
-  use Phoenix.Socket
-  use Guardian.Phoenix.Socket
-
-  def connect(_params, socket) do
-    # if we get here, we did not authenticate
-    :error
-  end
-end
-```
-
-Connection authentication requires a `guardian_token` parameter to be provided
-which is the JWT. If this is present, Guardian.Phoenix.Socket will authenticate
-the connection and carry on or return an `:error` and not allow the connection.
-
-On the javascript side provide your token when you connect.
-
-```javascript
-let socket = new Socket("/ws");
-socket.connect({guardian_token: jwt});
-```
-
-This works fine when all connections should be authenticated. In the case where
-you want some of them to be, you can manually sign in.
-
-```elixir
-defmodule MyApp.UsersSocket do
-  use Phoenix.Socket
-  import Guardian.Phoenix.Socket
-
-  def connect(%{"guardian_token" => jwt} = params, socket) do
-    case sign_in(socket, jwt) do
-      {:ok, authed_socket, guardian_params} ->
-        {:ok, authed_socket}
-      _ ->
-        #unauthenticated socket
-        {:ok, socket}
-    end
-  end
-
-  def connect(_params, socket) do
-    # handle unauthenticated connection
-  end
-end
-```
-
-Once you have an authenticated socket you can get the information from it:
-
-```elixir
-claims = Guardian.Phoenix.Socket.current_claims(socket)
-jwt = Guardian.Phoenix.Socket.current_token(socket)
-user = Guardian.Phoenix.Socket.current_resource(socket)
-```
-
-If you need even more control, you can use the helpers provided by
-Phoenix.Guardian.Socket inside your Channel.
-
-### Phoenix Channels
-
-We can use the Guardian.Phoenix.Socket module to help authenticate channels.
-
-```elixir
-defmodule MyApp.UsersChannel do
-  use Phoenix.Channel
-  import Guardian.Phoenix.Socket
-
-  def join(_room, %{"guardian_token" => token}, socket) do
-    case sign_in(socket, token) do
-      {:ok, authed_socket, _guardian_params} ->
-        {:ok, %{message: "Joined"}, authed_socket}
-      {:error, reason} ->
-        # handle error
-    end
-  end
-
-  def join(room, _, socket) do
-    {:error,  :authentication_required}
-  end
-
-  def handle_in("ping", _payload, socket) do
-    user = current_resource(socket)
-    broadcast(socket, "pong", %{message: "pong", from: user.email})
-    {:noreply, socket}
-  end
-end
-```
-
-Guardian picks up on joins that have been made and automatically verifies the
-token and makes available the claims and resource making the request.
-
-```javascript
-let socket = new Socket("/ws");
-socket.connect();
-let guardianToken = jQuery('meta[name="guardian_token"]').attr('content');
-let chan = socket.chan("pings", { guardian_token: guardianToken });
-```
-
-How to get the tokens onto the page?
-
-```eex
-<%= if Guardian.Plug.current_token(@conn) do %>
-  <meta name='guardian_token' content="<%= Guardian.Plug.current_token(@conn) %>">
-<% end %>
-```
-
-# Acknowledgements
-
-Many thanks to Sonny Scroggin (@scrogson) for the name Guardian and great
-feedback to get up and running.
-
-### TODO
-
-- [x] Flexible serialization
-- [x] Integration with Plug
-- [x] Basic integrations like raw TCP
-- [x] Service2Service credentials. That is, pass the authentication results through many downstream requests.
-- [x] Integration with Phoenix channels
-- [x] Integrated permission sets
-- [x] Hooks into the authentication cycle
-- [x] Revoke tokens
-- [x] Refresh tokens

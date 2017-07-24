@@ -1,186 +1,234 @@
-defmodule Guardian.Phoenix.Socket do
-  @moduledoc """
-  Provides functions for managing authentication with sockets.
-  Usually you'd use this on the Socket to authenticate on connection on
-  the `connect` function.
+if Code.ensure_loaded?(Phoenix) do
+  defmodule Guardian.Phoenix.Socket do
+    @moduledoc """
+    Provides functions for managing authentication with sockets.
+    Usually you'd use this on the Socket to authenticate on connection on
+    the `connect` function.
 
-  There are two main ways to use this module.
+    There are two main ways to use this module.
 
-  1. use Guardian.Phoenix.Socket
-  2. import Guardian.Phoenix.Socket
+    1. use Guardian.Phoenix.Socket
+    2. import Guardian.Phoenix.Socket
 
-  You use this function when you want to automatically sign in a socket
-  on `connect`. The case where authentication information is not provided
-  is not handled so that you can handle it yourself.
+    You use this function when you want to automatically sign in a socket
+    on `connect`. The case where authentication information is not provided
+    is not handled so that you can handle it yourself.
 
-  ```elixir
-  defmodule MyApp.UserSocket do
-    use Phoenix.Socket
-    use Guardian.Phoenix.Socket
+    ```elixir
+    defmodule MyApp.UserSocket do
+      use Phoenix.Socket
+      use Guardian.Phoenix.Socket
 
-    # This function will be called when there was no authentication information
-    def connect(_params,socket) do
-      :error
-    end
-  end
-  ```
-
-  If you want more control over the authentication of the connection, then you
-  should `import Guardian.Phoenix.Socket` and use the `sign_in` function
-  to authenticate.
-
-  ```elixir
-  defmodule MyApp.UserSocket do
-    use Phoenix.Socket
-    import Guardian.Phoenix.Socket
-
-    def connect(%{"guardian_token" => jwt} = params, socket) do
-      case sign_in(socket, jwt) do
-        {:ok, authed_socket, guardian_params} ->
-          {:ok, authed_socket}
-        _ -> :error
+      # This function will be called when there was no authentication information
+      def connect(_params, socket) do
+        :error
       end
     end
-  end
-  ```
+    ```
 
-  If you want to authenticate on the join of a channel, you can import this
-  module and use the sign_in function as normal.
-  """
-  defmacro __using__(opts) do
-    opts = Enum.into(opts, %{})
-    key = Map.get(opts, :key, :default)
+    If you want more control over the authentication of the connection, then you
+    should `import Guardian.Phoenix.Socket` and use the `sign_in` function
+    to authenticate.
 
-    quote do
+    ```elixir
+    defmodule MyApp.UserSocket do
+      use Phoenix.Socket
       import Guardian.Phoenix.Socket
 
-      def connect(%{"guardian_token" => jwt} = params, socket) do
-        case sign_in(socket, jwt, params, key: unquote(key)) do
-          {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
+      def connect(%{"guardian_token" => token} = params, socket) do
+        case sign_in(socket, MyApp.Guardian, token) do
+          {:ok, authed_socket, guardian_params} ->
+            {:ok, authed_socket}
           _ -> :error
         end
       end
     end
-  end
+    ```
 
-  @doc """
-  Set the current token. Used internally and in tests. Not expected to be
-  used inside channels or sockets.
-  """
-  def set_current_token(socket, jwt, key \\ :default) do
-    Phoenix.Socket.assign(socket, Guardian.Keys.jwt_key(key), jwt)
-  end
+    If you want to authenticate on the join of a channel, you can import this
+    module and use the sign_in function as normal.
+    """
 
-  @doc """
-  Set the current claims. Used internally and in tests. Not expected to be
-  used inside channels or sockets.
-  """
-  def set_current_claims(socket, new_claims, key \\ :default) do
-    Phoenix.Socket.assign(socket, Guardian.Keys.claims_key(key), new_claims)
-  end
+    import Guardian.Plug.Keys
 
-  @doc """
-  Set the current resource. Used internally and in tests. Not expected to be
-  used inside channels or sockets.
-  """
-  def set_current_resource(socket, resource, key \\ :default) do
-    Phoenix.Socket.assign(socket, Guardian.Keys.resource_key(key), resource)
-  end
+    alias Guardian.Plug, as: GPlug
+    alias Phoenix.Socket
 
-  # deprecated in 1.0
-  def claims(socket, key \\ :default), do: current_claims(socket, key)
-
-  @doc """
-  Fetches the `claims` map that was encoded into the token.
-  """
-  def current_claims(socket, key \\ :default) do
-    socket.assigns[Guardian.Keys.claims_key(key)]
-  end
-
-  @doc """
-  Fetches the JWT that was provided for the initial authentication.
-  This is provided as an encoded string.
-  """
-  def current_token(socket, key \\ :default) do
-    socket.assigns[Guardian.Keys.jwt_key(key)]
-  end
-
-  @doc """
-  Loads the resource from the serializer.
-  The resource is not cached onto the socket so using this function will load a
-  fresh version of the resource each time it's called.
-  """
-  def current_resource(socket, key \\ :default) do
-    case current_claims(socket, key) do
-      nil -> nil
-      the_claims ->
-        case Guardian.serializer.from_token(the_claims["sub"]) do
-          {:ok, resource} -> resource
-          _ -> nil
+    defmacro __using__(opts) do
+      key = Keyword.get(opts, :key, :default)
+      mod = Keyword.get(opts, :module)
+      module =
+        case mod do
+          {:__aliases__, _, _} = stuff -> Macro.expand(stuff, __ENV__)
+          mod -> mod
         end
-    end
-  end
 
-  @doc """
-  Boolean if the token is present or not to indicate an authenticated socket
-  """
-  def authenticated?(socket, key \\ :default) do
-    socket
-    |> current_token(key)
-    |> is_binary
-  end
-
-  def sign_in(_socket, nil), do: {:error, :no_token}
-  def sign_in(socket, jwt), do: sign_in(socket, jwt, %{})
-
-  @doc """
-  Sign into a socket. Takes a JWT and verifies it. If successful it caches the
-  JWT and decoded claims onto the socket for future use.
-  """
-  def sign_in(socket, jwt, params, opts \\ []) do
-    key = Keyword.get(opts, :key, :default)
-
-    case Guardian.decode_and_verify(jwt, params) do
-      {:ok, decoded_claims} ->
-        case Guardian.serializer.from_token(Map.get(decoded_claims, "sub")) do
-          {:ok, res} ->
-            authed_socket = socket
-            |> set_current_claims(decoded_claims, key)
-            |> set_current_token(jwt, key)
-            {
-              :ok,
-              authed_socket,
-              %{
-                claims: decoded_claims,
-                resource: res,
-                jwt: jwt
-              }
-          }
-          error -> error
+      params_key =
+        if Keyword.get(opts, :token_key) do
+          opts |> Keyword.get(:token_key) |> to_string()
+        else
+          module |> apply(:config, [:socket_token_key, "guardian_token"]) |> to_string()
         end
-      error -> error
+
+      quote do
+        import Guardian.Phoenix.Socket
+
+        def connect(%{unquote(params_key) => token} = params, socket) when not is_nil(token) do
+          case sign_in(socket, unquote(module), token, %{}, key: unquote(key)) do
+            {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
+            err -> :error
+          end
+        end
+      end
     end
-  end
 
-  @doc """
-  Signout of the socket and also revoke the token. Using with GuardianDB this
-  will render the token useless for future requests.
-  """
-  def sign_out!(socket, key \\ :default) do
-    jwt = current_token(socket)
-    the_claims = current_claims(socket)
-    _ = Guardian.revoke!(jwt, the_claims)
-    sign_out(socket, key)
-  end
+    @doc """
+    Puts the current token onto the socket for later use.
 
-  @doc """
-  Sign out of the socket but do not revoke. The token will still be valid for
-  future requests.
-  """
-  def sign_out(socket, key \\ :default) do
-    socket
-    |> set_current_claims(nil, key)
-    |> set_current_token(nil, key)
-    |> set_current_resource(nil, key)
+    Get the token from the socket with `current_token`
+    """
+    @spec put_current_token(
+      socket :: Socket.t,
+      token :: Guardian.Token.token | nil,
+      key :: atom | String.t | nil
+    ) :: Socket.t
+    def put_current_token(socket, token, key \\ :default) do
+      Socket.assign(socket, token_key(key), token)
+    end
+
+    @doc """
+    Put the current claims onto the socket for later use.
+    Get the claims from the socket with `current_claims`
+    """
+    @spec put_current_claims(
+      socket :: Socket.t,
+      new_claims :: Guardian.Token.claims | nil,
+      atom | String.t | nil
+    ) :: Socket.t
+    def put_current_claims(socket, new_claims, key \\ :default) do
+      Socket.assign(socket, claims_key(key), new_claims)
+    end
+
+    @doc """
+    Put the current resource onto the socket for later use.
+    Get the resource from the socket with `current_resource`
+    """
+    @spec put_current_resource(
+      socket :: Socket.t,
+      resource :: Guardian.Token.resource | nil,
+      key :: atom | String.t | nil
+    ) :: Socket.t
+    def put_current_resource(socket, resource, key \\ :default) do
+      Socket.assign(socket, resource_key(key), resource)
+    end
+
+    @doc """
+    Fetches the `claims` map that was encoded into the token from the socket.
+    """
+    @spec current_claims(Socket.t, atom | String.t) :: Guardian.Token.claims | nil
+    def current_claims(socket, key \\ :default) do
+      key = claims_key(key)
+      socket.assigns[key]
+    end
+
+    @doc """
+    Fetches the token that was provided for the initial authentication.
+    This is provided as an encoded string and fetched from the socket.
+    """
+    @spec current_token(Socket.t, atom | String.t) :: Guardian.Token.token | nil
+    def current_token(socket, key \\ :default) do
+      key = token_key(key)
+      socket.assigns[key]
+    end
+
+    @doc """
+    Fetches the resource from that was previously put onto the socket.
+    """
+    @spec current_resource(Socket.t, atom | String.t) :: Guardian.Token.resource | nil
+    def current_resource(socket, key \\ :default) do
+      key = resource_key(key)
+      socket.assigns[key]
+    end
+
+    @doc """
+    Boolean if the token is present or not to indicate an authenticated socket
+    """
+    @spec authenticated?(Socket.t, atom | String.t) :: true | false
+    def authenticated?(socket, key \\ :default) do
+      current_token(socket, key) != nil
+    end
+
+    @doc """
+    Assigns the resource, token and claims to the socket.
+
+    Use the `key` to specifiy a different location. This allows
+    multiple tokens to be active on a socket at once.
+    """
+
+    @spec assign_rtc(
+      socket :: Socket.t,
+      resource :: Guardian.Token.resource | nil,
+      token :: Guardian.Token.token | nil,
+      claims :: Guardian.Token.claims | nil,
+      key :: atom | String.t | nil
+    ) :: Socket.t
+    def assign_rtc(socket, resource, token, claims, key \\ :default) do
+      socket
+      |> put_current_token(token, key)
+      |> put_current_claims(claims, key)
+      |> put_current_resource(resource, key)
+    end
+
+    @doc """
+    Given an implementation module and token, this will
+
+    * decode and verify the token
+    * load the resource
+    * store the resource, claims and token on the socket.
+
+    Use the `key` to store the information in a different location.
+    This allows multiple tokens and resources on a single socket.
+    """
+    @spec sign_in(
+      socket :: Socket.t,
+      impl :: module,
+      token :: Guardian.Token.token | nil,
+      claims_to_check :: Guardian.Token.claims,
+      opts :: Guardian.opts
+    ) :: {:ok, Socket.t, %{claims: Guardian.Token.claims, token: Guardian.Token.token, resource: any}} |
+         {:error, atom | any}
+    def sign_in(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
+
+    def sign_in(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
+
+    def sign_in(socket, impl, token, claims_to_check, opts) do
+      with {:ok, resource, claims} <- Guardian.resource_from_token(impl, token, claims_to_check, opts),
+           key <- Keyword.get(opts, :key, GPlug.default_key()) do
+
+        authed_socket = assign_rtc(socket, resource, token, claims, key)
+
+        {:ok, authed_socket, %{claims: claims, token: token, resource: resource}}
+      end
+    end
+
+    @doc """
+    Signout of the socket and also revoke the token. Using with GuardianDB this
+    will render the token useless for future requests.
+    """
+    @spec sign_out!(Socket.t, module, atom | String.t | nil) :: Socket.t
+    def sign_out!(socket, impl, key \\ :default) do
+      token = current_token(socket, key)
+      if token, do: Guardian.revoke(impl, token, [])
+      sign_out(socket, key)
+    end
+
+    @doc """
+    Sign out of the socket but do not revoke. The token will still be valid for
+    future requests.
+    """
+    @spec sign_out(Socket.t, atom | String.t | nil) :: Socket.t
+    def sign_out(socket, key \\ :default) do
+      assign_rtc(socket, nil, nil, nil, key)
+    end
   end
 end

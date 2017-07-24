@@ -1,98 +1,66 @@
 defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   @moduledoc false
-  use ExUnit.Case, async: true
+
   use Plug.Test
+  use ExUnit.Case, async: true
 
-  alias Guardian.Plug.EnsureNotAuthenticated
+  alias Guardian.Plug, as: GPlug
+  alias GPlug.{EnsureNotAuthenticated}
 
-  defmodule TestHandler do
+  @resource %{id: "bobby"}
+
+  defmodule Handler do
     @moduledoc false
 
-    def already_authenticated(conn, _) do
+    import Plug.Conn
+
+    def auth_error(conn, {type, reason}, _opts) do
+      body = inspect({type, reason})
       conn
-      |> Plug.Conn.assign(:guardian_spec, :authenticated)
-      |> Plug.Conn.send_resp(401, "Authenticated")
+      |> send_resp(401, body)
     end
   end
 
-  test "init/1 sets the handler option to the module that's passed in" do
-    %{handler: handler_opts} = EnsureNotAuthenticated.init(handler: TestHandler)
+  defmodule Impl do
+    @moduledoc false
 
-    assert handler_opts == {TestHandler, :already_authenticated}
+    use Guardian, otp_app: :guardian,
+                  token_module: Guardian.Support.TokenModule
+
+    def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+    def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
+
+    def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
   end
 
-  test "init/1 defaults the handler option to Guardian.Plug.ErrorHandler" do
-    %{handler: handler_opts} = EnsureNotAuthenticated.init %{}
-
-    assert handler_opts == {Guardian.Plug.ErrorHandler, :already_authenticated}
+  setup do
+    handler = __MODULE__.Handler
+    {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource)
+    {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, handler: handler}}
   end
 
-  test "init/1 with default options" do
-    options = EnsureNotAuthenticated.init %{}
+  describe "with a verified token" do
+    setup ctx do
+      conn =
+        ctx.conn
+        |> GPlug.put_current_token(ctx.token, [])
+        |> GPlug.put_current_claims(ctx.claims, [])
 
-    assert options == %{
-      claims: %{},
-      handler: {Guardian.Plug.ErrorHandler, :already_authenticated},
-      key: :default
-    }
+      {:ok, %{conn: conn}}
+    end
+
+    test "it returns an error", ctx do
+      conn = EnsureNotAuthenticated.call(ctx.conn, error_handler: ctx.handler)
+      assert {401, _, "{:already_authenticated, :already_authenticated}"} = sent_resp(conn)
+      assert conn.halted
+    end
   end
 
-  test "it validates claims and fails if the claims do match" do
-    claims = %{"typ" => "access", "sub" => "user1"}
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, typ: "access")
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert already_authenticated?(ensured_conn)
-  end
-
-  test "it validates claims and calls through if the claims are not ok" do
-    claims = %{"aud" => "oauth", "sub" => "user1"}
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, typ: "access")
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute already_authenticated?(ensured_conn)
-  end
-
-  test "call authenticated when there's a session with default key" do
-    claims = %{"typ" => "access", "sub" => "user1"}
-    conn = :get |> conn("/foo") |> Guardian.Plug.set_claims({:ok, claims})
-    opts = EnsureNotAuthenticated.init(handler: TestHandler)
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert already_authenticated?(ensured_conn)
-  end
-
-  test "call authenticated when theres a session with specific key" do
-    claims = %{"typ" => "access", "sub" => "user1"}
-    conn = :get
-            |> conn("/foo")
-            |> Guardian.Plug.set_claims({:ok, claims}, :secret)
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    assert already_authenticated?(ensured_conn)
-  end
-
-  test "calls handler's authenticated/2 with session for default key" do
-    conn = conn(:get, "/foo")
-    opts = EnsureNotAuthenticated.init(handler: TestHandler)
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute already_authenticated?(ensured_conn)
-  end
-
-  test "calls handler's authenticated/2 with session for specific key" do
-    conn = conn(:get, "/foo")
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute already_authenticated?(ensured_conn)
-  end
-
-  test "it halts the connection" do
-    conn = conn(:get, "/foo")
-    opts = EnsureNotAuthenticated.init(handler: TestHandler, key: :secret)
-    ensured_conn = EnsureNotAuthenticated.call(conn, opts)
-    refute ensured_conn.halted
-  end
-
-  defp already_authenticated?(conn) do
-    conn.assigns[:guardian_spec] == :authenticated
+  describe "with no verified token" do
+    test "it allows the request to continue", ctx do
+      conn = EnsureNotAuthenticated.call(ctx.conn, error_handler: ctx.handler)
+      refute conn.halted
+      refute conn.status == 401
+    end
   end
 end

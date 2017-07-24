@@ -1,79 +1,90 @@
 defmodule Guardian.Plug.LoadResourceTest do
   @moduledoc false
-  use ExUnit.Case, async: true
-  use Plug.Test
-  import Guardian.TestHelper
 
-  alias Guardian.Plug.LoadResource
+  use Plug.Test
+  use ExUnit.Case, async: true
+
+  alias Guardian.Plug, as: GPlug
+  alias GPlug.{LoadResource}
+
+  @resource %{id: "bobby"}
+
+  defmodule Handler do
+    @moduledoc false
+
+    import Plug.Conn
+
+    def auth_error(conn, {type, reason}, _opts) do
+      body = inspect({type, reason})
+      send_resp(conn, 401, body)
+    end
+  end
+
+  defmodule Impl do
+    @moduledoc false
+
+    use Guardian, otp_app: :guardian,
+                  token_module: Guardian.Support.TokenModule
+
+    def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+    def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
+    def subject_for_token(_, _), do: {:error, :cannot_serialize_resource}
+
+    def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    def resource_from_claims(_), do: {:error, :not_found}
+  end
 
   setup do
-    conn = conn_with_fetched_session(conn(:get, "/"))
-    {:ok, %{conn: conn}}
+    impl = __MODULE__.Impl
+    handler = __MODULE__.Handler
+    {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource)
+    {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, impl: impl, handler: handler}}
   end
 
-  test "with a resource already set", %{conn: conn} do
-    conn = conn
-    |> Guardian.Plug.set_current_resource(:the_resource)
-    |> run_plug(LoadResource)
-    assert Guardian.Plug.current_resource(conn) == :the_resource
-  end
-
-  test "with no resource set and no claims", %{conn: conn} do
-    conn = run_plug(conn, LoadResource)
-    assert Guardian.Plug.current_resource(conn) == nil
-  end
-
-  test "with no resource set and erroneous claims", %{conn: conn} do
-    conn = conn
-    |> Guardian.Plug.set_claims({:error, :some_error})
-    |> run_plug(LoadResource)
-    assert Guardian.Plug.current_resource(conn) == nil
-  end
-
-  test "with no resource set, valid claims, default serializer", %{conn: conn} do
-    sub =  "User:42"
-
-    conn = conn
-    |> Guardian.Plug.set_claims({:ok, %{"sub" => sub}})
-    |> run_plug(LoadResource)
-
-    {:ok, resource} = Guardian.serializer.from_token(sub)
-    assert Guardian.Plug.current_resource(conn) == resource
-  end
-
-  test "with valid claims and custom serializer", %{conn: conn} do
-    defmodule TestSerializer do
-      @moduledoc false
-      @behaviour Guardian.Serializer
-
-      def from_token("User:" <> id), do: {:ok, id}
-      def for_token(_), do: {:ok, nil}
+  describe "with no token" do
+    test "it does nothing", ctx do
+      conn = LoadResource.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler, allow_blank: true)
+      refute conn.status == 401
+      refute conn.halted
     end
 
-    conn = conn
-    |> Guardian.Plug.set_claims({:ok, %{"sub" => "User:42"}})
-    |> run_plug(LoadResource, serializer: TestSerializer)
-    assert Guardian.Plug.current_resource(conn) == "42"
+    test "it fails when allow_blank is not set", ctx do
+      conn = LoadResource.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler)
+      assert {401, _, "{:no_resource_found, :no_resource_found}"} = sent_resp(conn)
+      assert conn.halted
+    end
   end
 
-  test "claim option specified, but not found", %{conn: conn} do
-    sub =  "User:42"
+  describe "with a token but no resource that can be found" do
+    setup %{conn: conn, token: token} do
+      conn =
+        conn
+        |> GPlug.put_current_token(token, [])
+        |> GPlug.put_current_claims(%{"no" => "sub"}, [])
 
-    conn = conn
-    |> Guardian.Plug.set_claims({:ok, %{"sub" => sub}})
-    |> run_plug(LoadResource, claim: "user")
+      {:ok, conn: conn}
+    end
 
-    assert Guardian.Plug.current_resource(conn) == nil
+    test "it fails", ctx do
+      conn = LoadResource.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler)
+      assert {401, _, "{:no_resource_found, :not_found}"} = sent_resp(conn)
+      assert conn.halted
+    end
   end
 
-  test "claim option specified, and is found", %{conn: conn} do
-    sub =  "User:42"
+  describe "with a token and found resource" do
+    test "it lets the connection continue and adds the resource", ctx do
+      conn =
+        ctx.conn
+        |> GPlug.put_current_token(ctx.token, [])
+        |> GPlug.put_current_claims(ctx.claims, [])
 
-    conn = conn
-    |> Guardian.Plug.set_claims({:ok, %{"user" => sub}})
-    |> run_plug(LoadResource, claim: "user")
+      conn = LoadResource.call(conn, module: ctx.impl, error_handler: ctx.handler)
 
-    {:ok, resource} = Guardian.serializer.from_token(sub)
-    assert Guardian.Plug.current_resource(conn) == resource
+      refute conn.status == 401
+      refute conn.halted
+
+      assert @resource == GPlug.current_resource(conn, [])
+    end
   end
 end
