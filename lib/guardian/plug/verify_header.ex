@@ -79,12 +79,12 @@ defmodule Guardian.Plug.VerifyHeader do
   defp fetch_token(_, _, []), do: nil
 
   defp fetch_token(conn, opts = %{realm_reg: reg}, [token|tail]) do
-    trimmed_token = String.strip(token)
+    trimmed_token = String.trim(token)
     case Regex.run(reg, trimmed_token) do
-      [_, match] -> String.strip(match)
+      [_, match] -> String.trim(match)
       _ -> fetch_token(conn, opts, tail)
     end
   end
 
-  defp fetch_token(_, _, [token|_tail]), do: String.strip(token)
+  defp fetch_token(_, _, [token|_tail]), do: String.trim(token)
 end
