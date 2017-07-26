@@ -21,8 +21,7 @@ defmodule Guardian.Permissions.BitwiseTest do
     def resource_from_claims(claims), do: {:ok, claims["sub"]}
 
     def build_claims(claims, _resource, opts) do
-      claims
-      |> encode_permissions_into_claims!(Keyword.get(opts, :permissions))
+      encode_permissions_into_claims!(claims, Keyword.get(opts, :permissions))
     end
   end
 
@@ -38,7 +37,7 @@ defmodule Guardian.Permissions.BitwiseTest do
   end
 
   test "max is -1" do
-    assert __MODULE__.Impl.max == -1
+    assert Impl.max == -1
   end
 
   describe "normalize_permissions" do
@@ -78,59 +77,59 @@ defmodule Guardian.Permissions.BitwiseTest do
 
   describe "available_permissions" do
     test "it provides all the permissions" do
-      result = __MODULE__.Impl.available_permissions()
+      result = Impl.available_permissions()
       assert result == %{profile: [:read, :write], user: [:read, :write]}
     end
   end
 
   describe "encode_permissions" do
     test "it encodes to an empty map when there are no permissions given" do
-      %{} = result = __MODULE__.Impl.encode_permissions!(%{})
+      %{} = result = Impl.encode_permissions!(%{})
       assert Enum.empty?(result)
     end
 
     test "it encodes when provided with an atom map" do
       perms = %{profile: [:read, :write], user: [:read]}
-      result = __MODULE__.Impl.encode_permissions!(perms)
+      result = Impl.encode_permissions!(perms)
       assert result == %{profile: 0b11, user: 0b1}
     end
 
     test "it encodes when provided with a string map" do
       perms = %{"profile" => ["read", "write"], "user" => ["read"]}
-      result = __MODULE__.Impl.encode_permissions!(perms)
+      result = Impl.encode_permissions!(perms)
       assert result == %{profile: 0b11, user: 0b1}
     end
 
     test "it encodes when provided with an integer" do
       perms = %{profile: [], user: 0b1}
-      result = __MODULE__.Impl.encode_permissions!(perms)
+      result = Impl.encode_permissions!(perms)
       assert result == %{profile: 0, user: 0b1}
     end
 
     test "it is ok with using max permissions" do
-      perms = %{profile: __MODULE__.Impl.max, user: 0b1}
-      result = __MODULE__.Impl.encode_permissions!(perms)
+      perms = %{profile: Impl.max, user: 0b1}
+      result = Impl.encode_permissions!(perms)
       assert result == %{profile: -1, user: 0b1}
     end
 
     test "when setting from an integer it does not lose resolution" do
-      perms = %{profile: __MODULE__.Impl.max, user: 0b111111}
-      result = __MODULE__.Impl.encode_permissions!(perms)
+      perms = %{profile: Impl.max, user: 0b111111}
+      result = Impl.encode_permissions!(perms)
       assert result == %{profile: -1, user: 0b111111}
     end
 
     test "it raises on unknown permission set" do
-      msg = "#{to_string __MODULE__.Impl} - Type: not_a_thing"
+      msg = "#{to_string Impl} - Type: not_a_thing"
       assert_raise GBits.PermissionNotFoundError, msg, fn ->
         perms = %{not_a_thing: [:not_a_thing]}
-        __MODULE__.Impl.encode_permissions!(perms)
+        Impl.encode_permissions!(perms)
       end
     end
 
     test "it raises on unknown permissions" do
       assert_raise GBits.PermissionNotFoundError, fn ->
         perms = %{profile: [:wot, :now, :brown, :cow]}
-        __MODULE__.Impl.encode_permissions!(perms)
+        Impl.encode_permissions!(perms)
       end
     end
   end
@@ -138,35 +137,35 @@ defmodule Guardian.Permissions.BitwiseTest do
   describe "decode_permissions" do
     test "it decodes to an empty map when there are no permissions given" do
       perms = %{profile: 0b1, user: 0}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read], user: []}
     end
 
     test "it decodes when provided with an atom map" do
       perms = %{profile: [:read], user: 0}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read], user: []}
 
       perms = %{profile: ["read"], user: 0}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read], user: []}
     end
 
     test "it is ok with using max permissions" do
       perms = %{profile: ["read"], user: -1}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read], user: [:read, :write]}
     end
 
     test "when setting from an integer it ignores extra resolution" do
       perms = %{profile: 0b1111, user: -1}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read, :write], user: [:read, :write]}
     end
 
     test "it ignores unknown permission sets" do
       perms = %{profile: 0b11, unknown: -1}
-      result = __MODULE__.Impl.decode_permissions(perms)
+      result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read, :write]}
     end
   end
@@ -175,12 +174,12 @@ defmodule Guardian.Permissions.BitwiseTest do
     setup do
       claims =
         %{"sub" => "user:1"}
-        |> __MODULE__.Impl.build_claims(nil, permissions: %{user: [:read], profile: [:read]})
+        |> Impl.build_claims(nil, permissions: %{user: [:read], profile: [:read]})
 
       conn =
         :get
         |> conn("/")
-        |> Pipeline.call(module: __MODULE__.Impl, error_handler: __MODULE__.Handler)
+        |> Pipeline.call(module: Impl, error_handler: Handler)
         |> GPlug.put_current_claims(claims)
 
       {:ok, %{conn: conn, claims: claims}}
@@ -242,7 +241,7 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "when there is no logged in resource it fails" do
-      conn = :get |> conn("/") |> Pipeline.call(module: __MODULE__.Impl, error_handler: __MODULE__.Handler)
+      conn = :get |> conn("/") |> Pipeline.call(module: Impl, error_handler: Handler)
 
       opts = GBits.init(ensure: %{user: [:read], profile: [:read]})
       conn = GBits.call(conn, opts)

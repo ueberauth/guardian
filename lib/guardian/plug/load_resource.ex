@@ -37,33 +37,31 @@ if Code.ensure_loaded?(Plug) do
     import Plug.Conn
 
     alias Guardian.Plug, as: GPlug
-    alias GPlug.{Pipeline}
+    alias Guardian.Plug.Pipeline
 
     def init(opts), do: opts
-
     def call(conn, opts) do
-      claims = GPlug.current_claims(conn, opts)
-      allow_blank? = Keyword.get(opts, :allow_blank)
-      module = Pipeline.fetch_module!(conn, opts)
+      allow_blank = Keyword.get(opts, :allow_blank)
 
-      if claims do
-        result = apply(module, :resource_from_claims, [claims])
-        case result do
-          {:ok, resource} ->
-            GPlug.put_current_resource(conn, resource, opts)
-          {:error, reason} ->
-            if allow_blank?, do: conn, else: return_error(conn, reason, opts)
-          _ ->
-            if allow_blank?, do: conn, else: return_error(conn, opts)
-        end
-      else
-        if allow_blank?, do: conn, else: return_error(conn, opts)
+      conn
+      |> GPlug.current_claims(opts)
+      |> resource(conn, opts)
+      |> respond(allow_blank)
+    end
+
+    defp resource(nil, conn, opts), do: {:error, :no_resource_found, conn, opts}
+    defp resource(claims, conn, opts) do
+      module = Pipeline.fetch_module!(conn, opts)
+      case apply(module, :resource_from_claims, [claims]) do
+        {:ok, resource} -> {:ok, resource, conn, opts}
+        {:error, reason} -> {:error, reason, conn, opts}
+        _ -> {:error, :no_resource_found, conn, opts}
       end
     end
 
-    defp return_error(conn, opts) do
-      return_error(conn, :no_resource_found, opts)
-    end
+    defp respond({:error, _reason, conn, _opts}, true), do: conn
+    defp respond({:error, reason, conn, opts}, _), do: return_error(conn, reason, opts)
+    defp respond({:ok, resource, conn, opts}, _), do: GPlug.put_current_resource(conn, resource, opts)
 
     defp return_error(conn, reason, opts) do
       handler = Pipeline.fetch_error_handler!(conn, opts)

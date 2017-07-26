@@ -124,13 +124,6 @@
         {Credo.Check.Warning.MapGetUnsafePass, false},
         {Credo.Check.Consistency.MultiAliasImportRequireUse, false},
 
-        # Deprecated checks (these will be deleted after a grace period)
-        {Credo.Check.Readability.Specs, false},
-        {Credo.Check.Warning.NameRedeclarationByAssignment, false},
-        {Credo.Check.Warning.NameRedeclarationByCase, false},
-        {Credo.Check.Warning.NameRedeclarationByDef, false},
-        {Credo.Check.Warning.NameRedeclarationByFn, false},
-
         # Custom checks can be created using `mix credo.gen.check`.
         #
       ]

@@ -18,34 +18,34 @@ defmodule Guardian.ConfigTest do
   end
 
   test "config with a value" do
-    assert __MODULE__.Impl.config(:issuer) == "FooApp"
+    assert Impl.config(:issuer) == "FooApp"
   end
 
   test "config with no value" do
-    assert __MODULE__.Impl.config(:not_a_thing) == nil
+    assert Impl.config(:not_a_thing) == nil
   end
 
   test "config with a default value" do
-    assert __MODULE__.Impl.config(:not_a_thing, :this_is_a_thing) ==
+    assert Impl.config(:not_a_thing, :this_is_a_thing) ==
       :this_is_a_thing
   end
 
   test "config with a system value" do
     System.put_env("FOO", "")
-    assert __MODULE__.Impl.config(:system_foo) == ""
+    assert Impl.config(:system_foo) == ""
     System.put_env("FOO", "foo")
-    assert __MODULE__.Impl.config(:system_foo) == "foo"
+    assert Impl.config(:system_foo) == "foo"
   end
 
   test "config with a {mod, fun}" do
-    assert __MODULE__.Impl.config(:mod_fun_foo) == "module function foo"
+    assert Impl.config(:mod_fun_foo) == "module function foo"
   end
 
   test "config with a {mod, fun, args}" do
-    assert __MODULE__.Impl.config(:mod_fun_args) == "mod fun args 1"
+    assert Impl.config(:mod_fun_args) == "mod fun args 1"
   end
 
   test "config with a function" do
-    assert __MODULE__.Impl.config(:fun) == "blah"
+    assert Impl.config(:fun) == "blah"
   end
 end

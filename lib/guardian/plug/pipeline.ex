@@ -199,10 +199,10 @@ if Code.ensure_loaded?(Plug) do
     def current_error_handler(conn), do: conn.private[:guardian_error_handler]
 
     def fetch_key(conn, opts),
-      do: Keyword.get(opts, :key) || current_key(conn) || GPlug.default_key()
+      do: Keyword.get(opts, :key, current_key(conn)) || GPlug.default_key()
 
     def fetch_module(conn, opts),
-      do: Keyword.get(opts, :module) || current_module(conn)
+      do: Keyword.get(opts, :module, current_module(conn))
 
     def fetch_module!(conn, opts) do
       module = fetch_module(conn, opts)
@@ -214,7 +214,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     def fetch_error_handler(conn, opts),
-      do: Keyword.get(opts, :error_handler) || current_error_handler(conn)
+      do: Keyword.get(opts, :error_handler, current_error_handler(conn))
 
     def fetch_error_handler!(conn, opts) do
       module = fetch_error_handler(conn, opts)
