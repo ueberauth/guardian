@@ -22,14 +22,13 @@ if Code.ensure_loaded?(Plug) do
     ## Example
 
     ```elixir
-
-      # setup the upstream pipeline
-      plug Guardian.Plug.EnsureAuthenticated, claims: %{"typ" => "access"}
-      plug Guardian.Plug.EnsureAuthenticated, key: :secret
-      ```
+    # setup the upstream pipeline
+    plug Guardian.Plug.EnsureAuthenticated, claims: %{"typ" => "access"}
+    plug Guardian.Plug.EnsureAuthenticated, key: :secret
+    ```
     """
     alias Guardian.Plug, as: GPlug
-    alias GPlug.{Pipeline}
+    alias Guardian.Plug.Pipeline
     alias Guardian.Token.Verify
 
     import Plug.Conn
@@ -39,24 +38,28 @@ if Code.ensure_loaded?(Plug) do
 
     @doc false
     def call(conn, opts) do
-      token = GPlug.current_token(conn, opts)
-      claims = GPlug.current_claims(conn, opts)
+      conn
+      |> GPlug.current_token(opts)
+      |> verify(conn, opts)
+      |> respond()
+    end
 
-      if token do
-        case verify_claims(claims, opts) do
-          {:ok, _} -> conn
-          {:error, reason} ->
-            conn
-            |> Pipeline.fetch_error_handler!(opts)
-            |> apply(:auth_error, [conn, {:unauthenticated, reason}, opts])
-            |> halt()
-        end
-      else
+    defp verify(nil, conn, opts), do: {{:error, :unauthenticated}, conn, opts}
+    defp verify(_token, conn, opts) do
+      result =
         conn
-        |> Pipeline.fetch_error_handler!(opts)
-        |> apply(:auth_error, [conn, {:unauthenticated, :unauthenticated}, opts])
-        |> halt()
-      end
+        |> GPlug.current_claims(opts)
+        |> verify_claims(opts)
+
+      {result, conn, opts}
+    end
+
+    def respond({{:ok, _}, conn, _opts}), do: conn
+    def respond({{:error, reason}, conn, opts}) do
+      conn
+      |> Pipeline.fetch_error_handler!(opts)
+      |> apply(:auth_error, [conn, {:unauthenticated, reason}, opts])
+      |> halt()
     end
 
     defp verify_claims(claims, opts) do
