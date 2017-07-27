@@ -62,7 +62,7 @@ if Code.ensure_loaded?(Plug) do
 
     @spec init(Keyword.t) :: Keyword.t
     def init(opts \\ []) do
-      realm = Keyword.get(opts, :realm, "bearer")
+      realm = Keyword.get(opts, :realm, "Bearer")
 
       case realm do
         "" -> opts
@@ -108,9 +108,9 @@ if Code.ensure_loaded?(Plug) do
 
     defp fetch_token_from_header(conn, opts, [token|tail]) do
       reg = Keyword.get(opts, :realm_reg, ~r/^(.*)$/)
-      trimmed_token = String.strip(token)
+      trimmed_token = String.trim(token)
       case Regex.run(reg, trimmed_token) do
-        [_, match] -> {:ok, String.strip(match)}
+        [_, match] -> {:ok, String.trim(match)}
         _ -> fetch_token_from_header(conn, opts, tail)
       end
     end

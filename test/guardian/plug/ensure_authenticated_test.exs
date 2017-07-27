@@ -2,10 +2,10 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   @moduledoc false
 
   use Plug.Test
-  use ExUnit.Case, async: true
+  use ExUnit.Case
 
   alias Guardian.Plug, as: GPlug
-  alias GPlug.{EnsureAuthenticated}
+  alias Guardian.Plug.EnsureAuthenticated
 
   defmodule Handler do
     @moduledoc false
@@ -14,8 +14,7 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
 
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
-      conn
-      |> send_resp(401, body)
+      send_resp(conn, 401, body)
     end
   end
 
@@ -34,9 +33,9 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   @resource %{id: "bobby"}
 
   setup do
-    impl = __MODULE__.Impl
-    handler = __MODULE__.Handler
-    {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource)
+    impl = Impl
+    handler = Handler
+    {:ok, token, claims} = Impl.encode_and_sign(@resource)
     {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, impl: impl, handler: handler}}
   end
 
