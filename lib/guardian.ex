@@ -295,6 +295,10 @@ defmodule Guardian do
 
   alias Guardian.Token.Verify
 
+  defmodule MalformedReturnValueError do
+    defexception [:message]
+  end
+
   defmacro __using__(opts \\ []) do
     alias Guardian.Config, as: GConfig
 
@@ -718,7 +722,9 @@ defmodule Guardian do
     case result do
       {:ok, _} -> result
       {:error, _} -> result
-      resp -> {:error, "Invalid return for #{mod}##{func} - #{inspect(resp)}"}
+      resp ->
+        raise MalformedReturnValueError,
+          message: "Expected `{:ok, result}` or `{:error, reason}` from #{mod}##{func}, got: #{inspect(resp)}"
     end
   end
 
