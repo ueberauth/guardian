@@ -108,9 +108,9 @@ conn = MyApp.Guardian.Plug.sign_out(conn)
 conn = MyApp.Guardian.Plug.remember_me(conn, resource)
 
 # Fetch the information from the current connection
-conn = MyApp.Guardian.Plug.current_token(conn)
-conn = MyApp.Guardian.Plug.current_claims(conn)
-conn = MyApp.Guardian.Plug.current_resource(conn)
+token = MyApp.Guardian.Plug.current_token(conn)
+claims = MyApp.Guardian.Plug.current_claims(conn)
+resource = MyApp.Guardian.Plug.current_resource(conn)
 ```
 
 Creating with custom claims and options
@@ -349,7 +349,7 @@ Please see the documentation for `Guardian.Phoenix.Socket`, `Guardian.Phoenix.Co
 Permissions can be encoded into your token as an optional add-in.
 
 Encoding permissions into a token is useful in some areas of authorization.
-The permissions provided by `Guardian.Permissions` have one level of nesting.  
+The permissions provided by `Guardian.Permissions` have one level of nesting.
 
 For example:
 
