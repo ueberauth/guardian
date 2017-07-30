@@ -114,9 +114,8 @@ defmodule Guardian.Token.Jwt do
 
   @behaviour Guardian.Token
 
-  alias Guardian.{Config}
+  alias Guardian.{Config, Token.Jwt.Verify}
   alias JOSE.{JWT, JWS, JWK}
-  alias Guardian.Token.Jwt.{Verify}
 
   import Guardian, only: [stringify_keys: 1]
 
@@ -311,8 +310,10 @@ defmodule Guardian.Token.Jwt do
   end
 
   defp fetch_secret(mod, opts) do
-    (opts |> Keyword.get(:secret) |> Config.resolve_value() || apply(mod, :config, [:secret_key]))
-    |> case do
+    secret = Keyword.get(opts, :secret)
+    secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+
+    case secret do
       nil -> raise "No secret key configured for JWT"
       val -> val
     end
@@ -359,29 +360,23 @@ defmodule Guardian.Token.Jwt do
     do: assign_exp_from_ttl(the_claims, {iat_v, requested_ttl})
 
   # catch all for when the issued at iat is not yet set
-  defp set_ttl(claims, requested_ttl) do
-    claims |> set_iat() |> set_ttl(requested_ttl)
-  end
+  defp set_ttl(claims, requested_ttl),
+    do: claims |> set_iat() |> set_ttl(requested_ttl)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}}) when unit in [:second, :seconds] do
-    Map.put(the_claims, "exp", iat_v + seconds)
-  end
+  defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}}) when unit in [:second, :seconds],
+    do: Map.put(the_claims, "exp", iat_v + seconds)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {minutes, unit}}) when unit in [:minute, :minutes] do
-    Map.put(the_claims, "exp", iat_v + minutes * 60)
-  end
+  defp assign_exp_from_ttl(the_claims, {iat_v, {minutes, unit}}) when unit in [:minute, :minutes],
+    do: Map.put(the_claims, "exp", iat_v + minutes * 60)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {hours, unit}}) when unit in [:hour, :hours] do
-    Map.put(the_claims, "exp", iat_v + hours * 60 * 60)
-  end
+  defp assign_exp_from_ttl(the_claims, {iat_v, {hours, unit}}) when unit in [:hour, :hours],
+    do: Map.put(the_claims, "exp", iat_v + hours * 60 * 60)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {days, unit}}) when unit in [:day, :days] do
-    Map.put(the_claims, "exp", iat_v + days * 24 * 60 * 60)
-  end
+  defp assign_exp_from_ttl(the_claims, {iat_v, {days, unit}}) when unit in [:day, :days],
+    do: Map.put(the_claims, "exp", iat_v + days * 24 * 60 * 60)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {weeks, unit}}) when unit in [:week, :weeks] do
-    Map.put(the_claims, "exp", iat_v + weeks * 7 * 24 * 60 * 60)
-  end
+  defp assign_exp_from_ttl(the_claims, {iat_v, {weeks, unit}}) when unit in [:week, :weeks],
+    do: Map.put(the_claims, "exp", iat_v + weeks * 7 * 24 * 60 * 60)
 
   defp assign_exp_from_ttl(_, {_iat_v, {_, units}}),
     do: raise "Unknown Units: #{units}"
