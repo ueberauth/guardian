@@ -10,19 +10,19 @@ if Code.ensure_loaded?(Plug) do
     If `allow_blank` is not set to true, the plug will return an error
     if no resource can be found with `:no_resource_found`
 
-    This, like all other Guardian plugs, requires a Guardian pipleine to be setup.
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
     It requires an implementation module, an error handler and a key.
 
     These can be set either:
 
     1. Upstream on the connection with `plug Guardian.Pipeline`
     2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
-    3. Inline with an option of `:module`, `:erorr_handler`, `:key`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
     Options:
 
     * `allow_blank` - boolean. If set to true, will try to load a resource but will not fail if no resource is found.
-    * `key` - The location to find the information in the connection. Defaults to: `deafult`
+    * `key` - The location to find the information in the connection. Defaults to: `default`
 
     ## Example
 

@@ -102,7 +102,7 @@ defmodule Guardian.Token.Jwt do
   2. `use Guardian.Token.Verify` in your own module and use that.
 
   To create your own verify module use `Guardian.Token.Verify` and configure
-  your implemetation to use it either through config files or when you setup your implementation.
+  your implementation to use it either through config files or when you setup your implementation.
 
   ```elixir
   defmodule MyApp.Tokens do

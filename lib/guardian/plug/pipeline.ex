@@ -39,7 +39,7 @@ if Code.ensure_loaded?(Plug) do
     We then ensure that we found a token and fail if not.
 
     Given that we found a token, we then attempt to load the resource the token
-    refres to, failing if one is not found.
+    refers to, failing if one is not found.
 
     ### Customizing your pipeline
 
@@ -57,7 +57,7 @@ if Code.ensure_loaded?(Plug) do
     or you can provide them when you call the plug.
 
     Additionally, for every option other than `:otp_app` you can use elixir
-    configuration, the using options, or linline options.
+    configuration, the `use` options, or inline options.
 
     * `:otp_app` - The otp app where the pipeline modules can be found
     * `:module` - The `Guardian` implementation module
@@ -69,7 +69,7 @@ if Code.ensure_loaded?(Plug) do
     Using keys allows you to specifiy locations in the session/connection where
     the tokens and resources will be placed. This allows multiple authenticated
     tokens to be in play for a single request. This is useful for impersonation or
-    higher security areas where you can have a specific set of privilages and
+    higher security areas where you can have a specific set of privileges and
     still be logged in.
 
     ### Error handler

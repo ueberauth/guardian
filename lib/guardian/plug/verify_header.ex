@@ -11,14 +11,14 @@ if Code.ensure_loaded?(Plug) do
 
     This plug will not do anything.
 
-    This, like all other Guardian plugs, requires a Guardian pipleine to be setup.
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
     It requires an implementation module, an error handler and a key.
 
     These can be set either:
 
     1. Upstream on the connection with `plug Guardian.Pipeline`
     2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
-    3. Inline with an option of `:module`, `:erorr_handler`, `:key`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
     If a token is found but is invalid, the error handler will be called with
     `auth_error(conn, {:invalid_token, reason}, opts)`
@@ -30,8 +30,8 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
-    * `realm` - The prefix for the token in the Authorization header. Defaults to `bearer`. `:none` will not use a prefix.
-    * `key` - The location to store the information in the connection. Defaults to: `deafult`
+    * `realm` - The prefix for the token in the Authorization header. Defaults to `Bearer`. `:none` will not use a prefix.
+    * `key` - The location to store the information in the connection. Defaults to: `default`
 
     ### Example
 

@@ -5,18 +5,18 @@ if Code.ensure_loaded?(Plug) do
 
     If one is not found, the `auth_error` will be called with `:already_authenticated`
 
-    This, like all other Guardian plugs, requires a Guardian pipleine to be setup.
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
     It requires an implementation module, an error handler and a key.
 
     These can be set either:
 
     1. Upstream on the connection with `plug Guardian.Pipeline`
     2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
-    3. Inline with an option of `:module`, `:erorr_handler`, `:key`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
     Options:
 
-    * `key` - The location to find the information in the connection. Defaults to: `deafult`
+    * `key` - The location to find the information in the connection. Defaults to: `default`
 
     ## Example
 

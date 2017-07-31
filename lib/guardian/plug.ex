@@ -2,7 +2,7 @@ if Code.ensure_loaded?(Plug) do
   defmodule Guardian.Plug do
     @moduledoc """
     Provides functions for the implementation module for dealing with
-    Guardain in a Plug environment
+    Guardian in a Plug environment
 
     ```elixir
     defmodule MyApp.Tokens do
@@ -16,7 +16,7 @@ if Code.ensure_loaded?(Plug) do
     interacting with plug.
 
     If you're using Guardian in your application most of the setters will
-    be unintersting. They're mostly for library authors and Guardian itself.
+    be uninteresting. They're mostly for library authors and Guardian itself.
 
     The usual functions you'd use in your application are:
 

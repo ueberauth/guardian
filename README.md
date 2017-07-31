@@ -196,7 +196,7 @@ The default token type of `Guardian` is JWT. It accepts many options but you rea
                     See `JOSE` for available. Default ["HS512"]
 * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
 * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
-* `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
+* `allowed_drift` The drift that is allowed when decoding/verifying a token in milliseconds
 * `verify_issuer` Default false
 
 ## Secrets (JWT)

@@ -10,7 +10,7 @@ defmodule Guardian do
 
   JWT tokens (the default) fit this description.
 
-  When using Guardian, you'll need an Implmentation module.
+  When using Guardian, you'll need an implementation module.
 
   ```elixir
   defmodule MyApp.Guardian do
@@ -83,7 +83,7 @@ defmodule Guardian do
   * `claims` - Any custom claims that you want to use in your token
   * `opts` - Options for the token module and callbacks
 
-  For mor information on options see the documentation for your Token Module.
+  For more information on options see the documentation for your Token Module.
 
   ```elixir
   # Provide a token using the defaults including the default_token_type
@@ -98,7 +98,7 @@ defmodule Guardian do
   ```
 
   The `encode_and_sign` function calls a number of callbacks on
-  your implemntation module. See `Guardian.encode_and_sign`
+  your implementation module. See `Guardian.encode_and_sign`
 
   #### `decode_and_verify(token, claims_to_check \\ %{}, opts \\ [])`
 
@@ -134,7 +134,7 @@ defmodule Guardian do
 
   Revoke a token.
 
-  *Note:* this is entirely dependant on your Token Module and implmentation
+  *Note:* this is entirely dependant on your Token Module and implementation
   callbacks.
 
   ```elixir
@@ -175,10 +175,10 @@ defmodule Guardian do
 
   Arguments:
 
-  * `old_token` - The existing token you wish to exchange
+  * `old_token` - The existing token you wish to exchange.
   * `from_type` - The type the old token must be. Can be given a list of types.
   * `to_type` - The new type of token that you want back.
-  * `options` - The options to pass to the token module and callbacks
+  * `options` - The options to pass to the token module and callbacks.
 
   Options:
 
@@ -687,7 +687,7 @@ defmodule Guardian do
   Exchanges one token for another with different token types
 
   The token is first decoded and verified to ensure that there is no escalation
-  Of privelages.
+  Of privileges.
 
   Tokens must have their type included in the `from_type` argument.
 
