@@ -52,11 +52,11 @@ defmodule MyApp.Guardian do
   use Guardian, otp_app: :my_app
 
   def subject_for_token(resource, _claims) do
-    to_string(resource.id)
+    {:ok, to_string(resource.id)}
   end
 
   def resource_from_claims(claims) do
-    find_me_a_resource(claims["sub"])
+    {:ok, find_me_a_resource(claims["sub"])}
   end
 end
 ```
