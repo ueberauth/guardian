@@ -10,14 +10,14 @@ if Code.ensure_loaded?(Plug) do
 
     This plug will not do anything.
 
-    This, like all other Guardian plugs, requires a Guardian pipleine to be setup.
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
     It requires an implementation module, an error handler and a key.
 
     These can be set either:
 
     1. Upstream on the connection with `plug Guardian.Pipeline`
     2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
-    3. Inline with an option of `:module`, `:erorr_handler`, `:key`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
     If a token is found but is invalid, the error handler will be called with
     `auth_error(conn, {:invalid_token, reason}, opts)`
@@ -32,8 +32,8 @@ if Code.ensure_loaded?(Plug) do
 
     Options:
 
-    * `:key` - The location of the token (deafult `:default`)
-    * `:echange_from` - The type of the cookie (default `"refresh"`)
+    * `:key` - The location of the token (default `:default`)
+    * `:exchange_from` - The type of the cookie (default `"refresh"`)
     * `:exchange_to` - The type of token to provide. Defaults to the implementation modules `default_type`
     * `:ttl` - The time to live of the exchanged token. Defaults to configured values.
     """

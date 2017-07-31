@@ -161,7 +161,7 @@ if Code.ensure_loaded?(Phoenix) do
     @doc """
     Assigns the resource, token and claims to the socket.
 
-    Use the `key` to specifiy a different location. This allows
+    Use the `key` to specify a different location. This allows
     multiple tokens to be active on a socket at once.
     """
 
