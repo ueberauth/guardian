@@ -91,6 +91,7 @@ defmodule Guardian.Plug do
   def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
 
   @doc false
+  @spec sign_in(Plug.Conn.t, any, atom | String.t, Keyword.t) :: Plug.Conn.t
   def sign_in(conn, object, type, new_claims) when is_list(new_claims) do
     sign_in(conn, object, type, Enum.into(new_claims, %{}))
   end
@@ -153,6 +154,7 @@ defmodule Guardian.Plug do
   def api_sign_in(conn, object, type), do: api_sign_in(conn, object, type, %{})
 
   @doc false
+  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Keyword.t) :: Plug.Conn.t
   def api_sign_in(conn, object, type, new_claims) when is_list(new_claims) do
     api_sign_in(conn, object, type, Enum.into(new_claims, %{}))
   end
