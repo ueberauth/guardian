@@ -16,7 +16,16 @@ end
 defmodule Guardian.Phoenix.SocketTest.MySocket do
   @moduledoc false
   use Phoenix.Socket
-  use Guardian.Phoenix.Socket, module: Guardian.Phoenix.SocketTest.Impl
+  import Guardian.Phoenix.Socket
+  alias Guardian.Phoenix.SocketTest.Impl
+
+  def connect(%{"guardian_token" => token}, socket) do
+    case sign_in(socket, Impl, token) do
+      {:ok, authed_socket, _guardian_params} ->
+        {:ok, authed_socket}
+      _ -> :error
+    end
+  end
 
   def connect(_params, _socket), do: :error
 

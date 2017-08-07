@@ -2,45 +2,48 @@ if Code.ensure_loaded?(Phoenix) do
   defmodule Guardian.Phoenix.Socket do
     @moduledoc """
     Provides functions for managing authentication with sockets.
-    Usually you'd use this on the Socket to authenticate on connection on
-    the `connect` function.
 
-    There are two main ways to use this module.
+    This module mostly provides convenience functions for storing tokens, claims and resources
+    on the socket assigns.
 
-    1. use Guardian.Phoenix.Socket
-    2. import Guardian.Phoenix.Socket
+    The main functions you'll be interested in are:
 
-    You use this function when you want to automatically sign in a socket
-    on `connect`. The case where authentication information is not provided
-    is not handled so that you can handle it yourself.
+    * `Guardian.Phoenix.Socket.authenticated?` - check if the socket has been authenticated
+    * `Guardian.Phoenix.Socket.sign_in` - Sign in a resource to a socket. Similar to `Guardian.Plug.sign_in`
+    * `Guardian.Phoenix.Socket.sign_out` - Sign out the resource on the socket
 
+    ### Getters
+
+    Once you're authenticated with your socket, you can use the getters
+    to fetch information about the authenticated resource for the socket.
+
+    * `Guardian.Phoenix.Socket.current_claims`
+    * `Guardian.Phoenix.Socket.current_token`
+    * `Guardian.Phoenix.Socket.current_resource`
+
+    These are the usual functions you'll want to use when dealing with authentication on sockets.
+
+    There is a bit of a difference between the usual `Guardian.Plug.sign_in` and the socket one.
+    The socket sign_in receives a token and signs in from that.
+    Please note that this is mere sugar on the underlying Guarian functions.
+
+    As an example:
     ```elixir
     defmodule MyApp.UserSocket do
       use Phoenix.Socket
-      use Guardian.Phoenix.Socket
+
+      def connect(%{"token" => token}, socket) do
+        result = Guarian.Socket.sign_in(socket, MyApp.Guardian, token)
+        case result do
+          {:ok, authedSocket, %{token: token, resource: resource, claims: claims}} ->
+            {:ok, authedSocket}
+          {:error, _} -> :error
+        end
+      end
 
       # This function will be called when there was no authentication information
       def connect(_params, socket) do
         :error
-      end
-    end
-    ```
-
-    If you want more control over the authentication of the connection, then you
-    should `import Guardian.Phoenix.Socket` and use the `sign_in` function
-    to authenticate.
-
-    ```elixir
-    defmodule MyApp.UserSocket do
-      use Phoenix.Socket
-      import Guardian.Phoenix.Socket
-
-      def connect(%{"guardian_token" => token} = params, socket) do
-        case sign_in(socket, MyApp.Guardian, token) do
-          {:ok, authed_socket, guardian_params} ->
-            {:ok, authed_socket}
-          _ -> :error
-        end
       end
     end
     ```
@@ -53,34 +56,6 @@ if Code.ensure_loaded?(Phoenix) do
 
     alias Guardian.Plug, as: GPlug
     alias Phoenix.Socket
-
-    defmacro __using__(opts) do
-      key = Keyword.get(opts, :key, :default)
-      mod = Keyword.get(opts, :module)
-      module =
-        case mod do
-          {:__aliases__, _, _} = stuff -> Macro.expand(stuff, __ENV__)
-          mod -> mod
-        end
-
-      params_key =
-        if Keyword.get(opts, :token_key) do
-          opts |> Keyword.get(:token_key) |> to_string()
-        else
-          module |> apply(:config, [:socket_token_key, "guardian_token"]) |> to_string()
-        end
-
-      quote do
-        import Guardian.Phoenix.Socket
-
-        def connect(%{unquote(params_key) => token} = params, socket) when not is_nil(token) do
-          case sign_in(socket, unquote(module), token, %{}, key: unquote(key)) do
-            {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
-            err -> :error
-          end
-        end
-      end
-    end
 
     @doc """
     Puts the current token onto the socket for later use.
