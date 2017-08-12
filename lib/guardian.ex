@@ -340,7 +340,7 @@ defmodule Guardian do
       Fetches the configuration for this module
       """
 
-      @spec config() :: Keword.t
+      @spec config() :: Keyword.t
       def config,
         do: unquote(otp_app) |> Application.get_env(__MODULE__, []) |> Keyword.merge(unquote(opts))
 
