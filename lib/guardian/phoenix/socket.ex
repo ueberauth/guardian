@@ -33,10 +33,9 @@ if Code.ensure_loaded?(Phoenix) do
       use Phoenix.Socket
 
       def connect(%{"token" => token}, socket) do
-        result = Guarian.Socket.sign_in(socket, MyApp.Guardian, token)
-        case result do
-          {:ok, authedSocket, %{token: token, resource: resource, claims: claims}} ->
-            {:ok, authedSocket}
+        case Guarian.Socket.sign_in(socket, MyApp.Guardian, token) do
+          {:ok, authed_socket} ->
+            {:ok, authed_socket}
           {:error, _} -> :error
         end
       end
@@ -170,8 +169,7 @@ if Code.ensure_loaded?(Phoenix) do
       token :: Guardian.Token.token | nil,
       claims_to_check :: Guardian.Token.claims,
       opts :: Guardian.opts
-    ) :: {:ok, Socket.t, %{claims: Guardian.Token.claims, token: Guardian.Token.token, resource: any}} |
-         {:error, atom | any}
+    ) :: {:ok, Socket.t} | {:error, atom | any}
     def sign_in(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
 
     def sign_in(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
@@ -182,7 +180,7 @@ if Code.ensure_loaded?(Phoenix) do
 
         authed_socket = assign_rtc(socket, resource, token, claims, key)
 
-        {:ok, authed_socket, %{claims: claims, token: token, resource: resource}}
+        {:ok, authed_socket}
       end
     end
 
