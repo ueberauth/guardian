@@ -9,8 +9,7 @@ if Code.ensure_loaded?(Phoenix) do
     The main functions you'll be interested in are:
 
     * `Guardian.Phoenix.Socket.authenticated?` - check if the socket has been authenticated
-    * `Guardian.Phoenix.Socket.sign_in` - Sign in a resource to a socket. Similar to `Guardian.Plug.sign_in`
-    * `Guardian.Phoenix.Socket.sign_out` - Sign out the resource on the socket
+    * `Guardian.Phoenix.Socket.authenticate` - Sign in a resource to a socket. Similar to `Guardian.Plug.authenticate`
 
     ### Getters
 
@@ -24,7 +23,7 @@ if Code.ensure_loaded?(Phoenix) do
     These are the usual functions you'll want to use when dealing with authentication on sockets.
 
     There is a bit of a difference between the usual `Guardian.Plug.sign_in` and the socket one.
-    The socket sign_in receives a token and signs in from that.
+    The socket authenticate receives a token and signs in from that.
     Please note that this is mere sugar on the underlying Guarian functions.
 
     As an example:
@@ -33,7 +32,7 @@ if Code.ensure_loaded?(Phoenix) do
       use Phoenix.Socket
 
       def connect(%{"token" => token}, socket) do
-        case Guarian.Socket.sign_in(socket, MyApp.Guardian, token) do
+        case Guarian.Socket.authenticate(socket, MyApp.Guardian, token) do
           {:ok, authed_socket} ->
             {:ok, authed_socket}
           {:error, _} -> :error
@@ -48,7 +47,7 @@ if Code.ensure_loaded?(Phoenix) do
     ```
 
     If you want to authenticate on the join of a channel, you can import this
-    module and use the sign_in function as normal.
+    module and use the authenticate function as normal.
     """
 
     import Guardian.Plug.Keys
@@ -163,18 +162,18 @@ if Code.ensure_loaded?(Phoenix) do
     Use the `key` to store the information in a different location.
     This allows multiple tokens and resources on a single socket.
     """
-    @spec sign_in(
+    @spec authenticate(
       socket :: Socket.t,
       impl :: module,
       token :: Guardian.Token.token | nil,
       claims_to_check :: Guardian.Token.claims,
       opts :: Guardian.opts
     ) :: {:ok, Socket.t} | {:error, atom | any}
-    def sign_in(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
+    def authenticate(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
 
-    def sign_in(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
+    def authenticate(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
 
-    def sign_in(socket, impl, token, claims_to_check, opts) do
+    def authenticate(socket, impl, token, claims_to_check, opts) do
       with {:ok, resource, claims} <- Guardian.resource_from_token(impl, token, claims_to_check, opts),
            key <- Keyword.get(opts, :key, GPlug.default_key()) do
 
@@ -182,26 +181,6 @@ if Code.ensure_loaded?(Phoenix) do
 
         {:ok, authed_socket}
       end
-    end
-
-    @doc """
-    Signout of the socket and also revoke the token. Using with GuardianDB this
-    will render the token useless for future requests.
-    """
-    @spec sign_out!(Socket.t, module, atom | String.t | nil) :: Socket.t
-    def sign_out!(socket, impl, key \\ :default) do
-      token = current_token(socket, key)
-      if token, do: Guardian.revoke(impl, token, [])
-      sign_out(socket, key)
-    end
-
-    @doc """
-    Sign out of the socket but do not revoke. The token will still be valid for
-    future requests.
-    """
-    @spec sign_out(Socket.t, atom | String.t | nil) :: Socket.t
-    def sign_out(socket, key \\ :default) do
-      assign_rtc(socket, nil, nil, nil, key)
     end
   end
 end

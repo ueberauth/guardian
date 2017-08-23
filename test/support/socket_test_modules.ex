@@ -20,9 +20,8 @@ defmodule Guardian.Phoenix.SocketTest.MySocket do
   alias Guardian.Phoenix.SocketTest.Impl
 
   def connect(%{"guardian_token" => token}, socket) do
-    case sign_in(socket, Impl, token) do
-      {:ok, authed_socket, _guardian_params} ->
-        {:ok, authed_socket}
+    case authenticate(socket, Impl, token) do
+      {:ok, authed_socket} -> {:ok, authed_socket}
       _ -> :error
     end
   end
