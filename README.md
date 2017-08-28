@@ -338,11 +338,10 @@ end
 
 ### Phoenix
 
-Guardian has great integration with Phoenix. For Controllers, pipelines, sockets or your custom integration points `Guardian` has you covered.
+Guardian provides some integration with Phoenix out of the box.
+Not a lot is really needed but around sockets some helper functions have been provided to make things easier to work with.
 
-By default `Guardian` does not require Phoenix. If Phoenix is available `Guardian` will load helpers relevant.
-
-Please see the documentation for `Guardian.Phoenix.Socket`, `Guardian.Phoenix.Controller` and `Guardian.Phoenix.Channel`
+Please see the documentation for `Guardian.Phoenix.Socket` for more information.
 
 ## Permissions
 
