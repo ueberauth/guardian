@@ -2,22 +2,42 @@ if Code.ensure_loaded?(Phoenix) do
   defmodule Guardian.Phoenix.Socket do
     @moduledoc """
     Provides functions for managing authentication with sockets.
-    Usually you'd use this on the Socket to authenticate on connection on
-    the `connect` function.
 
-    There are two main ways to use this module.
+    This module mostly provides convenience functions for storing tokens, claims and resources
+    on the socket assigns.
 
-    1. use Guardian.Phoenix.Socket
-    2. import Guardian.Phoenix.Socket
+    The main functions you'll be interested in are:
 
-    You use this function when you want to automatically sign in a socket
-    on `connect`. The case where authentication information is not provided
-    is not handled so that you can handle it yourself.
+    * `Guardian.Phoenix.Socket.authenticated?` - check if the socket has been authenticated
+    * `Guardian.Phoenix.Socket.authenticate` - Sign in a resource to a socket. Similar to `Guardian.Plug.authenticate`
 
+    ### Getters
+
+    Once you're authenticated with your socket, you can use the getters
+    to fetch information about the authenticated resource for the socket.
+
+    * `Guardian.Phoenix.Socket.current_claims`
+    * `Guardian.Phoenix.Socket.current_token`
+    * `Guardian.Phoenix.Socket.current_resource`
+
+    These are the usual functions you'll want to use when dealing with authentication on sockets.
+
+    There is a bit of a difference between the usual `Guardian.Plug.sign_in` and the socket one.
+    The socket authenticate receives a token and signs in from that.
+    Please note that this is mere sugar on the underlying Guarian functions.
+
+    As an example:
     ```elixir
     defmodule MyApp.UserSocket do
       use Phoenix.Socket
-      use Guardian.Phoenix.Socket
+
+      def connect(%{"token" => token}, socket) do
+        case Guarian.Socket.authenticate(socket, MyApp.Guardian, token) do
+          {:ok, authed_socket} ->
+            {:ok, authed_socket}
+          {:error, _} -> :error
+        end
+      end
 
       # This function will be called when there was no authentication information
       def connect(_params, socket) do
@@ -26,61 +46,14 @@ if Code.ensure_loaded?(Phoenix) do
     end
     ```
 
-    If you want more control over the authentication of the connection, then you
-    should `import Guardian.Phoenix.Socket` and use the `sign_in` function
-    to authenticate.
-
-    ```elixir
-    defmodule MyApp.UserSocket do
-      use Phoenix.Socket
-      import Guardian.Phoenix.Socket
-
-      def connect(%{"guardian_token" => token} = params, socket) do
-        case sign_in(socket, MyApp.Guardian, token) do
-          {:ok, authed_socket, guardian_params} ->
-            {:ok, authed_socket}
-          _ -> :error
-        end
-      end
-    end
-    ```
-
     If you want to authenticate on the join of a channel, you can import this
-    module and use the sign_in function as normal.
+    module and use the authenticate function as normal.
     """
 
     import Guardian.Plug.Keys
 
     alias Guardian.Plug, as: GPlug
     alias Phoenix.Socket
-
-    defmacro __using__(opts) do
-      key = Keyword.get(opts, :key, :default)
-      mod = Keyword.get(opts, :module)
-      module =
-        case mod do
-          {:__aliases__, _, _} = stuff -> Macro.expand(stuff, __ENV__)
-          mod -> mod
-        end
-
-      params_key =
-        if Keyword.get(opts, :token_key) do
-          opts |> Keyword.get(:token_key) |> to_string()
-        else
-          module |> apply(:config, [:socket_token_key, "guardian_token"]) |> to_string()
-        end
-
-      quote do
-        import Guardian.Phoenix.Socket
-
-        def connect(%{unquote(params_key) => token} = params, socket) when not is_nil(token) do
-          case sign_in(socket, unquote(module), token, %{}, key: unquote(key)) do
-            {:ok, authed_socket, _guardian_params} -> {:ok, authed_socket}
-            err -> :error
-          end
-        end
-      end
-    end
 
     @doc """
     Puts the current token onto the socket for later use.
@@ -189,46 +162,25 @@ if Code.ensure_loaded?(Phoenix) do
     Use the `key` to store the information in a different location.
     This allows multiple tokens and resources on a single socket.
     """
-    @spec sign_in(
+    @spec authenticate(
       socket :: Socket.t,
       impl :: module,
       token :: Guardian.Token.token | nil,
       claims_to_check :: Guardian.Token.claims,
       opts :: Guardian.opts
-    ) :: {:ok, Socket.t, %{claims: Guardian.Token.claims, token: Guardian.Token.token, resource: any}} |
-         {:error, atom | any}
-    def sign_in(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
+    ) :: {:ok, Socket.t} | {:error, atom | any}
+    def authenticate(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
 
-    def sign_in(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
+    def authenticate(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
 
-    def sign_in(socket, impl, token, claims_to_check, opts) do
+    def authenticate(socket, impl, token, claims_to_check, opts) do
       with {:ok, resource, claims} <- Guardian.resource_from_token(impl, token, claims_to_check, opts),
            key <- Keyword.get(opts, :key, GPlug.default_key()) do
 
         authed_socket = assign_rtc(socket, resource, token, claims, key)
 
-        {:ok, authed_socket, %{claims: claims, token: token, resource: resource}}
+        {:ok, authed_socket}
       end
-    end
-
-    @doc """
-    Signout of the socket and also revoke the token. Using with GuardianDB this
-    will render the token useless for future requests.
-    """
-    @spec sign_out!(Socket.t, module, atom | String.t | nil) :: Socket.t
-    def sign_out!(socket, impl, key \\ :default) do
-      token = current_token(socket, key)
-      if token, do: Guardian.revoke(impl, token, [])
-      sign_out(socket, key)
-    end
-
-    @doc """
-    Sign out of the socket but do not revoke. The token will still be valid for
-    future requests.
-    """
-    @spec sign_out(Socket.t, atom | String.t | nil) :: Socket.t
-    def sign_out(socket, key \\ :default) do
-      assign_rtc(socket, nil, nil, nil, key)
     end
   end
 end

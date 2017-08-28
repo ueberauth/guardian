@@ -21,7 +21,7 @@ defmodule Guardian.Phoenix.SocketTest do
   end
 
   test "signs in the user", ctx do
-    assert {:ok, socket} = apply(ctx.socket_mod, :connect, [%{"guardian_token" => ctx.token}, ctx.socket])
+    assert {:ok, socket} = ctx.socket_mod.connect(%{"guardian_token" => ctx.token}, ctx.socket)
 
     assert Guardian.Phoenix.Socket.current_token(socket) == ctx.token
     assert Guardian.Phoenix.Socket.current_claims(socket) == ctx.claims
