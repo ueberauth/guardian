@@ -77,7 +77,9 @@ See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from 
 
 To get off the ground quickly, simply replace `<guardian secret key>` in your Guardian config with the output of either:
 
-`$ mix phoenix.gen.secret`
+`$ mix phx.gen.secret` (Phoenix 1.3 or greater)
+
+`$ mix phoenix.gen.secret` (Older Phoenix versions)
 
 or
 
