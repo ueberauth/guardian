@@ -200,7 +200,7 @@ The default token type of `Guardian` is JWT. It accepts many options but you rea
 
 * `token_verify_module` - default `Guardian.Token.Jwt.Verify`. The module that verifies the claims
 * `allowed_algos` - The allowed algos to use for encoding and decoding.
-                    See `JOSE` for available. Default ["HS512"]
+                    See `JOSE` for available. Default `["HS512"]`
 * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
 * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
 * `allowed_drift` The drift that is allowed when decoding/verifying a token in milliseconds
