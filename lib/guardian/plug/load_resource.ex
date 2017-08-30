@@ -1,63 +1,72 @@
-defmodule Guardian.Plug.LoadResource do
-  @moduledoc """
-  Fetches the resource specified in a set of claims.
+if Code.ensure_loaded?(Plug) do
+  defmodule Guardian.Plug.LoadResource do
+    @moduledoc """
+    This plug loads the resource associated with a previously
+    validated token. Tokens are found and validated using the `Verify*` plugs.
 
-  The current resource is loaded by calling `from_token/1` on your
-  `Guardian.Serializer` with the value of the `sub` claim. See the `:serializer`
-  option for more details.
+    By default, load resource will return an error if no resource can be found.
+    You can override this behaviour using the `allow_blank: true` option.
 
-  If the resource is loaded successfully, it is accessible by calling
-  `Guardian.Plug.current_resource/2`.
+    If `allow_blank` is not set to true, the plug will return an error
+    if no resource can be found with `:no_resource_found`
 
-  If there is no valid JWT in the request so far (`Guardian.Plug.VerifySession`
-  / `Guardian.Plug.VerifyHeader`) did not find a valid token
-  then nothing will occur, and `Guardian.Plug.current_resource/2` will be nil.
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
+    It requires an implementation module, an error handler and a key.
 
-  ## Options
+    These can be set either:
 
-    * `:serializer` - The serializer to use to load the current resource from
-        the subject claim of the token. Defaults to the result of
-        `Guardian.serializer/0`.
+    1. Upstream on the connection with `plug Guardian.Pipeline`
+    2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
-    * `:claim` - The claim to look for to pass value to serializer. Defaults to `sub`.
-  """
+    Options:
 
-  @doc false
-  def init(opts \\ %{}), do: Enum.into(opts, %{})
+    * `allow_blank` - boolean. If set to true, will try to load a resource but will not fail if no resource is found.
+    * `key` - The location to find the information in the connection. Defaults to: `default`
 
-  @doc false
-  def call(conn, opts) do
-    key = Map.get(opts, :key, :default)
+    ## Example
 
-    case Guardian.Plug.current_resource(conn, key) do
-      nil ->
-        case Guardian.Plug.claims(conn, key) do
-          {:ok, claims} ->
-            claims |> load_resource(opts) |> put_current_resource(conn, key)
-          {:error, _} -> Guardian.Plug.set_current_resource(conn, nil, key)
-        end
-      _ -> conn
+    ```elixir
+
+      # setup the upstream pipeline
+      plug Guardian.Plug.LoadResource, allow_blank: true
+      plug Guardian.Plug.LoadResource, key: :secret
+      ```
+    """
+
+    import Plug.Conn
+
+    alias Guardian.Plug, as: GPlug
+    alias Guardian.Plug.Pipeline
+
+    def init(opts), do: opts
+    def call(conn, opts) do
+      allow_blank = Keyword.get(opts, :allow_blank)
+
+      conn
+      |> GPlug.current_claims(opts)
+      |> resource(conn, opts)
+      |> respond(allow_blank)
     end
-  end
 
-  defp put_current_resource({:ok, resource}, conn, key) do
-    Guardian.Plug.set_current_resource(conn, resource, key)
-  end
+    defp resource(nil, conn, opts), do: {:error, :no_resource_found, conn, opts}
+    defp resource(claims, conn, opts) do
+      module = Pipeline.fetch_module!(conn, opts)
+      case apply(module, :resource_from_claims, [claims]) do
+        {:ok, resource} -> {:ok, resource, conn, opts}
+        {:error, reason} -> {:error, reason, conn, opts}
+        _ -> {:error, :no_resource_found, conn, opts}
+      end
+    end
 
-  defp put_current_resource({:error, _}, conn, key) do
-    Guardian.Plug.set_current_resource(conn, nil, key)
-  end
+    defp respond({:error, _reason, conn, _opts}, true), do: conn
+    defp respond({:error, reason, conn, opts}, _), do: return_error(conn, reason, opts)
+    defp respond({:ok, resource, conn, opts}, _), do: GPlug.put_current_resource(conn, resource, opts)
 
-  defp load_resource(claims, opts) do
-    serializer = get_serializer(opts)
-    resource_claim = Map.get(opts, :claim, "sub")
-
-    claims
-    |> Map.get(resource_claim)
-    |> serializer.from_token()
-  end
-
-  defp get_serializer(opts) do
-    Map.get(opts, :serializer, Guardian.serializer)
+    defp return_error(conn, reason, opts) do
+      handler = Pipeline.fetch_error_handler!(conn, opts)
+      conn = apply(handler, :auth_error, [conn, {:no_resource_found, reason}, opts])
+      halt(conn)
+    end
   end
 end

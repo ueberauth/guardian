@@ -1,332 +1,309 @@
-defmodule Guardian.Plug do
-  @moduledoc """
-  Guardian.Plug contains functions that assist with interacting with Guardian
-  via Plugs.
+if Code.ensure_loaded?(Plug) do
+  defmodule Guardian.Plug do
+    @moduledoc """
+    Provides functions for the implementation module for dealing with
+    Guardian in a Plug environment
 
-  Guardian.Plug is not itself a plug.
+    ```elixir
+    defmodule MyApp.Tokens do
+      use Guardian, otp_app: :my_app
 
-  ## Example
-
-      Guardian.Plug.sign_in(conn, user)
-      Guardian.Plug.sign_in(conn, user, :access)
-
-      # stores this JWT in a different location (keyed by :secret)
-      Guardian.Plug.sign_in(
-        conn,
-        user,
-        :access,
-        %{ claims: "i", make: true, key: :secret }
-      )
-
-
-  ## Example
-
-      Guardian.Plug.sign_out(conn) # sign out all sessions
-      Guardian.Plug.sign_out(conn, :secret) # sign out only the :secret session
-
-  To sign in to an api action
-  (i.e. not store the jwt in the session, just on the conn)
-
-  ## Example
-
-      Guardian.Plug.api_sign_in(conn, user)
-      Guardian.Plug.api_sign_in(conn, user, :access)
-
-      # Store the JWT on the conn
-      Guardian.Plug.api_sign_in(
-        conn,
-        user,
-        :access,
-        %{
-          claims: "i",
-          make: true,
-          key: :secret
-        }
-      )
-
-  Then use the Guardian.Plug helpers to look up current_token,
-  claims and current_resource.
-
-  ## Example
-      Guardian.Plug.current_token(conn)
-      Guardian.Plug.claims(conn)
-      Guardian.Plug.current_resource(conn)
-
-  """
-
-  import Guardian.Keys
-
-  @doc """
-  A simple check to see if a request is authenticated
-  """
-  @spec authenticated?(Plug.Conn.t) :: atom # boolean
-  def authenticated?(conn), do: authenticated?(conn, :default)
-
-  @doc """
-  A simple check to see if a request is authenticated
-  """
-  @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
-  def authenticated?(conn, type) do
-    case claims(conn, type) do
-      {:error, _} -> false
-      _ -> true
+      # ... snip
     end
-  end
+    ```
 
-  @doc """
-  Sign in a resource (that your configured serializer knows about)
-  into the current web session.
-  """
-  @spec sign_in(Plug.Conn.t, any) :: Plug.Conn.t
-  def sign_in(conn, object), do: sign_in(conn, object, nil, %{})
+    Your implementation module will be given a `Plug` module for
+    interacting with plug.
 
-  @doc """
-  Sign in a resource (that your configured serializer knows about)
-  into the current web session.
+    If you're using Guardian in your application most of the setters will
+    be uninteresting. They're mostly for library authors and Guardian itself.
 
-  By specifying the 'type' of the token,
-  you're setting the typ field in the JWT.
-  """
-  @spec sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
-  def sign_in(conn, object, type), do: sign_in(conn, object, type, %{})
+    The usual functions you'd use in your application are:
 
-  @doc false
-  @spec sign_in(Plug.Conn.t, any, atom | String.t, Keyword.t) :: Plug.Conn.t
-  def sign_in(conn, object, type, new_claims) when is_list(new_claims) do
-    sign_in(conn, object, type, Enum.into(new_claims, %{}))
-  end
+    ### `sign_in(conn, resource, claims \\ %{}, opts \\ [])`
 
-  @doc """
-  Same as sign_in/3 but also encodes all claims into the JWT.
+    Sign in a resource for your application.
+    This will generate a token for your resource according to
+    your TokenModule and `subject_for_token` callback.
 
-  The `:key` key in the claims map is special in that it
-  sets the location of the storage.
+    `sign_in` will also cache the `resource`, `claims`, and `token` on the
+    connection.
 
-  The :perms key will provide the ability to encode permissions into the token.
-  The value at :perms should be a map
+    ```elixir
+    conn = MyApp.Guardian.Plug.sign_in(conn, resource, my_custom_claims)
+    ```
 
-  ### Example
+    If there is a session present the token will be stored in the session
+    to provide traditional session based authentication.
+    """
 
-      Guardian.sign_in(conn, user, :access, perms: %{default: [:read, :write]})
+    defmodule UnauthenticatedError do
+      defexception message: "Unauthenticated", status: 401
+    end
 
-  """
-  @spec sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t
-  def sign_in(conn, object, type, new_claims) do
-    the_key = Map.get(new_claims, :key, :default)
-    new_claims = Map.delete(new_claims, :key)
+    @default_key "default"
 
-    case Guardian.encode_and_sign(object, type, new_claims) do
-      {:ok, jwt, full_claims} ->
+    import Guardian, only: [returning_tuple: 1]
+    import Guardian.Plug.Keys
+    import Plug.Conn
+
+    alias Guardian.Plug, as: GPlug
+    alias GPlug.Pipeline
+    alias __MODULE__.UnauthenticatedError
+
+    defmacro __using__(impl) do
+      quote do
+        def implementation, do: unquote(impl)
+
+        def put_current_token(conn, token, opts \\ []),
+          do: GPlug.put_current_token(conn, token, opts)
+
+        def put_current_claims(conn, claims, opts \\ []),
+          do: GPlug.put_current_claims(conn, claims, opts)
+
+        def put_current_resource(conn, resource, opts \\ []),
+          do: GPlug.put_current_resource(conn, resource, opts)
+
+        def current_token(conn, opts \\ []),
+          do: GPlug.current_token(conn, opts)
+
+        def current_claims(conn, opts \\ []),
+          do: GPlug.current_claims(conn, opts)
+
+        def current_resource(conn, opts \\ []),
+          do: GPlug.current_resource(conn, opts)
+
+        def authenticated?(conn, opts \\ []),
+          do: GPlug.authenticated?(conn, opts)
+
+        def sign_in(conn, resource, claims \\ %{}, opts \\ []),
+          do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
+
+        def sign_out(conn, opts \\ []),
+          do: GPlug.sign_out(conn, implementation(), opts)
+
+        def remember_me(conn, resource, claims, opts),
+          do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
+
+        def remember_me_from_token(conn, token, claims_to_check \\ %{}, opts \\ []),
+          do: GPlug.remember_me_from_token(conn, implementation(), token, claims_to_check, opts)
+      end
+    end
+
+    def session_active?(conn) do
+      key = :seconds |> System.os_time() |> to_string()
+      get_session(conn, key) == nil
+    rescue
+      ArgumentError -> false
+    end
+
+    @spec authenticated?(Plug.Conn.t, Guardian.opts) :: true | false
+    def authenticated?(conn, opts) do
+      key =
         conn
-        |> Plug.Conn.configure_session(renew: true)
-        |> Plug.Conn.put_session(base_key(the_key), jwt)
-        |> set_current_resource(object, the_key)
-        |> set_claims({:ok, full_claims}, the_key)
-        |> set_current_token(jwt, the_key)
-        |> Guardian.hooks_module.after_sign_in(the_key)
+        |> fetch_key(opts)
+        |> token_key()
 
-      {:error, reason} ->
-        Plug.Conn.put_session(conn, base_key(the_key), {:error, reason})
+      conn.private[key] != nil
     end
-  end
 
-  @doc """
-  Sign in a resource for API requests.
+    @doc """
+    Provides the default key for the location of a token in the session and connection
+    """
 
-  This function does not store the resource in the session. Instead the
-  resource is stored in the `Plug.Conn` and is designed to be accessed with
-  `Guardian.Plug.current_resource/2`.
-  """
-  @spec api_sign_in(Plug.Conn.t, any) :: Plug.Conn.t
-  def api_sign_in(conn, object), do: api_sign_in(conn, object, nil, %{})
+    @spec default_key() :: String.t
+    def default_key, do: @default_key
 
-  @doc """
-  Sign in a resource for API requests.
-
-  This function does not store the resource in the session. Instead the
-  resource is stored in the `Plug.Conn` and is designed to be accessed with
-  `Guardian.Plug.current_resource/2`.
-
-  By specifying the 'type' of the token, you're setting the typ field in the
-  JWT.
-  """
-  @spec api_sign_in(Plug.Conn.t, any, atom | String.t) :: Plug.Conn.t
-  def api_sign_in(conn, object, type), do: api_sign_in(conn, object, type, %{})
-
-  @doc false
-  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, Keyword.t) :: Plug.Conn.t
-  def api_sign_in(conn, object, type, new_claims) when is_list(new_claims) do
-    api_sign_in(conn, object, type, Enum.into(new_claims, %{}))
-  end
-
-  @doc """
-  Same as api_sign_in/3 but also encodes all claims into the JWT.
-
-  The `:key` key in the claims map is special.
-  In that it sets the location of the storage.
-
-  The :perms key will provide the ability to encode permissions into the token.
-  The value at :perms should be a map
-
-  ### Example
-
-      Guardian.Plug.api_sign_in(
-        conn,
-        user,
-        :token,
-        perms: %{default: [:read, :write]}
-      )
-  """
-  @spec api_sign_in(Plug.Conn.t, any, atom | String.t, map) :: Plug.Conn.t
-  def api_sign_in(conn, object, type, new_claims) do
-    the_key = Map.get(new_claims, :key, :default)
-    new_claims = Map.delete(new_claims, :key)
-
-    case Guardian.encode_and_sign(object, type, new_claims) do
-      {:ok, jwt, full_claims} ->
+    @spec current_claims(Plug.Conn.t, Guardian.opts) :: Guardian.Token.claims | nil
+    def current_claims(conn, opts \\ []) do
+      key =
         conn
-        |> set_current_resource(object, the_key)
-        |> set_claims({:ok, full_claims}, the_key)
-        |> set_current_token(jwt, the_key)
-        |> Guardian.hooks_module.after_sign_in(the_key)
+        |> fetch_key(opts)
+        |> claims_key()
 
-      {:error, reason} ->
-        set_claims(conn, {:error, reason}, the_key)
+      conn.private[key]
     end
-  end
 
-  @doc """
-  Sign out of a session.
-
-  If no key is specified, the entire session is cleared.  Otherwise, only the
-  location specified is cleared
-  """
-  @spec sign_out(Plug.Conn.t) :: Plug.Conn.t
-  def sign_out(conn, the_key \\ :all) do
-    conn
-    |> Guardian.hooks_module.before_sign_out(the_key)
-    |> sign_out_via_key(the_key)
-  end
-
-  @doc """
-  Fetch the currently verified claims from the current request
-  """
-  @spec claims(Plug.Conn.t, atom) :: {:ok, map} |
-                                     {:error, atom | String.t}
-  def claims(conn, the_key \\ :default) do
-    case conn.private[claims_key(the_key)] do
-      {:ok, the_claims} -> {:ok, the_claims}
-      {:error, reason} -> {:error, reason}
-      _ -> {:error, :no_session}
-    end
-  end
-
-  @doc false
-  @spec set_claims(Plug.Conn.t, nil | {:ok, map} | {:error, String.t}, atom) :: Plug.Conn.t
-  def set_claims(conn, new_claims, the_key \\ :default) do
-    Plug.Conn.put_private(conn, claims_key(the_key), new_claims)
-  end
-
-  @doc """
-  Fetch the currently authenticated resource if loaded,
-  optionally located at a location (key)
-  """
-  @spec current_resource(Plug.Conn.t, atom) :: any | nil
-  def current_resource(conn, the_key \\ :default) do
-    conn.private[resource_key(the_key)]
-  end
-
-  @doc false
-  def set_current_resource(conn, resource, the_key \\ :default) do
-    Plug.Conn.put_private(conn, resource_key(the_key), resource)
-  end
-
-  @doc """
-  Fetch the currently verified token from the request.
-  Optionally located at a location (key)
-  """
-  @spec current_token(Plug.Conn.t, atom) :: String.t | nil
-  def current_token(conn, the_key \\ :default) do
-    conn.private[jwt_key(the_key)]
-  end
-
-  @doc false
-  def set_current_token(conn, jwt, the_key \\ :default) do
-    Plug.Conn.put_private(conn, jwt_key(the_key), jwt)
-  end
-
-  defp sign_out_via_key(conn, :all) do
-    keys = session_locations(conn)
-    conn
-      |> revoke_from_session(keys)
-      |> Plug.Conn.clear_session
-      |> clear_jwt_assign(keys)
-      |> clear_resource_assign(keys)
-      |> clear_claims_assign(keys)
-  end
-
-  defp sign_out_via_key(conn, the_key) do
-    conn
-      |> revoke_from_session(the_key)
-      |> Plug.Conn.delete_session(base_key(the_key))
-      |> clear_jwt_assign(the_key)
-      |> clear_resource_assign(the_key)
-      |> clear_claims_assign(the_key)
-  end
-
-  defp clear_resource_assign(conn, nil), do: conn
-  defp clear_resource_assign(conn, []), do: conn
-
-  defp clear_resource_assign(conn, [h|t]) do
-    conn
-    |> clear_resource_assign(h)
-    |> clear_resource_assign(t)
-  end
-
-  defp clear_resource_assign(conn, key) do
-    set_current_resource(conn, nil, key)
-  end
-
-  defp clear_claims_assign(conn, nil), do: conn
-  defp clear_claims_assign(conn, []), do: conn
-  defp clear_claims_assign(conn, [h|t]) do
-    conn
-    |> clear_claims_assign(h)
-    |> clear_claims_assign(t)
-  end
-
-  defp clear_claims_assign(conn, key), do: set_claims(conn, nil, key)
-
-  defp clear_jwt_assign(conn, nil), do: conn
-  defp clear_jwt_assign(conn, []), do: conn
-  defp clear_jwt_assign(conn, [h|t]) do
-    conn
-    |> clear_jwt_assign(h)
-    |> clear_jwt_assign(t)
-  end
-
-  defp clear_jwt_assign(conn, key), do: set_current_token(conn, nil, key)
-
-  defp session_locations(conn) do
-    conn.private.plug_session
-    |> Map.keys
-    |> Enum.map(&Guardian.Keys.key_from_other/1)
-    |> Enum.filter(&(&1 != nil))
-  end
-
-  defp revoke_from_session(conn, []), do: conn
-  defp revoke_from_session(conn, [h|t]) do
-    conn
-    |> revoke_from_session(h)
-    |> revoke_from_session(t)
-  end
-
-  defp revoke_from_session(conn, key) do
-    case Plug.Conn.get_session(conn, base_key(key)) do
-      nil -> conn
-      jwt ->
-        _ = Guardian.revoke!(jwt)
+    @spec current_resource(Plug.Conn.t, Guardian.opts) :: any | nil
+    def current_resource(conn, opts \\ []) do
+      key =
         conn
+        |> fetch_key(opts)
+        |> resource_key()
+
+      conn.private[key]
+    end
+
+    @spec current_token(Plug.Conn.t, Guardian.opts) :: Guardian.Token.token | nil
+    def current_token(conn, opts \\ []) do
+      key =
+        conn
+        |> fetch_key(opts)
+        |> token_key()
+
+      conn.private[key]
+    end
+
+    @spec put_current_token(Plug.Conn.t, Guardian.Token.token | nil, Guardian.opts) :: Plug.Conn.t
+    def put_current_token(conn, token, opts \\ []) do
+      key =
+        conn
+        |> fetch_key(opts)
+        |> token_key()
+
+      put_private(conn, key, token)
+    end
+
+    @spec put_current_claims(Plug.Conn.t, Guardian.Token.claims | nil, Guardian.opts) :: Plug.Conn.t
+    def put_current_claims(conn, claims, opts \\ []) do
+      key =
+        conn
+        |> fetch_key(opts)
+        |> claims_key()
+
+      put_private(conn, key, claims)
+    end
+
+    @spec put_current_resource(Plug.Conn.t, resource :: any | nil, Guardian.opts) :: Plug.Conn.t
+    def put_current_resource(conn, resource, opts \\ []) do
+      key =
+        conn
+        |> fetch_key(opts)
+        |> resource_key()
+
+      put_private(conn, key, resource)
+    end
+
+    @spec sign_in(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
+    def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
+      with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
+           {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
+           {:ok, conn} <-
+             returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
+
+        if session_active?(conn) do
+          key =
+            conn
+            |> fetch_key(opts)
+            |> token_key()
+
+          conn
+          |> put_session(key, token)
+          |> configure_session(renew: true)
+        else
+          conn
+        end
+      else
+        err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    @spec sign_out(Plug.Conn.t, module, Guardian.opts) :: Plug.Conn.t
+    def sign_out(conn, impl, opts) do
+      key = Keyword.get(opts, :key, :all)
+      result = do_sign_out(conn, impl, key, opts)
+      case result do
+        {:ok, conn} -> conn
+        {:error, reason} -> handle_unauthenticated(conn, reason, opts)
+      end
+    end
+
+    @spec remember_me(Plug.Conn.t, module, any, Guardian.Token.claims, Guardian.opts) :: Plug.Conn.t
+    def remember_me(conn, mod, resource, claims, opts) do
+      with type <- Keyword.get(opts, :token_type, "refresh"),
+           opts <- Keyword.put(opts, :token_type, type),
+           key <- Pipeline.fetch_key(conn, opts),
+           {:ok, token, _claims} <- Guardian.encode_and_sign(mod, resource, claims, opts) do
+
+        put_resp_cookie(conn, key, token)
+      else
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    @spec remember_me_from_token(
+      Plug.Conn.t, module, Guardian.Token.token, Guardian.Token.claims, Guardian.opts
+    ) :: Plug.Conn.t
+    def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
+      with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
+           type <- Keyword.get(opts, :token_type, "refresh"),
+           key <- Pipeline.fetch_key(conn, opts),
+           {:ok, _old, {new_t, _new_c}} <- Guardian.exchange(mod, token, claims["typ"], type, opts) do
+
+        put_resp_cookie(conn, key, new_t)
+      else
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    defp add_data_to_conn(conn, resource, token, claims, opts) do
+      conn =
+        conn
+        |> put_current_token(token, opts)
+        |> put_current_claims(claims, opts)
+        |> put_current_resource(resource, opts)
+
+      {:ok, conn}
+    end
+
+    defp cleanup_session({:ok, conn}) do
+      if session_active?(conn) do
+        {:ok, configure_session(conn, drop: true)}
+      else
+        {:ok, conn}
+      end
+    end
+
+    defp cleanup_session({:error, _} = err), do: err
+    defp cleanup_session(err), do: {:error, err}
+
+    defp clear_key(key, {:ok, conn}, impl, opts), do: do_sign_out(conn, impl, key, opts)
+    defp clear_key(_, err, _, _), do: err
+
+    defp fetch_key(conn, opts),
+      do: Keyword.get(opts, :key) || Pipeline.current_key(conn) || default_key()
+
+    defp remove_data_from_conn(conn, opts) do
+      conn =
+        conn
+        |> put_current_token(nil, opts)
+        |> put_current_claims(nil, opts)
+        |> put_current_resource(nil, opts)
+
+      {:ok, conn}
+    end
+
+    defp do_sign_out(%{private: private} = conn, impl, :all, opts) do
+      private
+      |> Map.keys()
+      |> Enum.map(&key_from_other/1)
+      |> Enum.filter(&(&1 != nil))
+      |> Enum.uniq()
+      |> Enum.reduce({:ok, conn}, &clear_key(&1, &2, impl, opts))
+      |> cleanup_session()
+    end
+
+    defp do_sign_out(conn, impl, key, opts) do
+      with {:ok, conn} <- returning_tuple({impl, :before_sign_out, [conn, key, opts]}),
+           {:ok, conn} <- remove_data_from_conn(conn, key: key) do
+
+        if session_active?(conn) do
+          {:ok, delete_session(conn, token_key(key))}
+        else
+          {:ok, conn}
+        end
+      end
+    end
+
+    defp handle_unauthenticated(conn, reason, opts) do
+      error_handler = Pipeline.current_error_handler(conn)
+      if error_handler do
+        conn
+        |> halt()
+        |> error_handler.auth_error({:unauthenticated, reason}, opts)
+      else
+        raise UnauthenticatedError, inspect(reason)
+      end
     end
   end
 end

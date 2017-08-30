@@ -1,50 +1,76 @@
-defmodule Guardian.Plug.VerifySession do
-  @moduledoc """
-  Use this plug to verify a token contained in a session.
+if Code.ensure_loaded?(Plug) do
+  defmodule Guardian.Plug.VerifySession do
+    @moduledoc """
+    Looks for and validates a token found in the session.
 
-  ## Example
+    In the case where:
 
-      plug Guardian.Plug.VerifySession
+    a. The session is not loaded
+    b. A token is already found for `:key`
 
-  You can also specify a location to look for the token
+    This plug will not do anything.
 
-  ## Example
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
+    It requires an implementation module, an error handler and a key.
 
-      plug Guardian.Plug.VerifySession, key: :secret
+    These can be set either:
 
-  Verifying the session will update the claims on the request,
-  available with Guardian.Plug.claims/1
+    1. Upstream on the connection with `plug Guardian.Pipeline`
+    2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
-  In the case of an error, the claims will be set to { :error, reason }
-  """
-  import Guardian.Keys
+    If a token is found but is invalid, the error handler will be called with
+    `auth_error(conn, {:invalid_token, reason}, opts)`
 
-  @doc false
-  def init(opts \\ %{}), do: Enum.into(opts, %{})
+    Once a token has been found it will be decoded, the token and claims will be put onto the connection.
 
-  @doc false
-  def call(conn, opts) do
-    key = Map.get(opts, :key, :default)
+    They will be available using `Guardian.Plug.current_claims/2` and `Guardian.Plug.current_token/2`
+    """
 
-    case Guardian.Plug.claims(conn, key) do
-      {:ok, _} -> conn
-      {:error, _} ->
-        jwt = Plug.Conn.get_session(conn, base_key(key))
+    import Plug.Conn
+    import Guardian.Plug.Keys
 
-        if jwt do
-          case Guardian.decode_and_verify(jwt, %{}) do
-            {:ok, claims} ->
-              conn
-              |> Guardian.Plug.set_claims({:ok, claims}, key)
-              |> Guardian.Plug.set_current_token(jwt, key)
-            {:error, reason} ->
-              conn
-              |> Plug.Conn.delete_session(base_key(key))
-              |> Guardian.Plug.set_claims({:error, reason}, key)
-          end
-        else
-          conn
-        end
+    alias Guardian.Plug, as: GPlug
+    alias GPlug.Pipeline
+
+    def init(opts), do: opts
+
+    @spec call(Plug.Conn.t, Keyword.t) :: Plug.Conn.t
+    def call(conn, opts) do
+      if GPlug.session_active?(conn) do
+        verify_session(conn, opts)
+      else
+        conn
+      end
     end
+
+    defp verify_session(conn, opts) do
+      with nil <- GPlug.current_token(conn, opts),
+           {:ok, token} <- find_token_from_session(conn, opts),
+           module <- Pipeline.fetch_module!(conn, opts),
+           claims_to_check <- Keyword.get(opts, :claims, %{}),
+           key <- storage_key(conn, opts),
+           {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
+
+        conn
+        |> GPlug.put_current_token(token, key: key)
+        |> GPlug.put_current_claims(claims, key: key)
+      else
+        :no_token_found -> conn
+        {:error, reason} ->
+          conn
+          |> Pipeline.fetch_error_handler!(opts)
+          |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
+        _ -> conn
+      end
+    end
+
+    defp find_token_from_session(conn, opts) do
+      key = conn |> storage_key(opts) |> token_key()
+      token = get_session(conn, key)
+      if token, do: {:ok, token}, else: :no_token_found
+    end
+
+    defp storage_key(conn, opts), do: Pipeline.fetch_key(conn, opts)
   end
 end

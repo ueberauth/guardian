@@ -1,146 +1,73 @@
 defmodule Guardian.Plug.EnsureAuthenticatedTest do
   @moduledoc false
-  use ExUnit.Case, async: true
-  use Plug.Test
-  import ExUnit.CaptureLog
-  import Guardian.TestHelper
 
+  use Plug.Test
+  use ExUnit.Case
+
+  alias Guardian.Plug, as: GPlug
   alias Guardian.Plug.EnsureAuthenticated
 
-  defmodule TestHandler do
+  defmodule Handler do
     @moduledoc false
 
-    def unauthenticated(conn, _) do
-      conn
-      |> Plug.Conn.assign(:guardian_spec, :unauthenticated)
-      |> Plug.Conn.send_resp(401, "Unauthenticated")
+    import Plug.Conn
+
+    def auth_error(conn, {type, reason}, _opts) do
+      body = inspect({type, reason})
+      send_resp(conn, 401, body)
     end
   end
+
+  defmodule Impl do
+    @moduledoc false
+
+    use Guardian, otp_app: :guardian,
+                  token_module: Guardian.Support.TokenModule
+
+    def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+    def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
+
+    def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+  end
+
+  @resource %{id: "bobby"}
 
   setup do
-    conn = conn(:get, "/foo")
-    {:ok, %{conn: conn}}
+    impl = Impl
+    handler = Handler
+    {:ok, token, claims} = Impl.encode_and_sign(@resource)
+    {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, impl: impl, handler: handler}}
   end
 
-  test "init/1 sets the handler option to the module that's passed in" do
-    %{handler: handler_opts} = EnsureAuthenticated.init(handler: TestHandler)
-
-    assert handler_opts == {TestHandler, :unauthenticated}
+  describe "with no authenticated token" do
+    test "returns an error", ctx do
+      conn = EnsureAuthenticated.call(ctx.conn, [module: ctx.impl, error_handler: ctx.handler])
+      assert {401, _, "{:unauthenticated, :unauthenticated}"} = sent_resp(conn)
+      assert conn.halted
+    end
   end
 
-  test "init/1 sets the handler option to the value of on_failure" do
-    fun = fn ->
-      %{handler: handler_opts} = EnsureAuthenticated.init(
-        on_failure: {TestHandler, :custom_failure_method}
-      )
+  describe "with an authenticated token" do
+    setup ctx do
+      conn =
+        ctx.conn
+        |> GPlug.put_current_token(ctx.token, [])
+        |> GPlug.put_current_claims(ctx.claims, [])
 
-      assert handler_opts == {TestHandler, :custom_failure_method}
+      {:ok, %{conn: conn}}
     end
 
-    assert capture_log([level: :warn], fun) =~ ":on_failure is deprecated"
-  end
+    test "allows the plug to continue", ctx do
+      conn = EnsureAuthenticated.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler)
+      refute conn.halted
+      refute conn.status == 401
+    end
 
-  test "init/1 defaults the handler option to Guardian.Plug.ErrorHandler" do
-    %{handler: handler_opts} = EnsureAuthenticated.init %{}
-
-    assert handler_opts == {Guardian.Plug.ErrorHandler, :unauthenticated}
-  end
-
-  test "init/1 with default options" do
-    options = EnsureAuthenticated.init %{}
-
-    assert options == %{
-      claims: %{},
-      handler: {Guardian.Plug.ErrorHandler, :unauthenticated},
-      key: :default
-    }
-  end
-
-  test "init/1 uses all opts as claims except :on_failure, :key and :handler" do
-    %{claims: claims} = EnsureAuthenticated.init(
-      on_failure: {TestHandler, :some_method},
-      key: :super_secret,
-      handler: TestHandler,
-      foo: "bar",
-      another: "option"
-    )
-
-    assert claims == %{"foo" => "bar", "another" => "option"}
-  end
-
-  test "validates claims and calls through if claims are ok", %{conn: conn} do
-    claims = %{"typ" => "access", "sub" => "user1"}
-
-    ensured_conn =
-      conn
-      |> Guardian.Plug.set_claims({:ok, claims})
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, typ: "access")
-
-    refute must_authenticate?(ensured_conn)
-  end
-
-  test "it validates claims and fails if claims don't match", %{conn: conn} do
-    claims = %{"aud" => "oauth", "sub" => "user1"}
-
-    ensured_conn =
-      conn
-      |> Guardian.Plug.set_claims({:ok, claims})
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, typ: "access")
-
-    assert must_authenticate?(ensured_conn)
-  end
-
-  test "doesn't call unauth when session for default key", %{conn: conn} do
-    claims = %{"typ" => "access", "sub" => "user1"}
-
-    ensured_conn =
-      conn
-      |> Guardian.Plug.set_claims({:ok, claims})
-      |> run_plug(EnsureAuthenticated, handler: TestHandler)
-
-    refute must_authenticate?(ensured_conn)
-  end
-
-  test "doesn't call unauthenticated when session for key", %{conn: conn} do
-    claims = %{"typ" => "access", "sub" => "user1"}
-
-    ensured_conn =
-      conn
-      |> Guardian.Plug.set_claims({:ok, claims}, :secret)
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, key: :secret)
-
-    refute must_authenticate?(ensured_conn)
-  end
-
-  test "calls unauthenticated with no session for default key", %{conn: conn} do
-    ensured_conn = run_plug(conn, EnsureAuthenticated, handler: TestHandler)
-
-    assert must_authenticate?(ensured_conn)
-  end
-
-  test "calls unauthenticated when no session for key", %{conn: conn} do
-    ensured_conn = run_plug(
-      conn,
-      EnsureAuthenticated,
-      handler: TestHandler,
-      key: :secret
-    )
-
-    assert must_authenticate?(ensured_conn)
-  end
-
-  test "it halts the connection", %{conn: conn} do
-    ensured_conn = run_plug(
-      conn,
-      EnsureAuthenticated,
-      handler: TestHandler,
-      key: :secret
-    )
-
-    assert ensured_conn.halted
-  end
-
-  defp must_authenticate?(conn) do
-    conn.assigns[:guardian_spec] == :unauthenticated
+    test "rejects when claims to not match", ctx do
+      conn = EnsureAuthenticated.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler, claims: %{no: "access"})
+      assert conn.halted
+      assert conn.status == 401
+      assert {401, _, "{:unauthenticated, :no}"} = sent_resp(conn)
+    end
   end
 end

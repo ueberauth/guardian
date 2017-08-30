@@ -1,80 +1,50 @@
-defmodule Guardian.Plug.EnsureNotAuthenticated do
-  @moduledoc """
-  This plug ensures that a invalid JWT was provided and has been
-  verified on the request.
+if Code.ensure_loaded?(Plug) do
+  defmodule Guardian.Plug.EnsureNotAuthenticated do
+    @moduledoc """
+    This plug ensures that a resource is not logged in.
 
-  If one is found, the `already_authenticated/2` function is invoked with the
-  `Plug.Conn.t` object and its params.
+    If one is not found, the `auth_error` will be called with `:already_authenticated`
 
-  ## Example
+    This, like all other Guardian plugs, requires a Guardian pipeline to be setup.
+    It requires an implementation module, an error handler and a key.
 
-      # Will call the already_authenticated/2 function on your handler
-      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule
+    These can be set either:
 
-      # look in the :secret location.  You can also do simple claim checks:
-      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule,
-                                                 key: :secret
+    1. Upstream on the connection with `plug Guardian.Pipeline`
+    2. Upstream on the connection with `Guardian.Pipeline.{put_module, put_error_handler, put_key}`
+    3. Inline with an option of `:module`, `:error_handler`, `:key`
 
-      plug Guardian.Plug.EnsureNotAuthenticated, handler: SomeModule,
-                                                 typ: "access"
+    Options:
 
-  If the handler option is not passed, `Guardian.Plug.ErrorHandler` will provide
-  the default behavior.
-  """
-  require Logger
-  import Plug.Conn
+    * `key` - The location to find the information in the connection. Defaults to: `default`
 
-  @doc false
-  def init(opts) do
-    opts = Enum.into(opts, %{})
-    handler = build_handler_tuple(opts)
+    ## Example
 
-    claims_to_check = Map.drop(opts, [:key, :handler])
-    %{
-      handler: handler,
-      key: Map.get(opts, :key, :default),
-      claims: Guardian.Utils.stringify_keys(claims_to_check)
-    }
-  end
+    ```elixir
 
-  @doc false
-  def call(conn, opts) do
-    key = Map.get(opts, :key, :default)
+      # setup the upstream pipeline
+      plug Guardian.Plug.EnsureNotAuthenticated
+      plug Guardian.Plug.EnsureNotAuthenticated, key: :secret
+      ```
+    """
+    import Plug.Conn
 
-    case Guardian.Plug.claims(conn, key) do
-      {:ok, claims} -> conn |> check_claims(opts, claims)
-      {:error, _reason} -> conn
+    alias Guardian.Plug, as: GPlug
+    alias GPlug.{Pipeline}
+
+    def init(opts), do: opts
+
+    def call(conn, opts) do
+      token = GPlug.current_token(conn, opts)
+
+      if token do
+        conn
+        |> Pipeline.fetch_error_handler!(opts)
+        |> apply(:auth_error, [conn, {:already_authenticated, :already_authenticated}, opts])
+        |> halt()
+      else
+        conn
+      end
     end
-  end
-
-  @doc false
-  defp handle_error(conn, reason, opts) do
-    the_connection = conn |> assign(:guardian_failure, reason) |> halt
-
-    {mod, meth} = Map.get(opts, :handler)
-    apply(
-      mod,
-      meth,
-      [the_connection, Map.merge(the_connection.params, %{reason: reason})]
-    )
-  end
-
-  defp check_claims(conn, opts = %{claims: claims_to_check}, claims) do
-    claims_match = claims_to_check
-                   |> Map.keys
-                   |> Enum.all?(&(claims_to_check[&1] == claims[&1]))
-    if claims_match do
-      handle_error(conn, {:error, :claims_match}, opts)
-    else
-      conn
-    end
-  end
-
-  defp build_handler_tuple(%{handler: mod}) do
-    {mod, :already_authenticated}
-  end
-
-  defp build_handler_tuple(_) do
-    {Guardian.Plug.ErrorHandler, :already_authenticated}
   end
 end
