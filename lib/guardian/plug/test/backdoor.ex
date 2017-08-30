@@ -26,11 +26,11 @@ defmodule Guardian.Plug.Test.Backdoor do
   navigate_to "/?token=\#{token}"
   ```
 
-  If you aren't using [Hound][hound], a simple `GET /?as=User:5` request will
-  work.
+  If you aren't using [Hound][hound], a simple `GET /?token=SignedToken` request
+  will work.
 
   When the `Guardian.Plug.Test.Backdoor` plug runs, it passes along the value
-  of the `as` parameter directly to your application's Guardian serializer.
+  of the `token` parameter directly to your application's Guardian serializer.
 
   ## Options
 
