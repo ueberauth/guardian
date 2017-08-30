@@ -59,7 +59,7 @@ defmodule Guardian.Mixfile do
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
       # Dev and Test dependencies
-      {:credo, "~> 0.8.6", only: :test, runtime: false},
+      {:credo, "~> 0.8.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.16", only: :dev}
     ]
