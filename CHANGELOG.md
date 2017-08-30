@@ -1,3 +1,14 @@
+# v 1.0.0
+
+* Allow for multiple Guardian setups in a single applications
+* Adds pipelines
+* Significantly updates Guardian api to be more consistent
+* Make Phoenix an optional dependency
+* Make Plug an optional dependency
+* Permissions as an optional add-in
+* Deprecates Hooks in favour of callbacks on particular implementations
+* Removes Phoenix macros in favour of plain functions
+
 # v 0.14.5
 
 Update the poison and phoenix deps to allow a broader version setting
