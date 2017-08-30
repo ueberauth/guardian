@@ -2,7 +2,7 @@ defmodule Guardian.Mixfile do
   @moduledoc false
   use Mix.Project
 
-  @version "1.0.0-rc.1"
+  @version "1.0.0-beta.0"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
@@ -15,7 +15,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: ">= 1.3.2 or ~> 1.4 or ~> 1.5",
+      elixir: "~> 1.3.2 or ~> 1.4 or ~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env),
       package: package(),
       source_url: @url,
@@ -34,7 +34,7 @@ defmodule Guardian.Mixfile do
     ]
   end
 
-  defp elixirc_paths(env) when env in [:test], do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
   def application do
@@ -49,16 +49,20 @@ defmodule Guardian.Mixfile do
   end
 
   defp deps do
-    [{:jose, "~> 1.8"},
-     {:plug, ">= 1.0.0", optional: true},
-     {:poison, ">= 1.3.0 and < 4.0.0"},
-     {:uuid, ">= 1.1.1"},
-     {:phoenix, ">= 1.0.0 and < 2.0.0 or ~> 1.3-rc", optional: true},
+    [
+      {:jose, "~> 1.8"},
+      {:poison, "~> 2.2 or ~> 3.0"},
+      {:uuid, ">= 1.1.1"},
 
-     # Dev and Test dependencies
-     {:credo, "~> 0.8.0-rc6", optional: true, runtime: false},
-     {:dialyxir, "~> 0.5.0", optional: true, only: [:dev, :test], runtime: false},
-     {:ex_doc, "~> 0.15", optional: true, only: :dev}]
+      # Optional dependencies
+      {:phoenix, "~> 1.0 or ~> 1.2 or ~> 1.3", optional: true},
+      {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
+
+      # Dev and Test dependencies
+      {:credo, "~> 0.8.6", only: :test, runtime: false},
+      {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.16", only: :dev}
+    ]
   end
 
   defp package do
