@@ -1,18 +1,28 @@
 language: elixir
+
 elixir:
+  - 1.5
   - 1.4
   - 1.3
+
 otp_release:
   - 20.0
   - 19.3
   - 18.3
+
 matrix:
   exclude:
     - elixir: 1.3
       otp_release: 20.0
+env:
+  global:
+    - MIX_ENV=test
+
 notifications:
   email: false
+
 sudo: false
+
 script:
   - mix test
   - mix credo

@@ -299,7 +299,7 @@ defmodule Guardian.Token.Jwt do
     Map.merge(%{"alg" => hd(algos)}, headers)
   end
 
-  defp jose_jwk(the_secret = %JWK{}), do: the_secret
+  defp jose_jwk(%JWK{} = the_secret), do: the_secret
   defp jose_jwk(the_secret) when is_binary(the_secret), do: JWK.from_oct(the_secret)
   defp jose_jwk(the_secret) when is_map(the_secret), do: JWK.from_map(the_secret)
   defp jose_jwk(value), do: Config.resolve_value(value)
