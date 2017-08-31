@@ -172,13 +172,9 @@ Some configuration may be required by your `token_module`
 
 ### Configuration values
 
-Guardian resolves different types of configuration values. These can be provided in the config or options as:
+Guardian supports resolving configuration options at runtime, to that we use the following syntax:
 
-* `{:system, "FOO"}` - Read from the system environment
-* `{MyModule, :function_name}` - To call a function and use the result
 * `{MyModule, :func, [:some, :args]}` Calls the function on the module with args
-* `fn -> :some_value end` - an anonymous function whose result will be used
-* any other value
 
 These are evaluated at runtime and any value that you fetch via
 

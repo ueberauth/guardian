@@ -6,10 +6,7 @@ defmodule Guardian.ConfigTest do
     @moduledoc false
     use Guardian, otp_app: :guardian,
                   issuer: "FooApp",
-                  system_foo: {:system, "FOO"},
-                  mod_fun_foo: {__MODULE__, :foo},
-                  mod_fun_args: {__MODULE__, :foo, [1]},
-                  fun: fn -> "blah" end
+                  mod_fun_args: {__MODULE__, :foo, [1]}
 
     use Guardian.TestHelper
 
@@ -30,22 +27,7 @@ defmodule Guardian.ConfigTest do
       :this_is_a_thing
   end
 
-  test "config with a system value" do
-    System.put_env("FOO", "")
-    assert Impl.config(:system_foo) == ""
-    System.put_env("FOO", "foo")
-    assert Impl.config(:system_foo) == "foo"
-  end
-
-  test "config with a {mod, fun}" do
-    assert Impl.config(:mod_fun_foo) == "module function foo"
-  end
-
   test "config with a {mod, fun, args}" do
     assert Impl.config(:mod_fun_args) == "mod fun args 1"
-  end
-
-  test "config with a function" do
-    assert Impl.config(:fun) == "blah"
   end
 end
