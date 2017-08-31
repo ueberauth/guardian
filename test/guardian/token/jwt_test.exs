@@ -138,32 +138,12 @@ defmodule Guardian.Token.JwtTest do
       assert jwt.fields == ctx.claims
     end
 
-    test "it creates a token with an {m, f}", ctx do
-      secret = {ctx.impl, :the_secret_yo}
-      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret)
-      jwk = JWK.from_oct(ctx.impl.the_secret_yo)
-      {true, jwt, _} = JWT.verify_strict(jwk, ["HS512"], token)
-
-      assert jwt.fields == ctx.claims
-    end
-
     test "it creates a token with an {m, f, a}", ctx do
       the_secret = ctx.impl.config(:secret_key)
       secret = {ctx.impl, :the_secret_yo, [the_secret]}
       {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret)
       jwk = JWK.from_oct(the_secret)
       {true, jwt, _} = JOSE.JWT.verify_strict(jwk, ["HS512"], token)
-
-      assert jwt.fields == ctx.claims
-    end
-
-    test "it creates a token with an secret function", ctx do
-      the_secret = ctx.impl.config(:secret_key)
-      secret = fn -> the_secret end
-
-      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret)
-      jwk = JWK.from_oct(the_secret)
-      {true, jwt, _} = JWT.verify_strict(jwk, ["HS512"], token)
 
       assert jwt.fields == ctx.claims
     end
@@ -187,23 +167,9 @@ defmodule Guardian.Token.JwtTest do
       assert {:ok, ctx.claims} == result
     end
 
-    test "it decodes the jwt with a module function", ctx do
-      secret = {ctx.impl, :the_secret_yo}
-      result = Jwt.decode_token(ctx.impl, ctx.jwt, secret: secret)
-      assert {:ok, ctx.claims} == result
-    end
-
     test "it decodes the jwt with an {m, f, a}", ctx do
       the_secret = ctx.impl.config(:secret_key)
       secret = {ctx.impl, :the_secret_yo, [the_secret]}
-      result = Jwt.decode_token(ctx.impl, ctx.jwt, secret: secret)
-      assert {:ok, ctx.claims} == result
-    end
-
-    test "it decodes the jwt with a :secret function", ctx do
-      the_secret = ctx.impl.config(:secret_key)
-      secret = fn -> the_secret end
-
       result = Jwt.decode_token(ctx.impl, ctx.jwt, secret: secret)
       assert {:ok, ctx.claims} == result
     end

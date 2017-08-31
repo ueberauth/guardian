@@ -12,11 +12,7 @@ defmodule Guardian.Config do
   * `fn -> :some_value end` - an anonymous function whose result will be used
   * any other value
   """
-  @type config_value :: {:system, String.t} |
-                        {module, atom} |
-                        {module, atom, list(any)} |
-                        fun |
-                        any
+  @type config_value :: {module, atom, list(any)} | any
 
   @doc """
   Resolves possible values from a configuration.
@@ -28,9 +24,6 @@ defmodule Guardian.Config do
   * value - Returns other values as is
   """
   @spec resolve_value(value :: config_value) :: any
-  def resolve_value({:system, name}), do: System.get_env(name)
-  def resolve_value({m, f}) when is_atom(m) and is_atom(f), do: apply(m, f, [])
   def resolve_value({m, f, a}) when is_atom(m) and is_atom(f), do: apply(m, f, a)
-  def resolve_value(f) when is_function(f, 0), do: apply(f, [])
   def resolve_value(v), do: v
 end
