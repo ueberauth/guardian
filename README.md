@@ -284,6 +284,9 @@ Make sure no one is logged in
 #### `Guardian.Plug.LoadResource`
 If a token was found, load the resource for it
 
+#### `Guardian.Plug.EnsureResource`
+Make sure that current resource has been set, usually in `Guardian.Plug.LoadResource`
+
 See the documentation for each Plug for more information.
 
 ### Pipelines
