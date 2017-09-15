@@ -72,7 +72,7 @@ Add your configuration
 
 ```elixir
 config :my_app, MyApp.Guardian,
-       issuer: "my_app"
+       issuer: "my_app",
        secret_key: "Secret key. You can use `mix guardian.gen.secret` to get one"
 ```
 
