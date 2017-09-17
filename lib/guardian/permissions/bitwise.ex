@@ -231,17 +231,12 @@ defmodule Guardian.Permissions.Bitwise do
       """
       @spec all_permissions?(GBits.input_permissions, GBits.input_permissions) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
-        has_perms = decode_permissions(has_perms)
-        test_perms = decode_permissions(test_perms)
+        has_perms_bits = encode_permissions!(has_perms)
+        test_perms_bits = encode_permissions!(test_perms)
 
-        Enum.all? test_perms, fn {k, needs} ->
-          has = has_perms |> Map.get(k, []) |> Enum.sort()
-          wants = Enum.sort(needs)
-
-          case [has, wants] do
-            [same, same] -> true
-            _ -> false
-          end
+        Enum.all? test_perms_bits, fn {k, needs} ->
+          has = Map.get(has_perms_bits, k, 0)
+          Bitwise.band(has, needs) == needs
         end
       end
 
