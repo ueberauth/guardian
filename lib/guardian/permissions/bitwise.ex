@@ -66,13 +66,13 @@ defmodule Guardian.Permissions.Bitwise do
   # Check if all permissions are present
   has_all_these_things? =
     claims
-    |> MyApp.Auth.Token.decode_permissions_from_claims(claims)
+    |> MyApp.Auth.Token.decode_permissions_from_claims
     |> MyApp.Auth.Token.all_permissions?(%{default: [:user_about_me, :public_profile]})
 
   # Checks if any permissions are present
   show_any_media_things? =
     claims
-    |> MyApp.Auth.Token.decode_permissions_from_claims(claims)
+    |> MyApp.Auth.Token.decode_permissions_from_claims
     |> MyApp.Auth.Token.any_permissions?(%{user_actions: [:books, :fitness, :music]})
   ```
 
