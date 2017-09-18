@@ -174,7 +174,7 @@ defmodule Guardian.Permissions.BitwiseTest do
     setup do
       claims =
         %{"sub" => "user:1"}
-        |> Impl.build_claims(nil, permissions: %{user: [:read], profile: [:read]})
+        |> Impl.build_claims(nil, permissions: %{user: [:read, :write], profile: [:read]})
 
       conn =
         :get
@@ -196,7 +196,6 @@ defmodule Guardian.Permissions.BitwiseTest do
 
     test "it does not allow when none of the one_of permissions match", ctx do
       opts = GBits.init(one_of: [
-        %{user: [:write]},
         %{profile: [:write]},
         %{user: [:read], profile: [:write]},
       ])
