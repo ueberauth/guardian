@@ -102,6 +102,26 @@ With this level of configuration you can have a working installation.
 
 With Plug
 
+Create a module that uses `Guardian.Plug`
+
+With bare Plug or Phoenix 1.2
+
+```elixir
+defmodule MyApp.Guardian.Plug do
+  use Guardian.Plug, MyApp.Guardian
+end
+```
+
+In Phoenix 1.3, Phoenix puts the web interface in a separate namespace with a `Web` suffix, so use that namespace for the module instead
+
+```elixir
+defmodule MyAppWeb.Guardian.Plug do
+  use Guardian.Plug, MyApp.Guardian
+end
+```
+
+Call `MyApp.Guardian.Plug` or (`MyAppWeb.Guardian.Plug` if using Phoenix 1.3)
+
 ```elixir
 # If a session is loaded the token/resource/claims will be put into the session and connection
 # If no session is loaded, the token/resource/claims only go onto the connection
