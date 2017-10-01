@@ -76,7 +76,7 @@ config :my_app, MyApp.Guardian,
        secret_key: "Secret key. You can use `mix guardian.gen.secret` to get one"
 ```
 
-With this level of configuration you can have a working installation.
+With this level of configuration, you can have a working installation.
 
 ## Basics
 
@@ -158,8 +158,8 @@ The following configuration is available to all implementation modules.
 
 * `token_module` - The module that implements the functions for dealing with tokens. Default `Guardian.Token.Jwt`
 
-Guardian can handle tokens of any type that implement the `Guardian.Token` behaviour.
-Each token module will have it's own configuration requirements. Please see below for the JWT configuration.
+Guardian can handle tokens of any type that implements the `Guardian.Token` behaviour.
+Each token module will have its own configuration requirements. Please see below for the JWT configuration.
 
 All configuration values may be provided in two ways.
 
@@ -221,7 +221,7 @@ These options are passed from the initiating call through to the `token_module` 
 
 ## Hooks
 
-Each implementation module (modules that `use Guardian`) implement callbacks for the `Guardian` behaviour. By default these are just pass-through but you can implement your own version to tweak the behaviour of your tokens.
+Each implementation module (modules that `use Guardian`) implement callbacks for the `Guardian` behaviour. By default, these are just pass-through but you can implement your own version to tweak the behaviour of your tokens.
 
 The callbacks are:
 
@@ -324,7 +324,7 @@ plug Guardian.Plug.Pipeline, module: MyApp.Guardian,
 plug Guardian.Plug.VerifySession
 ```
 
-### Plug Error handlers
+### Plug Error Handlers
 
 The error handler is a module that implements an `auth_error` function.
 
@@ -342,7 +342,7 @@ end
 ### Phoenix
 
 Guardian provides some integration with Phoenix out of the box.
-Not a lot is really needed but around sockets some helper functions have been provided to make things easier to work with.
+Not a lot is really needed but around sockets, some helper functions have been provided to make things easier to work with.
 
 Please see the documentation for `Guardian.Phoenix.Socket` for more information.
 
@@ -363,7 +363,7 @@ For example:
 * `admin -> all_users_write`
 
 Once a permission is granted it is valid for as long as the token is valid.
-Since the permission is valid for the life of a token it is not suitable to encode highly dynamic information into a token. These permissions are similar in intent to OAuth scopes. Very useful as a broad grant to an area of code for 3rd party services / other microservices. If you have a requirement to look up permissions from you database for a particular user on each request, these are not the permissions you're looking for.
+Since the permission is valid for the life of a token it is not suitable to encode highly dynamic information into a token. These permissions are similar in intent to OAuth scopes. Very useful as a broad grant to an area of code for 3rd party services / other microservices. If you have a requirement to look up permissions from your database for a particular user on each request, these are not the permissions you're looking for.
 
 Please see `Guardian.Permissions` for more information.
 
@@ -372,7 +372,7 @@ Please see `Guardian.Permissions` for more information.
 When using tokens, depending on the type of token you use, nothing may happen by default when you `revoke` a token.
 
 For example, JWT tokens by default are not tracked by the application.
-The fact that they are signed with the correct secret and are not expired is usually how validation of if a token is active or not. Depending on your use-case this may not be enough for your applications needs.
+The fact that they are signed with the correct secret and are not expired is usually how validation of if a token is active or not. Depending on your use-case this may not be enough for your application needs.
 If you need to track and revoke individual tokens, you may need to use something like
 [GuardianDb](https://github.com/ueberauth/guardian_db)
 
@@ -399,7 +399,7 @@ Alternatively, a configuration value that resolves to:
 
 may be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
 
-See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from jose for how to generate your own keys.
+See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from Jose for how to generate your own keys.
 
 To get off the ground quickly, set your `secret_key` in your Guardian config with the output of either:
 
