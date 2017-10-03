@@ -120,9 +120,6 @@ defmodule Guardian.Permissions.Bitwise do
     defexception [:message]
   end
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.Pipeline
-
   defmacro __using__(_opts \\ []) do
     # Credo is incorrectly identifying an unless block with negated condition 2017-06-10
     # credo:disable-for-next-line /\.Refactor\./
@@ -365,6 +362,8 @@ defmodule Guardian.Permissions.Bitwise do
 
   if Code.ensure_loaded?(Plug) do
     import Plug.Conn
+    alias Guardian.Plug, as: GPlug
+    alias GPlug.Pipeline
 
     @doc false
     @spec init([plug_option]) :: [plug_option]
