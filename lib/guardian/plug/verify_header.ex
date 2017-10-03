@@ -91,6 +91,7 @@ if Code.ensure_loaded?(Plug) do
           conn
           |> Pipeline.fetch_error_handler!(opts)
           |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
+          |> halt()
         _ -> conn
       end
     end
