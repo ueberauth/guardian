@@ -130,6 +130,7 @@ defmodule Guardian.Token.Jwt do
   Return an map with keys: `headers` and `claims`
   """
   def peek(nil), do: nil
+
   def peek(token) do
     %{headers: JWT.peek_protected(token).fields, claims: JWT.peek_payload(token).fields}
   end
@@ -196,6 +197,7 @@ defmodule Guardian.Token.Jwt do
       |> set_type(mod, options)
       |> set_sub(mod, sub, options)
       |> set_ttl(mod, options)
+
     {:ok, claims}
   end
 
@@ -218,7 +220,7 @@ defmodule Guardian.Token.Jwt do
     verify_result = JWT.verify_strict(secret, algos, token)
 
     case verify_result do
-      {true, jose_jwt, _} ->  {:ok, jose_jwt.fields}
+      {true, jose_jwt, _} -> {:ok, jose_jwt.fields}
       {false, _, _} -> {:error, :invalid_token}
     end
   end
@@ -262,8 +264,7 @@ defmodule Guardian.Token.Jwt do
   def refresh(mod, old_token, options) do
     with {:ok, old_claims} <- apply(mod, :decode_and_verify, [old_token, %{}, options]),
          {:ok, claims} <- refresh_claims(mod, old_claims, options),
-         {:ok, token} <- create_token(mod, claims, options)
-    do
+         {:ok, token} <- create_token(mod, claims, options) do
       {:ok, {old_token, old_claims}, {token, claims}}
     else
       {:error, _} = err -> err
@@ -305,8 +306,9 @@ defmodule Guardian.Token.Jwt do
   defp jose_jwk(value), do: Config.resolve_value(value)
 
   defp fetch_allowed_algos(mod, opts) do
-    opts |> Keyword.get(:allowed_algos) |> Config.resolve_value() ||
-      apply(mod, :config, [:allowed_algos, @default_algos])
+    opts
+    |> Keyword.get(:allowed_algos)
+    |> Config.resolve_value() || apply(mod, :config, [:allowed_algos, @default_algos])
   end
 
   defp fetch_secret(mod, opts) do
@@ -335,6 +337,7 @@ defmodule Guardian.Token.Jwt do
   end
 
   defp set_ttl(%{"exp" => exp} = claims, _mod, _opts) when not is_nil(exp), do: claims
+
   defp set_ttl(%{"typ" => token_typ} = claims, mod, opts) do
     ttl = Keyword.get(opts, :ttl)
 
@@ -360,8 +363,7 @@ defmodule Guardian.Token.Jwt do
     do: assign_exp_from_ttl(the_claims, {iat_v, requested_ttl})
 
   # catch all for when the issued at iat is not yet set
-  defp set_ttl(claims, requested_ttl),
-    do: claims |> set_iat() |> set_ttl(requested_ttl)
+  defp set_ttl(claims, requested_ttl), do: claims |> set_iat() |> set_ttl(requested_ttl)
 
   defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}}) when unit in [:second, :seconds],
     do: Map.put(the_claims, "exp", iat_v + seconds)
@@ -378,8 +380,7 @@ defmodule Guardian.Token.Jwt do
   defp assign_exp_from_ttl(the_claims, {iat_v, {weeks, unit}}) when unit in [:week, :weeks],
     do: Map.put(the_claims, "exp", iat_v + weeks * 7 * 24 * 60 * 60)
 
-  defp assign_exp_from_ttl(_, {_iat_v, {_, units}}),
-    do: raise "Unknown Units: #{units}"
+  defp assign_exp_from_ttl(_, {_iat_v, {_, units}}), do: raise("Unknown Units: #{units}")
 
   defp set_iss(claims, mod, _opts) do
     issuer = mod |> apply(:config, [:issuer]) |> to_string()
@@ -398,7 +399,7 @@ defmodule Guardian.Token.Jwt do
   defp refresh_claims(mod, claims, options), do: {:ok, reset_claims(mod, claims, options)}
 
   defp exchange_claims(mod, old_claims, from_type, to_type, options) when is_list(from_type) do
-    from_type = Enum.map(from_type, &(to_string(&1)))
+    from_type = Enum.map(from_type, &to_string(&1))
 
     if Enum.member?(from_type, old_claims["typ"]) do
       exchange_claims(mod, old_claims, old_claims["typ"], to_type, options)

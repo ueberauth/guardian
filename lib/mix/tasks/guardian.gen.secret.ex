@@ -15,9 +15,9 @@ defmodule Mix.Tasks.Guardian.Gen.Secret do
   use Mix.Task
 
   @doc false
-  def run([]),    do: run(["64"])
+  def run([]), do: run(["64"])
   def run([int]), do: int |> parse!() |> random_string() |> Mix.Shell.IO.info()
-  def run([_|_]), do: invalid_args!()
+  def run([_ | _]), do: invalid_args!()
 
   defp parse!(int) do
     case Integer.parse(int) do
@@ -29,10 +29,11 @@ defmodule Mix.Tasks.Guardian.Gen.Secret do
   defp random_string(length) when length > 31 do
     length |> :crypto.strong_rand_bytes() |> Base.encode64() |> binary_part(0, length)
   end
-  defp random_string(_), do: Mix.raise "The secret should be at least 32 characters long"
+
+  defp random_string(_), do: Mix.raise("The secret should be at least 32 characters long")
 
   @spec invalid_args!() :: no_return()
   defp invalid_args! do
-    Mix.raise "mix guardian.gen.secret expects a length as integer or no argument at all"
+    Mix.raise("mix guardian.gen.secret expects a length as integer or no argument at all")
   end
 end

@@ -35,7 +35,7 @@ if Code.ensure_loaded?(Plug) do
 
     def init(opts), do: opts
 
-    @spec call(Plug.Conn.t, Keyword.t) :: Plug.Conn.t
+    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       if GPlug.session_active?(conn) do
         verify_session(conn, opts)
@@ -51,18 +51,21 @@ if Code.ensure_loaded?(Plug) do
            claims_to_check <- Keyword.get(opts, :claims, %{}),
            key <- storage_key(conn, opts),
            {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
-
         conn
         |> GPlug.put_current_token(token, key: key)
         |> GPlug.put_current_claims(claims, key: key)
       else
-        :no_token_found -> conn
+        :no_token_found ->
+          conn
+
         {:error, reason} ->
           conn
           |> Pipeline.fetch_error_handler!(opts)
           |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
           |> halt()
-        _ -> conn
+
+        _ ->
+          conn
       end
     end
 

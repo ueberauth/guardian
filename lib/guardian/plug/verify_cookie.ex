@@ -46,8 +46,9 @@ if Code.ensure_loaded?(Plug) do
 
     def init(opts), do: opts
 
-    @spec call(Plug.Conn.t, Keyword.t) :: Plug.Conn.t
+    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, _opts), do: conn
+
     def call(conn, opts) do
       with nil <- GPlug.current_token(conn, opts),
            {:ok, token} <- find_token_from_cookies(conn, opts),
@@ -57,20 +58,24 @@ if Code.ensure_loaded?(Plug) do
            default_type <- module.default_token_type(),
            exchange_to <- Keyword.get(opts, :exchange_to, default_type),
            active_session? <- GPlug.session_active?(conn),
-           {:ok, _old, {new_t, new_c}} <- Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
-
+           {:ok, _old, {new_t, new_c}} <-
+             Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
         conn
         |> GPlug.put_current_token(new_t, key: key)
         |> GPlug.put_current_claims(new_c, key: key)
         |> maybe_put_in_session(active_session?, new_t, key)
       else
-        :no_token_found -> conn
+        :no_token_found ->
+          conn
+
         {:error, reason} ->
           conn
           |> Pipeline.fetch_error_handler!(opts)
           |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
           |> halt()
-        _ -> conn
+
+        _ ->
+          conn
       end
     end
 
