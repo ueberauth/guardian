@@ -20,6 +20,7 @@ defmodule Guardian.Token.Jwt.Verify do
 
   @doc false
   def verify_claim(_mod, "nbf", %{"nbf" => nil} = claims, _opts), do: {:ok, claims}
+
   def verify_claim(mod, "nbf", %{"nbf" => nbf} = claims, _opts) do
     if Verify.time_within_drift?(mod, nbf) || nbf <= Guardian.timestamp() do
       {:ok, claims}
@@ -30,6 +31,7 @@ defmodule Guardian.Token.Jwt.Verify do
 
   @doc false
   def verify_claim(_mod, "exp", %{"exp" => nil} = claims, _opts), do: {:ok, claims}
+
   def verify_claim(mod, "exp", %{"exp" => exp} = claims, _opts) do
     if Verify.time_within_drift?(mod, exp) || exp >= Guardian.timestamp() do
       {:ok, claims}

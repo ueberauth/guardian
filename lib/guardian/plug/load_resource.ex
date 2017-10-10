@@ -40,6 +40,7 @@ if Code.ensure_loaded?(Plug) do
     alias Guardian.Plug.Pipeline
 
     def init(opts), do: opts
+
     def call(conn, opts) do
       allow_blank = Keyword.get(opts, :allow_blank)
 
@@ -50,8 +51,10 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp resource(nil, conn, opts), do: {:error, :no_resource_found, conn, opts}
+
     defp resource(claims, conn, opts) do
       module = Pipeline.fetch_module!(conn, opts)
+
       case apply(module, :resource_from_claims, [claims]) do
         {:ok, resource} -> {:ok, resource, conn, opts}
         {:error, reason} -> {:error, reason, conn, opts}
@@ -61,7 +64,9 @@ if Code.ensure_loaded?(Plug) do
 
     defp respond({:error, _reason, conn, _opts}, true), do: conn
     defp respond({:error, reason, conn, opts}, _), do: return_error(conn, reason, opts)
-    defp respond({:ok, resource, conn, opts}, _), do: GPlug.put_current_resource(conn, resource, opts)
+
+    defp respond({:ok, resource, conn, opts}, _),
+      do: GPlug.put_current_resource(conn, resource, opts)
 
     defp return_error(conn, reason, opts) do
       handler = Pipeline.fetch_error_handler!(conn, opts)

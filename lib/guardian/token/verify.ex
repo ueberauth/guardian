@@ -17,30 +17,28 @@ defmodule Guardian.Token.Verify do
   ```
   """
   @callback verify_claim(
-    mod :: module,
-    claim_key :: String.t,
-    claims :: Guardian.Token.claims,
-    options :: Guardian.options
-  ) :: {:ok, Guardian.Token.claims} | {:error, atom}
+              mod :: module,
+              claim_key :: String.t(),
+              claims :: Guardian.Token.claims(),
+              options :: Guardian.options()
+            ) :: {:ok, Guardian.Token.claims()} | {:error, atom}
 
   defmacro __using__(_opts \\ []) do
     quote do
       def verify_claims(mod, claims, opts) do
-        Enum.reduce claims, {:ok, claims}, fn
+        Enum.reduce(claims, {:ok, claims}, fn
           {k, v}, {:ok, claims} -> verify_claim(mod, k, claims, opts)
           _, {:error, reason} = err -> err
-        end
+        end)
       end
 
       def verify_claim(_mod, _claim_key, claims, _opts), do: {:ok, claims}
 
-      defoverridable [verify_claim: 4]
+      defoverridable verify_claim: 4
     end
   end
 
-  @spec time_within_drift?(
-    mod :: module, time :: pos_integer
-  ) :: true | false
+  @spec time_within_drift?(mod :: module, time :: pos_integer) :: true | false
   @doc """
   Checks that a time value is within the `allowed_drift` as
   configured for the provided module
@@ -54,22 +52,23 @@ defmodule Guardian.Token.Verify do
     diff = abs(time - Guardian.timestamp())
     diff <= allowed_drift
   end
+
   def time_within_drift?(_), do: true
 
   @spec verify_literal_claims(
-    claims :: Guardian.Token.claims,
-    claims_to_check :: Guardian.Token.claims | nil,
-    opts :: Guardian.options
-  ) :: {:ok, Guardian.Token.claims} | {:error, any}
+          claims :: Guardian.Token.claims(),
+          claims_to_check :: Guardian.Token.claims() | nil,
+          opts :: Guardian.options()
+        ) :: {:ok, Guardian.Token.claims()} | {:error, any}
   @doc """
   For claims, check the values against the values found in
   `claims_to_check`. If there is a claim to check that does not match
   verification fails.
   """
   def verify_literal_claims(claims, nil, _opts), do: {:ok, claims}
+
   def verify_literal_claims(claims, claims_to_check, _opts) do
-    results =
-      for {k, v} <- claims_to_check, into: [], do: verify_literal_claim(claims, k, v)
+    results = for {k, v} <- claims_to_check, into: [], do: verify_literal_claim(claims, k, v)
 
     errors = Enum.filter(results, &(elem(&1, 0) == :error))
 

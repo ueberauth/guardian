@@ -127,7 +127,7 @@ if Code.ensure_loaded?(Plug) do
 
         import Pipeline
 
-        plug :put_modules
+        plug(:put_modules)
 
         def init(options) do
           new_opts =
@@ -135,15 +135,16 @@ if Code.ensure_loaded?(Plug) do
             |> Keyword.merge(unquote(opts))
             |> config()
 
-          unless Keyword.get(new_opts, :otp_app),
-            do: raise_error(:otp_app)
+          unless Keyword.get(new_opts, :otp_app), do: raise_error(:otp_app)
 
           new_opts
         end
 
         defp config(opts) do
           case Keyword.get(opts, :otp_app) do
-            nil -> opts
+            nil ->
+              opts
+
             otp_app ->
               otp_app
               |> Application.get_env(__MODULE__, [])
@@ -163,14 +164,13 @@ if Code.ensure_loaded?(Plug) do
           pipeline_opts = [
             module: config(opts, :module),
             error_handler: config(opts, :error_handler),
-            key: config(opts, :key, GPlug.default_key()),
+            key: config(opts, :key, GPlug.default_key())
           ]
 
           Pipeline.call(conn, pipeline_opts)
         end
 
-        defp raise_error(key),
-          do: raise "Config `#{key}` is missing for #{__MODULE__}"
+        defp raise_error(key), do: raise("Config `#{key}` is missing for #{__MODULE__}")
       end
     end
 
@@ -183,14 +183,11 @@ if Code.ensure_loaded?(Plug) do
       |> maybe_put_key(:guardian_key, Keyword.get(opts, :key))
     end
 
-    def put_key(conn, key),
-      do: put_private(conn, :guardian_key, key)
+    def put_key(conn, key), do: put_private(conn, :guardian_key, key)
 
-    def put_module(conn, module),
-      do: put_private(conn, :guardian_module, module)
+    def put_module(conn, module), do: put_private(conn, :guardian_module, module)
 
-    def put_error_handler(conn, module),
-      do: put_private(conn, :guardian_error_handler, module)
+    def put_error_handler(conn, module), do: put_private(conn, :guardian_error_handler, module)
 
     def current_key(conn), do: conn.private[:guardian_key]
 
@@ -201,11 +198,11 @@ if Code.ensure_loaded?(Plug) do
     def fetch_key(conn, opts),
       do: Keyword.get(opts, :key, current_key(conn)) || GPlug.default_key()
 
-    def fetch_module(conn, opts),
-      do: Keyword.get(opts, :module, current_module(conn))
+    def fetch_module(conn, opts), do: Keyword.get(opts, :module, current_module(conn))
 
     def fetch_module!(conn, opts) do
       module = fetch_module(conn, opts)
+
       if module do
         module
       else
@@ -218,6 +215,7 @@ if Code.ensure_loaded?(Plug) do
 
     def fetch_error_handler!(conn, opts) do
       module = fetch_error_handler(conn, opts)
+
       if module do
         module
       else
@@ -228,7 +226,6 @@ if Code.ensure_loaded?(Plug) do
     defp maybe_put_key(conn, _, nil), do: conn
     defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
 
-    defp raise_error(key),
-      do: raise "`#{key}` not set in Guardian pipeline"
+    defp raise_error(key), do: raise("`#{key}` not set in Guardian pipeline")
   end
 end

@@ -45,6 +45,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp verify(nil, conn, opts), do: {{:error, :unauthenticated}, conn, opts}
+
     defp verify(_token, conn, opts) do
       result =
         conn
@@ -55,6 +56,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     def respond({{:ok, _}, conn, _opts}), do: conn
+
     def respond({{:error, reason}, conn, opts}) do
       conn
       |> Pipeline.fetch_error_handler!(opts)

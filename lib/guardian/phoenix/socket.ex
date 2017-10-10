@@ -61,10 +61,10 @@ if Code.ensure_loaded?(Phoenix) do
     Get the token from the socket with `current_token`
     """
     @spec put_current_token(
-      socket :: Socket.t,
-      token :: Guardian.Token.token | nil,
-      key :: atom | String.t | nil
-    ) :: Socket.t
+            socket :: Socket.t(),
+            token :: Guardian.Token.token() | nil,
+            key :: atom | String.t() | nil
+          ) :: Socket.t()
     def put_current_token(socket, token, key \\ :default) do
       Socket.assign(socket, token_key(key), token)
     end
@@ -74,10 +74,10 @@ if Code.ensure_loaded?(Phoenix) do
     Get the claims from the socket with `current_claims`
     """
     @spec put_current_claims(
-      socket :: Socket.t,
-      new_claims :: Guardian.Token.claims | nil,
-      atom | String.t | nil
-    ) :: Socket.t
+            socket :: Socket.t(),
+            new_claims :: Guardian.Token.claims() | nil,
+            atom | String.t() | nil
+          ) :: Socket.t()
     def put_current_claims(socket, new_claims, key \\ :default) do
       Socket.assign(socket, claims_key(key), new_claims)
     end
@@ -87,10 +87,10 @@ if Code.ensure_loaded?(Phoenix) do
     Get the resource from the socket with `current_resource`
     """
     @spec put_current_resource(
-      socket :: Socket.t,
-      resource :: Guardian.Token.resource | nil,
-      key :: atom | String.t | nil
-    ) :: Socket.t
+            socket :: Socket.t(),
+            resource :: Guardian.Token.resource() | nil,
+            key :: atom | String.t() | nil
+          ) :: Socket.t()
     def put_current_resource(socket, resource, key \\ :default) do
       Socket.assign(socket, resource_key(key), resource)
     end
@@ -98,7 +98,7 @@ if Code.ensure_loaded?(Phoenix) do
     @doc """
     Fetches the `claims` map that was encoded into the token from the socket.
     """
-    @spec current_claims(Socket.t, atom | String.t) :: Guardian.Token.claims | nil
+    @spec current_claims(Socket.t(), atom | String.t()) :: Guardian.Token.claims() | nil
     def current_claims(socket, key \\ :default) do
       key = claims_key(key)
       socket.assigns[key]
@@ -108,7 +108,7 @@ if Code.ensure_loaded?(Phoenix) do
     Fetches the token that was provided for the initial authentication.
     This is provided as an encoded string and fetched from the socket.
     """
-    @spec current_token(Socket.t, atom | String.t) :: Guardian.Token.token | nil
+    @spec current_token(Socket.t(), atom | String.t()) :: Guardian.Token.token() | nil
     def current_token(socket, key \\ :default) do
       key = token_key(key)
       socket.assigns[key]
@@ -117,7 +117,7 @@ if Code.ensure_loaded?(Phoenix) do
     @doc """
     Fetches the resource from that was previously put onto the socket.
     """
-    @spec current_resource(Socket.t, atom | String.t) :: Guardian.Token.resource | nil
+    @spec current_resource(Socket.t(), atom | String.t()) :: Guardian.Token.resource() | nil
     def current_resource(socket, key \\ :default) do
       key = resource_key(key)
       socket.assigns[key]
@@ -126,7 +126,7 @@ if Code.ensure_loaded?(Phoenix) do
     @doc """
     Boolean if the token is present or not to indicate an authenticated socket
     """
-    @spec authenticated?(Socket.t, atom | String.t) :: true | false
+    @spec authenticated?(Socket.t(), atom | String.t()) :: true | false
     def authenticated?(socket, key \\ :default) do
       current_token(socket, key) != nil
     end
@@ -139,12 +139,12 @@ if Code.ensure_loaded?(Phoenix) do
     """
 
     @spec assign_rtc(
-      socket :: Socket.t,
-      resource :: Guardian.Token.resource | nil,
-      token :: Guardian.Token.token | nil,
-      claims :: Guardian.Token.claims | nil,
-      key :: atom | String.t | nil
-    ) :: Socket.t
+            socket :: Socket.t(),
+            resource :: Guardian.Token.resource() | nil,
+            token :: Guardian.Token.token() | nil,
+            claims :: Guardian.Token.claims() | nil,
+            key :: atom | String.t() | nil
+          ) :: Socket.t()
     def assign_rtc(socket, resource, token, claims, key \\ :default) do
       socket
       |> put_current_token(token, key)
@@ -163,20 +163,20 @@ if Code.ensure_loaded?(Phoenix) do
     This allows multiple tokens and resources on a single socket.
     """
     @spec authenticate(
-      socket :: Socket.t,
-      impl :: module,
-      token :: Guardian.Token.token | nil,
-      claims_to_check :: Guardian.Token.claims,
-      opts :: Guardian.opts
-    ) :: {:ok, Socket.t} | {:error, atom | any}
+            socket :: Socket.t(),
+            impl :: module,
+            token :: Guardian.Token.token() | nil,
+            claims_to_check :: Guardian.Token.claims(),
+            opts :: Guardian.opts()
+          ) :: {:ok, Socket.t()} | {:error, atom | any}
     def authenticate(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
 
     def authenticate(_socket, _impl, nil, _claims_to_check, _opts), do: {:error, :no_token}
 
     def authenticate(socket, impl, token, claims_to_check, opts) do
-      with {:ok, resource, claims} <- Guardian.resource_from_token(impl, token, claims_to_check, opts),
+      with {:ok, resource, claims} <-
+             Guardian.resource_from_token(impl, token, claims_to_check, opts),
            key <- Keyword.get(opts, :key, GPlug.default_key()) do
-
         authed_socket = assign_rtc(socket, resource, token, claims, key)
 
         {:ok, authed_socket}
