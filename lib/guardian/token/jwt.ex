@@ -58,7 +58,7 @@ defmodule Guardian.Token.Jwt do
     MyApp.Tokens.encode_and_sign(
       resource,
       %{},
-      secret: {MyModule, :get_my_secret},
+      secret: {MyModule, :get_my_secret, ["some", "args"]},
       token_ttl: {4, :weeks},
       token_type: "refresh"
     )
@@ -73,7 +73,7 @@ defmodule Guardian.Token.Jwt do
 
   # decode a token and check literal claims with options
   {:ok, claims} =
-    MyApp.Tokens.decode_and_verify(token, %{"typ" => "refresh"} secret: {MyModule, :get_my_secret})
+    MyApp.Tokens.decode_and_verify(token, %{"typ" => "refresh"} secret: {MyModule, :get_my_secret, ["some", "args"]})
 
   # exchange a token
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
@@ -81,14 +81,14 @@ defmodule Guardian.Token.Jwt do
 
   # exchange a token with options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.exchange(old_token, ["access", "refresh"], "access" secret: {MyModule, :get_my_secret}, token_ttl: {1, :hour})
+    MyApp.Tokens.exchange(old_token, ["access", "refresh"], "access" secret: {MyModule, :get_my_secret, ["some", "args"]}, token_ttl: {1, :hour})
 
   # refresh a token using defaults
   {:ok, {old_token, old_claims}, {new_token, new_claims}} = MyApp.Tokens.refresh(old_token)
 
   # refresh a token using options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.refresh(old_token, token_ttl: {1, :week}, secret: {MyMod, :get_secret})
+    MyApp.Tokens.refresh(old_token, token_ttl: {1, :week}, secret: {MyMod, :get_secret, ["some", "args"})
   ```
 
   ### Token verify module
