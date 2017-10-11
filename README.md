@@ -134,9 +134,7 @@ Creating with custom claims and options
 
 # Customize the secret
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: "custom")
-{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func})
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
-{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: fn -> "secret" end)
 ```
 
 Decoding tokens
@@ -147,9 +145,7 @@ Decoding tokens
 
 # Use a custom secret
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: "custom")
-{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func})
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
-{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: fn -> "secret" end)
 ```
 
 ## Configuration
@@ -208,9 +204,7 @@ Secrets can be simple strings or more complicated `JOSE` secret schemes.
 
 The simplest way to use the JWT module is to provide a simple String. (`mix guardian.gen.secret` works great)
 
-You can provide a system env string value by using `secret_key: {:system, "MY_TOKEN_SECRET"}` and setting the `MY_TOKEN_SECRET` in your environment.
-
-Alternatively you can use a module and function by adding `secret_key: {MyModule, :function_name}`.
+Alternatively you can use a module and function by adding `secret_key: {MyModule, :function_name, [:some, :args]}`.
 
 More advanced secret information can be found below.
 
@@ -443,7 +437,7 @@ end
 
 config :my_app, MyApp.Guardian,
   allowed_algos: ["RS512"],
-  secret_key: {MySecretKey, :fetch}
+  secret_key: {MySecretKey, :fetch, []}
 
 ## %JOSE.JWK{} Struct ##
 # Useful if you store your secret key in an encrypted JSON file with the passphrase in an environment variable.
@@ -457,5 +451,5 @@ end
 
 config :my_app, MyApp.Guardian,
   allowed_algos: ["Ed25519"],
-  secret_key: {MySecretKey, :fetch}
+  secret_key: {MySecretKey, :fetch, []}
 ```
