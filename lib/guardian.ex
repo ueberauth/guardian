@@ -42,7 +42,7 @@ defmodule Guardian do
   Token types allow a developer to mark a token as having a particular purpose.
   Different types of tokens can then be used specifically in your app.
 
-  Types may includes (but are not limited to):
+  Types may include (but are not limited to):
 
   * `"access"`
   * `"refresh"`
