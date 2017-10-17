@@ -6,10 +6,7 @@ defmodule Guardian.Config do
   @typedoc """
   Configuration values can be given using the following types:
 
-  * `{:system, "FOO"}` - Read from the system environment
-  * `{MyModule, :function_name}` - To call a function and use the result
   * `{MyModule, :func, [:some, :args]}` Calls the function on the module with args
-  * `fn -> :some_value end` - an anonymous function whose result will be used
   * any other value
   """
   @type config_value :: {module, atom, list(any)} | any
@@ -17,10 +14,7 @@ defmodule Guardian.Config do
   @doc """
   Resolves possible values from a configuration.
 
-  * `{:system, "FOO"}` - reads "FOO" from the environment
-  * `{m, f}` - Calls function `f` on module `m` and returns the result
   * `{m, f, a}` - Calls function `f` on module `m` with arguments `a` and returns the result
-  * `f` - Calls the function `f` and returns the result
   * value - Returns other values as is
   """
   @spec resolve_value(value :: config_value) :: any
