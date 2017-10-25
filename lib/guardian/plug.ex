@@ -249,16 +249,26 @@ if Code.ensure_loaded?(Plug) do
       {:ok, conn}
     end
 
-    defp cleanup_session({:ok, conn}) do
-      if session_active?(conn) do
-        {:ok, configure_session(conn, drop: true)}
-      else
-        {:ok, conn}
-      end
+    defp cleanup_session({:ok, conn}, opts) do
+      conn =
+        if session_active?(conn) do
+          key =
+            conn
+            |> fetch_key(opts)
+            |> token_key()
+
+          conn
+          |> delete_session(key)
+          |> configure_session(renew: true)
+        else
+          conn
+        end
+
+      {:ok, conn}
     end
 
-    defp cleanup_session({:error, _} = err), do: err
-    defp cleanup_session(err), do: {:error, err}
+    defp cleanup_session({:error, _} = err, _opts), do: err
+    defp cleanup_session(err, _opts), do: {:error, err}
 
     defp clear_key(key, {:ok, conn}, impl, opts), do: do_sign_out(conn, impl, key, opts)
     defp clear_key(_, err, _, _), do: err
@@ -283,7 +293,7 @@ if Code.ensure_loaded?(Plug) do
       |> Enum.filter(&(&1 != nil))
       |> Enum.uniq()
       |> Enum.reduce({:ok, conn}, &clear_key(&1, &2, impl, opts))
-      |> cleanup_session()
+      |> cleanup_session(opts)
     end
 
     defp do_sign_out(conn, impl, key, opts) do
