@@ -26,7 +26,7 @@ defmodule Guardian.Token do
   @doc """
   Inspect the contents of the token without validation or signature checking
   """
-  @callback peek(token :: token) :: map
+  @callback peek(module :: module, token :: token) :: map
 
   @doc """
   Generate a unique id for a token

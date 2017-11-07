@@ -11,7 +11,7 @@ defmodule Guardian.Support.TokenModule do
     UUID.uuid4()
   end
 
-  def peek(token) do
+  def peek(_mod, token) do
     claims =
       token
       |> Base.decode64!()
