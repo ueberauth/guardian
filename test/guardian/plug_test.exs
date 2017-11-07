@@ -341,4 +341,31 @@ defmodule Guardian.PlugTest do
       assert gather_function_calls() == expected
     end
   end
+
+  describe "remember me token in cookie" do
+    @resource %{id: "bobby"}
+
+    test "it creates a cookie with the default token and key", ctx do
+      conn = ctx.conn
+      assert %Plug.Conn{} = xconn = GPlug.remember_me(conn, ctx.impl, @resource, %{}, [])
+
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
+      %{secure: secure, value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+      assert secure
+      assert token
+      assert max_age == 1000
+
+      claims = %{"sub" => "bobby", "typ" => "refresh"}
+      ops = [token_type: "refresh"]
+      expected = [
+        {ctx.impl, :subject_for_token, [@resource, %{}]},
+        {Guardian.Support.TokenModule, :build_claims, [ctx.impl, @resource, "bobby", %{}, ops]},
+        {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, ops]},
+      ]
+
+      assert gather_function_calls() == expected
+    end
+
+  end
+
 end
