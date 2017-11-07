@@ -88,11 +88,11 @@ defmodule Guardian.Token.JwtTest do
 
   describe "peek" do
     test "with a nil token", %{token_mod: mod} do
-      assert apply(mod, :peek, [nil]) == nil
+      assert mod.peek(Impl, nil) == nil
     end
 
     test "with a valid token", %{token_mod: mod, jwt: jwt, claims: claims} do
-      result = apply(mod, :peek, [jwt])
+      result = mod.peek(Impl, jwt)
       assert result == %{
         headers: %{"typ" => "JWT"},
         claims: claims

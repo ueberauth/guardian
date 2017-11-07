@@ -389,7 +389,9 @@ defmodule Guardian do
       See `Guardian.peek` for more information
       """
       @spec peek(String.t()) :: map
-      def peek(token), do: Guardian.peek(__MODULE__, token)
+      def peek(token) do
+        config(:token_module).peek(__MODULE__, token)
+      end
 
       @doc """
       Encodes the claims.
@@ -492,6 +494,7 @@ defmodule Guardian do
                      on_revoke: 3,
                      on_refresh: 3,
                      on_verify: 3,
+                     peek: 1,
                      verify_claims: 2
     end
   end
@@ -528,9 +531,7 @@ defmodule Guardian do
 
   @spec peek(module, Guardian.Token.token()) :: %{claims: map}
   def peek(mod, token) do
-    mod
-    |> apply(:config, [:token_module, @default_token_module])
-    |> apply(:peek, [token])
+    mod.peek(token)
   end
 
   @doc """
@@ -660,12 +661,12 @@ defmodule Guardian do
           {:ok, Guardian.Token.claims()} | {:error, any}
   def revoke(mod, token, opts \\ []) do
     token_mod = apply(mod, :config, [:token_module, @default_token_module])
-    %{claims: claims} = Guardian.peek(mod, token)
-
-    with {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
+    with %{claims: claims} <- mod.peek(token),
+         {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
          {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
       {:ok, claims}
     else
+      nil -> {:error, :not_found}
       {:error, _} = err -> err
     end
   end

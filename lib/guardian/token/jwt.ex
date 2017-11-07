@@ -129,9 +129,9 @@ defmodule Guardian.Token.Jwt do
 
   Return an map with keys: `headers` and `claims`
   """
-  def peek(nil), do: nil
+  def peek(_mod, nil), do: nil
 
-  def peek(token) do
+  def peek(_mod, token) do
     %{headers: JWT.peek_protected(token).fields, claims: JWT.peek_payload(token).fields}
   end
 
