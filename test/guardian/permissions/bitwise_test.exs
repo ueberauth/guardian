@@ -1,10 +1,6 @@
 defmodule Guardian.Permissions.BitwiseTest do
   use ExUnit.Case, async: true
 
-  import Plug.Test
-
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.Pipeline
   alias Guardian.Permissions.Bitwise, as: GBits
 
   defmodule Impl do
@@ -15,26 +11,13 @@ defmodule Guardian.Permissions.BitwiseTest do
                   },
                   token_module: Guardian.Support.TokenModule
 
-    use Guardian.Permissions.Bitwise
-
     def subject_for_token(resource, _claims), do: {:ok, resource}
     def resource_from_claims(claims), do: {:ok, claims["sub"]}
 
-    def build_claims(claims, _resource, opts) do
-      encode_permissions_into_claims!(claims, Keyword.get(opts, :permissions))
-    end
+    use Guardian.Permissions.Bitwise
+
   end
 
-  defmodule Handler do
-    @moduledoc false
-
-    import Plug.Conn
-
-    def auth_error(conn, {type, reason}, _opts) do
-      body = inspect({type, reason})
-      send_resp(conn, 403, body)
-    end
-  end
 
   test "max is -1" do
     assert Impl.max == -1
@@ -167,130 +150,6 @@ defmodule Guardian.Permissions.BitwiseTest do
       perms = %{profile: 0b11, unknown: -1}
       result = Impl.decode_permissions(perms)
       assert result == %{profile: [:read, :write]}
-    end
-  end
-
-  describe "when used as a plug" do
-    setup do
-      claims =
-        %{"sub" => "user:1"}
-        |> Impl.build_claims(nil, permissions: %{user: [:read, :write], profile: [:read]})
-
-      conn =
-        :get
-        |> conn("/")
-        |> Pipeline.call(module: Impl, error_handler: Handler)
-        |> GPlug.put_current_claims(claims)
-
-      {:ok, %{conn: conn, claims: claims}}
-    end
-
-    test "it does not allow when permissions are missing from ensure", ctx do
-      opts = GBits.init(ensure: %{user: [:write, :read], profile: [:read, :write]})
-      conn = GBits.call(ctx.conn, opts)
-
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-      assert conn.halted
-    end
-
-    test "it does not allow when none of the one_of permissions match", ctx do
-      opts = GBits.init(one_of: [
-        %{profile: [:write]},
-        %{user: [:read], profile: [:write]},
-      ])
-
-      conn = GBits.call(ctx.conn, opts)
-
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-      assert conn.halted
-    end
-
-    test "it allows the request when permissions from ensure match", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]})
-      conn = GBits.call(ctx.conn, opts)
-
-      refute conn.halted
-
-      opts = GBits.init(ensure: %{user: [:read]})
-      conn = GBits.call(ctx.conn, opts)
-
-      refute conn.halted
-    end
-
-    test "it allows when one of the one of permissions from one_of match", ctx do
-      opts = GBits.init(one_of: [
-        %{user: [:write]},
-        %{profile: [:write]},
-        %{user: [:read]},
-      ])
-      conn = GBits.call(ctx.conn, opts)
-
-      refute conn.halted
-
-      opts = GBits.init(one_of: [
-        %{user: [:write]},
-        %{profile: [:write]},
-        %{profile: [:read]},
-      ])
-      conn = GBits.call(ctx.conn, opts)
-
-      refute conn.halted
-    end
-
-    test "when there is no logged in resource it fails" do
-      conn = :get |> conn("/") |> Pipeline.call(module: Impl, error_handler: Handler)
-
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]})
-      conn = GBits.call(conn, opts)
-
-      assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-    end
-
-    test "when looking in a different location with correct permissions", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
-      conn =
-        ctx.conn
-        |> GPlug.put_current_claims(ctx.claims, key: :secret)
-        |> GBits.call(opts)
-
-      refute conn.halted
-
-      opts = GBits.init(ensure: %{user: [:read]}, key: :secret)
-
-      conn =
-        ctx.conn
-        |> GPlug.put_current_claims(ctx.claims, key: :secret)
-        |> GBits.call(opts)
-
-      refute conn.halted
-    end
-
-    test "when looking in a different location with incorrect ensure permissions", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
-      conn = GBits.call(ctx.conn, opts)
-
-      assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-    end
-
-    test "when looking in a different location with incorrect one_of permissions", ctx do
-      opts = GBits.init(one_of: [%{user: [:read]}], key: :secret)
-      conn = GBits.call(ctx.conn, opts)
-
-      assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-    end
-
-    test "with no permissions specified", ctx do
-      opts = GBits.init([])
-      conn = GBits.call(ctx.conn, opts)
-      refute conn.halted
     end
   end
 end
