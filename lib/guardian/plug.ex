@@ -42,6 +42,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @default_key "default"
+    @default_cookie_options [secure: true, max_age: 60 * 60 * 24 * 7 * 4]
 
     import Guardian, only: [returning_tuple: 1]
     import Guardian.Plug.Keys
@@ -199,6 +200,51 @@ if Code.ensure_loaded?(Plug) do
         {:ok, conn} -> conn
         {:error, reason} -> handle_unauthenticated(conn, reason, opts)
       end
+    end
+
+    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.opts()) ::
+            Plug.Conn.t()
+    def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
+      with type <- Keyword.get(opts, :token_type, "refresh"),
+           opts <- Keyword.put(opts, :token_type, type),
+           key <- conn |> Pipeline.fetch_key(opts) |> token_key() |> Atom.to_string(),
+           {:ok, token, full_claims} <- Guardian.encode_and_sign(mod, resource, claims, opts) do
+        
+        cookie_opts = cookie_options(mod, full_claims)
+        put_resp_cookie(conn, key, token, cookie_opts)
+      else
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    @spec remember_me_from_token(
+            Plug.Conn.t(),
+            module,
+            Guardian.Token.token(),
+            Guardian.Token.claims(),
+            Guardian.opts()
+          ) :: Plug.Conn.t()
+    def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
+      with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
+           type <- Keyword.get(opts, :token_type, "refresh"),
+           key <- conn |> Pipeline.fetch_key(opts) |> token_key() |> Atom.to_string(),
+           {:ok, _old, {new_t, full_new_c}} <-
+             Guardian.exchange(mod, token, claims["typ"], type, opts) do
+
+        cookie_opts = cookie_options(mod, full_new_c)
+        put_resp_cookie(conn, key, new_t, cookie_opts)
+      else
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    defp cookie_options(mod, %{"exp" => timestamp}) do
+      max_age = timestamp - Guardian.timestamp()
+      [max_age: max_age] ++ cookie_options(mod, %{})
+    end
+    
+    defp cookie_options(mod, _claims) do
+      mod.config(:cookie_options, []) ++ @default_cookie_options
     end
 
     defp add_data_to_conn(conn, resource, token, claims, opts) do

@@ -351,9 +351,12 @@ defmodule Guardian.PlugTest do
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
       %{secure: secure, value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+      
+      #make sure that the cookie secure options is set by default
       assert secure
+      #default max age
+      assert max_age == 2419200
       assert token
-      assert max_age == 1000
 
       claims = %{"sub" => "bobby", "typ" => "refresh"}
       ops = [token_type: "refresh"]
