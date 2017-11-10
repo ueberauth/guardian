@@ -358,7 +358,7 @@ defmodule Guardian.PlugTest do
       assert max_age == 2419200
       assert token
 
-      claims = %{"sub" => "bobby", "typ" => "refresh"}
+      claims = %{"sub" => @resource.id, "typ" => "refresh"}
       ops = [token_type: "refresh"]
       expected = [
         {ctx.impl, :subject_for_token, [@resource, %{}]},
@@ -369,6 +369,36 @@ defmodule Guardian.PlugTest do
       assert gather_function_calls() == expected
     end
 
+    test "it creates a cookie with the default token and key from an existing token", ctx do
+      conn = ctx.conn
+      claims = %{"sub" => @resource.id, "typ" => "refresh"}
+      old_token = Poison.encode!(%{claims: claims}) |> Base.encode64()
+
+      assert %Plug.Conn{} = xconn = GPlug.remember_me_from_token(conn, ctx.impl, old_token, claims)
+
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
+      %{secure: secure, value: new_token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+      
+      #make sure that the cookie secure options is set by default
+      assert secure
+      #default max age
+      assert max_age == 2419200
+      assert new_token
+      expected = [
+        #decode and verify the old token
+        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
+        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
+        #as part of the exhange we decode and verfify the old token again
+        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
+        {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
+        {Guardian.Support.TokenModule, :exchange,      [ctx.impl, old_token, "refresh", "refresh", []]},
+        #as part of the exhange we decode the old token to get the claims
+        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]}
+      ]
+
+      assert gather_function_calls() == expected
+    end
+    
   end
 
 end
