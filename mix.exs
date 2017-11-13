@@ -24,6 +24,7 @@ defmodule Guardian.Mixfile do
       maintainers: @maintainers,
       description: "Elixir Authentication framework",
       homepage_url: @url,
+      aliases: aliases(),
       docs: docs(),
       deps: deps(),
       xref: [exclude: [:phoenix]],
@@ -61,7 +62,11 @@ defmodule Guardian.Mixfile do
       # Dev and Test dependencies
       {:credo, "~> 0.8.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.16", only: :dev}
+      {:ex_doc, "~> 0.16", only: :dev},
+
+      # Used for the one time token
+      {:ecto, "~> 2.2.6", optional: true},
+      {:postgrex, "~> 0.13.3", optional: true},
     ]
   end
 
@@ -71,6 +76,13 @@ defmodule Guardian.Mixfile do
       licenses: ["MIT"],
       links: %{github: @url},
       files: ~w(lib) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
+    ]
+  end
+
+  defp aliases do
+    [
+      # Ensures database is reset before tests are run
+      "test": ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
   end
 end

@@ -10,4 +10,7 @@ defmodule Guardian.TestHelper do
   end
 end
 
+{:ok, _pid} = Guardian.Token.OneTime.Repo.start_link()
+Ecto.Adapters.SQL.Sandbox.mode(Guardian.Token.OneTime.Repo, :manual)
+
 ExUnit.start()
