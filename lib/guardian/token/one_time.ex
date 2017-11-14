@@ -64,6 +64,7 @@ if Code.ensure_loaded?(Ecto) do
     import Ecto.Query, only: [from: 2]
 
     defmodule Token do
+      @moduledoc false
       use Ecto.Schema
       import Ecto.Changeset
 
@@ -203,9 +204,8 @@ if Code.ensure_loaded?(Ecto) do
     defp ttl_in_seconds({_, units}), do: raise("Unknown Units: #{units}")
 
     defp find_token(mod, token) do
-      result = from(t in {mod.token_table, Token}, where: t.id == ^token) |> mod.repo.one()
-
-      result
+      query = from(t in {mod.token_table, Token}, where: t.id == ^token)
+      mod.repo.one(query)
     end
 
     defp find_token(mod, token, nil) do
@@ -213,12 +213,13 @@ if Code.ensure_loaded?(Ecto) do
     end
 
     defp find_token(mod, token, expiring_after) do
-      from(
-        t in {mod.token_table, Token},
-        where: is_nil(t.expiry) or t.expiry >= ^expiring_after,
-        where: t.id == ^token
-      )
-      |> mod.repo.one()
+      query =
+        from(
+          t in {mod.token_table, Token},
+          where: is_nil(t.expiry) or t.expiry >= ^expiring_after,
+          where: t.id == ^token
+        )
+      mod.repo.one(query)
     end
   end
 end

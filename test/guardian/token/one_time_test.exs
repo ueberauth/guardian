@@ -1,4 +1,5 @@
 defmodule Guardian.Token.OneTimeTest do
+  @moduledoc false
   use ExUnit.Case
 
   alias Guardian.Token.OneTime.Repo

@@ -4,7 +4,7 @@ defmodule Guardian.OneTime.Repo.Migrations.TestMigration do
   def change do
     create table(:one_time_tokens, primary_key: false) do
       add :id, :string, priary_key: true
-      add :claims, :map
+      add :claims, :json
       add :expiry, :utc_datetime
     end
   end
