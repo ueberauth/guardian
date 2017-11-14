@@ -8,6 +8,8 @@
 * Permissions as an optional add-in
 * Deprecates Hooks in favour of callbacks on particular implementations
 * Removes Phoenix macros in favour of plain functions
+* Drops support for Elixir 1.3
+* Adds a OneTime use token `Guardian.Token.OneTime`
 
 # v 0.14.5
 

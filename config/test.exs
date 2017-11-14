@@ -10,3 +10,14 @@ config :guardian, Guardian.Phoenix.ControllerTest.Endpoint,
 config :guardian, Guardian.Phoenix.SocketTest.Impl, []
 
 config :guardian, Guardian.Phoenix.Permissions.BitwiseTest.Impl, []
+
+
+config :guardian, ecto_repos: [Guardian.Token.OneTime.Repo]
+
+config :guardian, Guardian.Token.OneTime.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  username: "postgres",
+  database: "guardian_one_time_test",
+  hostname: "localhost",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  loggers: []
