@@ -295,9 +295,12 @@ defmodule MyApp.AuthAccessPipeline do
   plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
   plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
   plug Guardian.Plug.EnsureAuthenticated
-  plug Guardian.Plug.LoadResource, ensure: true
+  plug Guardian.Plug.LoadResource, allow_blank: true
 end
 ```
+
+By default, the LoadResource plug will return an error if no resource can be found.
+You can override this behaviour using the `allow_blank: true` option.
 
 Add your implementation module and error handler to your configuration:
 
