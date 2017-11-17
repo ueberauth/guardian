@@ -32,7 +32,7 @@ if Code.ensure_loaded?(Phoenix) do
       use Phoenix.Socket
 
       def connect(%{"token" => token}, socket) do
-        case Guarian.Socket.authenticate(socket, MyApp.Guardian, token) do
+        case Guardian.Phoenix.Socket.authenticate(socket, MyApp.Guardian, token) do
           {:ok, authed_socket} ->
             {:ok, authed_socket}
           {:error, _} -> :error
