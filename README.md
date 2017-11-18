@@ -41,7 +41,7 @@ mix.exs
 
 ```elixir
 defp deps do
-  [{:guardian, "~> 1.0-beta"}]
+  [{:guardian, "~> 1.0"}]
 end
 ```
 
