@@ -76,12 +76,6 @@ if Code.ensure_loaded?(Plug) do
           do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
 
         def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
-
-        def remember_me(conn, resource, claims, opts),
-          do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
-
-        def remember_me_from_token(conn, token, claims_to_check \\ %{}, opts \\ []),
-          do: GPlug.remember_me_from_token(conn, implementation(), token, claims_to_check, opts)
       end
     end
 
@@ -204,38 +198,6 @@ if Code.ensure_loaded?(Plug) do
       case result do
         {:ok, conn} -> conn
         {:error, reason} -> handle_unauthenticated(conn, reason, opts)
-      end
-    end
-
-    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.opts()) ::
-            Plug.Conn.t()
-    def remember_me(conn, mod, resource, claims, opts) do
-      with type <- Keyword.get(opts, :token_type, "refresh"),
-           opts <- Keyword.put(opts, :token_type, type),
-           key <- Pipeline.fetch_key(conn, opts),
-           {:ok, token, _claims} <- Guardian.encode_and_sign(mod, resource, claims, opts) do
-        put_resp_cookie(conn, key, token)
-      else
-        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
-      end
-    end
-
-    @spec remember_me_from_token(
-            Plug.Conn.t(),
-            module,
-            Guardian.Token.token(),
-            Guardian.Token.claims(),
-            Guardian.opts()
-          ) :: Plug.Conn.t()
-    def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
-      with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-           type <- Keyword.get(opts, :token_type, "refresh"),
-           key <- Pipeline.fetch_key(conn, opts),
-           {:ok, _old, {new_t, _new_c}} <-
-             Guardian.exchange(mod, token, claims["typ"], type, opts) do
-        put_resp_cookie(conn, key, new_t)
-      else
-        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
       end
     end
 
