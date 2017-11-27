@@ -52,26 +52,15 @@ defmodule MyApp.Guardian do
   use Guardian, otp_app: :my_app
 
   def subject_for_token(resource, _claims) do
-    # You could send any information you want
-    # as long as it will be useful to find the resource back
-    # from the token `claims["sub"]` on `resource_from_claims` function
-    sub = to_string(resource.id)
-    {:ok, sub}
+    {:ok, to_string(resource.id)}
   end
+
   def subject_for_token(_, _) do
     {:error, :reason_for_error}
   end
 
   def resource_from_claims(claims) do
-    # In this case `claims["sub"]` is the `id of the resource`
-    # because we previously used the `id` of the resource` for `sub`
-    # of the tokens see `subject_for_token` function.
-    id = claims["sub"]
-    resource = MyApp.get_resource_by_id(id)
-
-    # Do whatever you want for find the resource
-    # but you have to return `{:ok, resource}`
-    {:ok,  resource}
+    {:ok, find_me_a_resource(claims["sub"])}
   end
   def resource_from_claims(_claims) do
     {:error, :reason_for_error}
