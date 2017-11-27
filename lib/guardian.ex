@@ -390,7 +390,7 @@ defmodule Guardian do
       """
       @spec peek(String.t()) :: map
       def peek(token) do
-        config(:token_module).peek(__MODULE__, token)
+        Guardian.token_module(__MODULE__).peek(__MODULE__, token)
       end
 
       @doc """
@@ -572,7 +572,7 @@ defmodule Guardian do
       |> Enum.into(%{})
       |> Guardian.stringify_keys()
 
-    token_mod = apply(mod, :config, [:token_module, @default_token_module])
+    token_mod = Guardian.token_module(mod)
 
     with {:ok, subject} <- returning_tuple({mod, :subject_for_token, [resource, claims]}),
          {:ok, claims} <-
@@ -610,7 +610,7 @@ defmodule Guardian do
           {:ok, Guardian.Token.claims()} | {:error, any}
   def decode_and_verify(mod, token, claims_to_check \\ %{}, opts \\ []) do
     claims_to_check = claims_to_check |> Enum.into(%{}) |> Guardian.stringify_keys()
-    token_mod = apply(mod, :config, [:token_module, @default_token_module])
+    token_mod = Guardian.token_module(mod)
 
     with {:ok, claims} <- returning_tuple({token_mod, :decode_token, [mod, token, opts]}),
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
@@ -660,7 +660,7 @@ defmodule Guardian do
   @spec revoke(module, Guardian.Token.token(), options) ::
           {:ok, Guardian.Token.claims()} | {:error, any}
   def revoke(mod, token, opts \\ []) do
-    token_mod = apply(mod, :config, [:token_module, @default_token_module])
+    token_mod = Guardian.token_module(mod)
     with %{claims: claims} <- mod.peek(token),
          {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
          {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
@@ -696,7 +696,7 @@ defmodule Guardian do
             }
           | {:error, any}
   def refresh(mod, old_token, opts) do
-    with token_mod <- apply(mod, :config, [:token_module, @default_token_module]),
+    with token_mod <- Guardian.token_module(mod),
          {:ok, _claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
          {:ok, old_stuff, new_stuff} <- apply(token_mod, :refresh, [mod, old_token, opts]) do
       apply(mod, :on_refresh, [old_stuff, new_stuff, opts])
@@ -737,7 +737,7 @@ defmodule Guardian do
             }
           | {:error, any}
   def exchange(mod, old_token, from_type, to_type, opts) do
-    with token_mod <- apply(mod, :config, [:token_module, @default_token_module]),
+    with token_mod <- Guardian.token_module(mod),
          {:ok, claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
          :ok <- validate_exchange_type(claims, from_type),
          {:ok, old_stuff, new_stuff} <-
@@ -766,6 +766,11 @@ defmodule Guardian do
             inspect(resp)
           }"
     end
+  end
+
+  @doc false
+  def token_module(mod) do
+    apply(mod, :config, [:token_module, @default_token_module])
   end
 
   defp validate_exchange_type(claims, from_type) when is_binary(from_type),
