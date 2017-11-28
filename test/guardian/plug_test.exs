@@ -388,11 +388,11 @@ defmodule Guardian.PlugTest do
         #decode and verify the old token
         {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        #as part of the exhange we decode and verfify the old token again
+        #as part of the exchange we decode and verify the old token again
         {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
         {Guardian.Support.TokenModule, :exchange,      [ctx.impl, old_token, "refresh", "refresh", []]},
-        #as part of the exhange we decode the old token to get the claims
+        #as part of the exchange we decode the old token to get the claims
         {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]}
       ]
 
