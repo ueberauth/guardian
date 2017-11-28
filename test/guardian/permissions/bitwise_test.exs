@@ -40,6 +40,26 @@ defmodule Guardian.Permissions.BitwiseTest do
     assert Impl.max == -1
   end
 
+  describe "any_permissions?" do
+    test "it checks if any permissions matched" do
+      assert Impl.any_permissions?(%{user: [:read, :write]}, %{user: [:read]})
+    end
+
+    test "it checks if permissions didn't match" do
+      refute Impl.any_permissions?(%{user: [:write]}, %{user: [:read]})
+    end
+  end
+
+  describe "all_permissions?" do
+    test "it checks if all permissions matched" do
+      assert Impl.all_permissions?(%{user: [:read, :write]}, %{user: [:read, :write]})
+    end
+
+    test "it checks if not all permissions matched" do
+      refute Impl.all_permissions?(%{user: [:write]}, %{user: [:read, :write]})
+    end
+  end
+
   describe "normalize_permissions" do
     test "it normalizes a list of permissions" do
       result = GBits.normalize_permissions(%{some: [:read, :write], other: [:one, :two]})
