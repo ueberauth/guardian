@@ -661,7 +661,7 @@ defmodule Guardian do
           {:ok, Guardian.Token.claims()} | {:error, any}
   def revoke(mod, token, opts \\ []) do
     token_mod = Guardian.token_module(mod)
-    with %{claims: claims} <- mod.peek(token),
+    with %{claims: claims} <- token_mod.peek(token_mod, token),
          {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
          {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
       {:ok, claims}
