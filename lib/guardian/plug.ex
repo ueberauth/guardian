@@ -42,7 +42,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @default_key "default"
-    @default_cookie_options [secure: true, max_age: 60 * 60 * 24 * 7 * 4]
+    @default_cookie_options [max_age: 60 * 60 * 24 * 7 * 4]
 
     import Guardian, only: [returning_tuple: 1]
     import Guardian.Plug.Keys
@@ -77,6 +77,10 @@ if Code.ensure_loaded?(Plug) do
           do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
 
         def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
+
+        def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []), do: GPlug.remember_me(conn, mod, resource, claims, opts)
+        
+        def remember_me_from_token(conn, mod, token, claims \\ %{}, opts \\ []), do: GPlug.remember_me_from_token(conn, mod, token, claims, opts)
       end
     end
 

@@ -350,10 +350,8 @@ defmodule Guardian.PlugTest do
       assert %Plug.Conn{} = xconn = GPlug.remember_me(conn, ctx.impl, @resource, %{}, [])
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
-      %{secure: secure, value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+      %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
       
-      #make sure that the cookie secure options is set by default
-      assert secure
       #default max age
       assert max_age == 2419200
       assert token
@@ -377,10 +375,8 @@ defmodule Guardian.PlugTest do
       assert %Plug.Conn{} = xconn = GPlug.remember_me_from_token(conn, ctx.impl, old_token, claims)
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
-      %{secure: secure, value: new_token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+      %{value: new_token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
       
-      #make sure that the cookie secure options is set by default
-      assert secure
       #default max age
       assert max_age == 2419200
       assert new_token
