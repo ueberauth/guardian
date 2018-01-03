@@ -4,7 +4,7 @@ defmodule Guardian.Plug.VerifyCookieTest do
   use Plug.Test
 
   alias Guardian.Plug, as: GPlug
-  alias GPlug.{VerifyCookie, Pipeline}
+  alias GPlug.{VerifyCookie, VerifySession, Pipeline}
 
   use ExUnit.Case, async: true
 
@@ -125,6 +125,37 @@ defmodule Guardian.Plug.VerifyCookieTest do
 
       assert new_c["typ"] == "access"
       refute new_t == ctx.token
+    end
+  end
+
+  describe "with verify session" do
+    setup %{conn: conn, token: token, impl: impl, handler: handler} do
+      conn = conn
+        |> Pipeline.put_module(impl)
+        |> Pipeline.put_error_handler(handler)
+
+      {:ok, %{conn: conn}}
+    end
+
+    test "will verify", ctx do
+      :ets.new(:session, [:named_table, :public, read_concurrency: true])
+
+      session_config = Plug.Session.init(store: :ets, key: "default", table: :session)
+
+      old_conn = ctx.conn
+        |> put_req_cookie("guardian_default_token", ctx.token)
+        |> fetch_cookies()
+        |> Plug.Session.call(session_config)
+        |> Plug.Conn.fetch_session
+        |> VerifyCookie.call([])
+
+      private = Map.put(ctx.conn.private, :plug_session, old_conn.private[:plug_session])
+      new_conn = %{ctx.conn | private: private}
+        |> Plug.Session.call(session_config)
+        |> Plug.Conn.fetch_session
+        |> VerifySession.call([])
+
+      refute new_conn.status == 401
     end
   end
 end

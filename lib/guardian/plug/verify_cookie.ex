@@ -63,7 +63,7 @@ if Code.ensure_loaded?(Plug) do
         conn
         |> GPlug.put_current_token(new_t, key: key)
         |> GPlug.put_current_claims(new_c, key: key)
-        |> maybe_put_in_session(active_session?, new_t, key)
+        |> maybe_put_in_session(active_session?, new_t, opts)
       else
         :no_token_found ->
           conn
@@ -86,7 +86,10 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp maybe_put_in_session(conn, false, _, _), do: conn
-    defp maybe_put_in_session(conn, true, token, key), do: put_session(conn, key, token)
+    defp maybe_put_in_session(conn, true, token, opts) do
+      key = conn |> storage_key(opts) |> token_key()
+      put_session(conn, key, token)
+    end
 
     defp storage_key(conn, opts), do: Pipeline.fetch_key(conn, opts)
   end
