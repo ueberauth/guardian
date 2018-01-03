@@ -387,6 +387,16 @@ This will record each token issued in your database, confirm it is still valid o
 
 For more in-depth documentation please see the [GuardianDb README](https://github.com/ueberauth/guardian_db/blob/master/README.md)
 
+## Best testing practises
+
+### How to add the token to a request (the Phoenix way)
+```elixir
+{:ok, token, _} = encode_and_sign(resource, %{}, token_type: :access)
+conn = conn
+|> put_req_header("authorization", "bearer: " <> token)
+|> get(auth_path(conn, :me))
+```
+
 ## Related projects
 
 * [GuardianDb](https://hex.pm/packages/guardian_db) - Token tracking in the database
