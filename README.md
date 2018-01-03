@@ -7,6 +7,8 @@ Guardian
 
 > Looking for [Guardian pre 1.0](https://github.com/ueberauth/guardian/tree/v0.14.x)?
 
+> Upgrading from pre 1.0? See the [0.14 to 1.0 Upgrade Guide](upgrade_guides/0.14.to.1.0.md)
+
 Guardian is a token based authentication library for use with Elixir applications.
 
 Guardian remains a functional system. It integrates with Plug, but can be used outside of it. If you're implementing a TCP/UDP protocol directly, or want to utilize your authentication via channels in Phoenix, Guardian is your friend.
@@ -28,8 +30,6 @@ You can use Guardian tokens to authenticate:
 Tokens should be able to contain any assertions (claims) that a developer wants to make and may contain both standard and application specific information encoded within them.
 
 Guardian also allows you to configure multiple token types/configurations in a single application.
-
-## Useful articles
 
 ## Installation
 

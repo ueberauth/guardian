@@ -9,6 +9,8 @@
 * Deprecates Hooks in favour of callbacks on particular implementations
 * Removes Phoenix macros in favour of plain functions
 
+See the [0.14 to 1.0 Upgrade Guide](upgrade_guides/0.14.to.1.0.md) for detailed updating instructions
+
 # v 0.14.5
 
 Update the poison and phoenix deps to allow a broader version setting
