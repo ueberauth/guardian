@@ -170,6 +170,7 @@ if Code.ensure_loaded?(Plug) do
           Pipeline.call(conn, pipeline_opts)
         end
 
+        @spec raise_error(atom()) :: no_return
         defp raise_error(key), do: raise("Config `#{key}` is missing for #{__MODULE__}")
       end
     end
