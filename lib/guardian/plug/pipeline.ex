@@ -226,6 +226,7 @@ if Code.ensure_loaded?(Plug) do
     defp maybe_put_key(conn, _, nil), do: conn
     defp maybe_put_key(conn, key, v), do: put_private(conn, key, v)
 
+    @spec raise_error :: no_return
     defp raise_error(key), do: raise("`#{key}` not set in Guardian pipeline")
   end
 end
