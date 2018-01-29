@@ -397,10 +397,23 @@ For more in-depth documentation please see the [GuardianDb README](https://githu
 ### How to add the token to a request (the Phoenix way)
 
 ```elixir
-{:ok, token, _} = encode_and_sign(resource, %{}, token_type: :access)
-conn = conn
-|> put_req_header("authorization", "bearer: " <> token)
-|> get(auth_path(conn, :me))
+defmodule HelloWeb.AuthControllerTest do
+  use HelloWeb.ConnCase
+  import HelloWeb.Guardian
+
+ test "GET /auth/me", %{conn: conn} do
+    user = insert(:user) // See https://github.com/thoughtbot/ex_machina
+
+    {:ok, token, _} = encode_and_sign(user, %{}, token_type: :access)
+
+    conn = conn
+    |> put_req_header("authorization", "bearer: " <> token)
+    |> get(auth_path(conn, :me))
+
+    # Assert things here
+  end
+
+end
 ```
 
 ## Related projects
