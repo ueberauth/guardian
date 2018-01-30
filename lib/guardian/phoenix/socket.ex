@@ -24,7 +24,7 @@ if Code.ensure_loaded?(Phoenix) do
 
     There is a bit of a difference between the usual `Guardian.Plug.sign_in` and the socket one.
     The socket authenticate receives a token and signs in from that.
-    Please note that this is mere sugar on the underlying Guarian functions.
+    Please note that this is mere sugar on the underlying Guardian functions.
 
     As an example:
     ```elixir

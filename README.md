@@ -31,6 +31,9 @@ Tokens should be able to contain any assertions (claims) that a developer wants 
 
 Guardian also allows you to configure multiple token types/configurations in a single application.
 
+## Documentation
+API documentation is available at [https://hexdocs.pm/guardian](https://hexdocs.pm/guardian)
+
 ## Installation
 
 Guardian requires that you create an "Implementation Module". This module is your applications implementation for a particular type/configuration of token. You do this by `use`ing Guardian in your module and adding the relevant configuration.
