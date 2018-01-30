@@ -129,7 +129,7 @@ defmodule Guardian.Plug.VerifyCookieTest do
   end
 
   describe "with verify session" do
-    setup %{conn: conn, token: token, impl: impl, handler: handler} do
+    setup %{conn: conn, impl: impl, handler: handler} do
       conn = conn
         |> Pipeline.put_module(impl)
         |> Pipeline.put_error_handler(handler)

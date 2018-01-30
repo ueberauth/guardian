@@ -60,6 +60,7 @@ if Code.ensure_loaded?(Plug) do
            active_session? <- GPlug.session_active?(conn),
            {:ok, _old, {new_t, new_c}} <-
              Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
+
         conn
         |> GPlug.put_current_token(new_t, key: key)
         |> GPlug.put_current_claims(new_c, key: key)
