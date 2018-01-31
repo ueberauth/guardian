@@ -32,6 +32,7 @@ Tokens should be able to contain any assertions (claims) that a developer wants 
 Guardian also allows you to configure multiple token types/configurations in a single application.
 
 ## Documentation
+
 API documentation is available at [https://hexdocs.pm/guardian](https://hexdocs.pm/guardian)
 
 ## Installation
