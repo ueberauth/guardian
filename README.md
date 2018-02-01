@@ -170,7 +170,7 @@ Each token module will have its own configuration requirements. Please see below
 All configuration values may be provided in two ways.
 
 1. In your config files
-2. As a Keyword list to your call to `use Guardian` in you implementation module.
+2. As a Keyword list to your call to `use Guardian` in your implementation module.
 
 Any options given to `use Guardian` have precedence over config values found in the config files.
 
