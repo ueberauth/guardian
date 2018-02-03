@@ -402,7 +402,7 @@ defmodule HelloWeb.AuthControllerTest do
   import HelloWeb.Guardian
 
  test "GET /auth/me", %{conn: conn} do
-    user = insert(:user) // See https://github.com/thoughtbot/ex_machina
+    user = insert(:user) # See https://github.com/thoughtbot/ex_machina
 
     {:ok, token, _} = encode_and_sign(user, %{}, token_type: :access)
 
