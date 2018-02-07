@@ -42,6 +42,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @default_key "default"
+    @default_cookie_options [max_age: 60 * 60 * 24 * 7 * 4]
 
     import Guardian, only: [returning_tuple: 1]
     import Guardian.Plug.Keys
@@ -76,6 +77,10 @@ if Code.ensure_loaded?(Plug) do
           do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
 
         def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
+
+        def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []), do: GPlug.remember_me(conn, mod, resource, claims, opts)
+        
+        def remember_me_from_token(conn, mod, token, claims \\ %{}, opts \\ []), do: GPlug.remember_me_from_token(conn, mod, token, claims, opts)
       end
     end
 
@@ -199,6 +204,51 @@ if Code.ensure_loaded?(Plug) do
         {:ok, conn} -> conn
         {:error, reason} -> handle_unauthenticated(conn, reason, opts)
       end
+    end
+
+    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.opts()) ::
+            Plug.Conn.t()
+    def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
+      opts = Keyword.put_new(opts, :token_type, "refresh")
+      key = fetch_token_key(conn, opts)
+
+      case Guardian.encode_and_sign(mod, resource, claims, opts) do
+        {:ok, token, new_claims} -> 
+          put_resp_cookie(conn, key, token, cookie_options(mod, new_claims))
+        {:error, _} = err -> 
+          handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    @spec remember_me_from_token(Plug.Conn.t(), module, Guardian.Token.token(), Guardian.Token.claims(), Guardian.opts()) :: 
+            Plug.Conn.t()
+    def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
+      token_type = Keyword.get(opts, :token_type, "refresh")
+      key = fetch_token_key(conn, opts)
+
+      with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
+           {:ok, _old, {new_t, full_new_c}} <- Guardian.exchange(mod, token, claims["typ"], token_type, opts) 
+      do
+        put_resp_cookie(conn, key, new_t, cookie_options(mod, full_new_c))
+      else
+        {:error, _} = err -> handle_unauthenticated(conn, err, opts)
+      end
+    end
+
+    defp fetch_token_key(conn, opts) do
+      conn
+      |> Pipeline.fetch_key(opts)
+      |> token_key()
+      |> Atom.to_string()
+    end
+
+    defp cookie_options(mod, %{"exp" => timestamp}) do
+      max_age = timestamp - Guardian.timestamp()
+      [max_age: max_age] ++ cookie_options(mod, %{})
+    end
+    
+    defp cookie_options(mod, _claims) do
+      mod.config(:cookie_options, []) ++ @default_cookie_options
     end
 
     defp add_data_to_conn(conn, resource, token, claims, opts) do

@@ -20,7 +20,9 @@ if Code.ensure_loaded?(Plug) do
     3. Inline with an option of `:module`, `:error_handler`, `:key`
 
     If a token is found but is invalid, the error handler will be called with
-    `auth_error(conn, {:invalid_token, reason}, opts)`
+    `auth_error(conn, {:invalid_token, reason}, opts)
+
+    If a token is expired, the error handler WONT be called, the error can be handled with the ensure_authenticated plug
 
     Once a token has been found it will be exchanged for an access (default) token.
     This access token will be placed into the session and connection.
@@ -67,6 +69,9 @@ if Code.ensure_loaded?(Plug) do
         |> maybe_put_in_session(active_session?, new_t, opts)
       else
         :no_token_found ->
+          conn
+        # Let the ensure_authenticated plug handle the token expired later in the pipeline
+        {:error, :token_expired} ->
           conn
 
         {:error, reason} ->

@@ -5,3 +5,4 @@ erl_crash.dump
 *.ez
 doc
 .DS_Store
+.elixir_ls/
