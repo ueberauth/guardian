@@ -53,7 +53,7 @@ defmodule Guardian.Token do
   @doc """
   Decode the token. Without verification of the claims within it.
   """
-  @callback decode_token(mod :: module, token :: token, options :: Guadian.options()) ::
+  @callback decode_token(mod :: module, token :: token, options :: Guardian.options()) ::
               {:ok, token} | secret_error | decoding_error
 
   @doc """
