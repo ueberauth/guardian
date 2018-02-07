@@ -306,6 +306,15 @@ if Code.ensure_loaded?(Plug) do
       {:ok, conn}
     end
 
+    defp revoke_token(conn, impl, key, opts) do
+      claims = current_claims(conn, key: key)
+      token = current_token(conn, key: key)
+
+      with {:ok, _} <-
+          returning_tuple({impl, :on_revoke, [claims, token, opts]}),
+        do: {:ok, conn}
+    end
+
     defp do_sign_out(%{private: private} = conn, impl, :all, opts) do
       private
       |> Map.keys()
@@ -318,6 +327,7 @@ if Code.ensure_loaded?(Plug) do
 
     defp do_sign_out(conn, impl, key, opts) do
       with {:ok, conn} <- returning_tuple({impl, :before_sign_out, [conn, key, opts]}),
+           {:ok, conn} <- revoke_token(conn, impl, key, opts),
            {:ok, conn} <- remove_data_from_conn(conn, key: key) do
         if session_active?(conn) do
           {:ok, delete_session(conn, token_key(key))}
