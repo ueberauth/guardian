@@ -453,4 +453,72 @@ defmodule Guardian.PlugTest do
       assert gather_function_calls() == expected
     end
   end
+
+  defmodule Handler do
+    @moduledoc false
+
+    import Plug.Conn
+
+    def auth_error(conn, {type, reason}, _opts) do
+      body = inspect({type, reason})
+      send_resp(conn, 401, body)
+    end
+  end
+
+  defmodule PipelineImpl do
+    use GPlug.Pipeline,
+      otp_app: :guardian,
+      module: __MODULE__.Impl,
+      error_handler: __MODULE__.Handler
+  end
+
+  describe "after using a pipeline" do
+    @resource %{id: "bob"}
+
+    setup %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> __MODULE__.PipelineImpl.call(__MODULE__.PipelineImpl.init([]))
+
+      {:ok, %{conn: conn}}
+    end
+
+    test "calls the right hooks", %{conn: conn} do
+      conn =
+        conn
+        |> Impl.Plug.sign_in(@resource)
+
+      %{guardian_default_token: token, guardian_default_claims: claims} = conn.private
+
+      conn
+      |> Impl.Plug.sign_out()
+
+      expected = [
+        {Guardian.PlugTest.Impl, :subject_for_token, [@resource, %{}]},
+        {Guardian.Support.TokenModule, :build_claims,
+         [Guardian.PlugTest.Impl, @resource, "bob", %{}, []]},
+        {Guardian.Support.TokenModule, :create_token, [Guardian.PlugTest.Impl, claims, []]},
+        {Guardian.PlugTest.Impl, :after_sign_in, [:conn, @resource, token, claims, []]},
+        {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :default, []]},
+        {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, claims, token, []]},
+        {Guardian.PlugTest.Impl, :on_revoke, [claims, token, []]}
+      ]
+
+      assert gather_function_calls() == expected
+    end
+  end
+
+  describe "#keys" do
+    alias Guardian.Plug.Keys
+
+    test "key_from_other/1 only calculates key from conn-keys" do
+      assert Keys.key_from_other(:guardian_default_token) == :default
+      assert Keys.key_from_other(:guardian_bob_claims) == :bob
+      assert Keys.key_from_other(:guardian_jane_resource) == :jane
+      assert Keys.key_from_other(:guardian_module) == nil
+      assert Keys.key_from_other(:guardian_error_handler) == nil
+      assert Keys.key_from_other(:plug_session) == nil
+    end
+  end
 end

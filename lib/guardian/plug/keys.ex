@@ -30,13 +30,16 @@ defmodule Guardian.Plug.Keys do
   def base_key("guardian_" <> _ = the_key), do: String.to_atom(the_key)
   def base_key(the_key), do: String.to_atom("guardian_#{the_key}")
 
-  def key_from_other(other_key) do
-    other_key
-    |> to_string()
-    |> String.replace(~r/(_(token|resource|claims))?$/, "")
-    |> find_key_from_other()
+  def key_from_other(other_key) when is_binary(other_key) do
+    ~r/^guardian_(?<key>.+)_(token|resource|claims)$/
+    |> Regex.named_captures(other_key)
+    |> extract_key()
   end
-
-  defp find_key_from_other("guardian_" <> key), do: String.to_atom(key)
-  defp find_key_from_other(_), do: nil
+  def key_from_other(atom) do
+    atom
+    |> to_string()
+    |> key_from_other()
+  end
+  defp extract_key(%{"key" => key}), do: String.to_atom(key)
+  defp extract_key(_), do: nil
 end
