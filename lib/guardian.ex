@@ -425,7 +425,7 @@ defmodule Guardian do
               token :: Guardian.Token.token(),
               claims_to_check :: Guardian.Token.claims() | nil,
               opts :: Guardian.options()
-            ) :: {:ok, Guardian.Token.resource(), Guardian.Token.claims()}
+            ) :: {:ok, Guardian.Token.resource(), Guardian.Token.claims()} | {:error, any}
       def resource_from_token(token, claims_to_check \\ %{}, opts \\ []),
         do: Guardian.resource_from_token(__MODULE__, token, claims_to_check, opts)
 
@@ -634,7 +634,7 @@ defmodule Guardian do
           token :: Guardian.Token.token(),
           claims_to_check :: Guardian.Token.claims() | nil,
           opts :: options
-        ) :: {:ok, Guardian.Token.resource(), Guardian.Token.claims()}
+        ) :: {:ok, Guardian.Token.resource(), Guardian.Token.claims()} | {:error, any}
   def resource_from_token(mod, token, claims_to_check \\ %{}, opts \\ []) do
     with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
          {:ok, resource} <- returning_tuple({mod, :resource_from_claims, [claims]}) do
