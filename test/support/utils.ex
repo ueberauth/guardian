@@ -4,7 +4,7 @@ defmodule Guardian.Support.Utils do
   """
 
   def send_function_call(call) do
-    send self(), call
+    send(self(), call)
   end
 
   def gather_function_calls, do: gather_function_calls([])

@@ -12,12 +12,11 @@ defmodule Guardian.Phoenix.SocketTest do
     {:ok, token, claims} = Guardian.encode_and_sign(impl, @resource)
 
     {:ok,
-      socket: socket("user_id", %{some: :assign}),
-      socket_mod: __MODULE__.MySocket,
-      impl: impl,
-      token: token,
-      claims: claims
-    }
+     socket: socket("user_id", %{some: :assign}),
+     socket_mod: __MODULE__.MySocket,
+     impl: impl,
+     token: token,
+     claims: claims}
   end
 
   test "signs in the user", ctx do

@@ -22,8 +22,9 @@ defmodule Guardian.Plug.VerifyCookieTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     def subject_for_token(%{id: id}, _claims), do: {:ok, id}
     def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
@@ -86,7 +87,7 @@ defmodule Guardian.Plug.VerifyCookieTest do
     end
 
     test "with an incorrect token type", ctx do
-      conn = VerifyCookie.call(ctx.conn, [exchange_from: "access"])
+      conn = VerifyCookie.call(ctx.conn, exchange_from: "access")
       assert conn.halted
       assert {401, _, "{:invalid_token, :invalid_token_type}"} = sent_resp(conn)
     end
@@ -130,7 +131,8 @@ defmodule Guardian.Plug.VerifyCookieTest do
 
   describe "with verify session" do
     setup %{conn: conn, impl: impl, handler: handler} do
-      conn = conn
+      conn =
+        conn
         |> Pipeline.put_module(impl)
         |> Pipeline.put_error_handler(handler)
 
@@ -142,17 +144,20 @@ defmodule Guardian.Plug.VerifyCookieTest do
 
       session_config = Plug.Session.init(store: :ets, key: "default", table: :session)
 
-      old_conn = ctx.conn
+      old_conn =
+        ctx.conn
         |> put_req_cookie("guardian_default_token", ctx.token)
         |> fetch_cookies()
         |> Plug.Session.call(session_config)
-        |> Plug.Conn.fetch_session
+        |> Plug.Conn.fetch_session()
         |> VerifyCookie.call([])
 
       private = Map.put(ctx.conn.private, :plug_session, old_conn.private[:plug_session])
-      new_conn = %{ctx.conn | private: private}
+
+      new_conn =
+        %{ctx.conn | private: private}
         |> Plug.Session.call(session_config)
-        |> Plug.Conn.fetch_session
+        |> Plug.Conn.fetch_session()
         |> VerifySession.call([])
 
       refute new_conn.status == 401

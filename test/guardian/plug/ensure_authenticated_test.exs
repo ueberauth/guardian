@@ -21,8 +21,9 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     def subject_for_token(%{id: id}, _claims), do: {:ok, id}
     def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
@@ -41,7 +42,7 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
 
   describe "with no authenticated token" do
     test "returns an error", ctx do
-      conn = EnsureAuthenticated.call(ctx.conn, [module: ctx.impl, error_handler: ctx.handler])
+      conn = EnsureAuthenticated.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler)
       assert {401, _, "{:unauthenticated, :unauthenticated}"} = sent_resp(conn)
       assert conn.halted
     end
@@ -64,7 +65,14 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     end
 
     test "rejects when claims to not match", ctx do
-      conn = EnsureAuthenticated.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler, claims: %{no: "access"})
+      conn =
+        EnsureAuthenticated.call(
+          ctx.conn,
+          module: ctx.impl,
+          error_handler: ctx.handler,
+          claims: %{no: "access"}
+        )
+
       assert conn.halted
       assert conn.status == 401
       assert {401, _, "{:unauthenticated, :no}"} = sent_resp(conn)

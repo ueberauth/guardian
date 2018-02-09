@@ -16,6 +16,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
 
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
+
       conn
       |> send_resp(401, body)
     end
@@ -24,8 +25,9 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     def subject_for_token(%{id: id}, _claims), do: {:ok, id}
     def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}

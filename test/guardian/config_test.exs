@@ -4,9 +4,10 @@ defmodule Guardian.ConfigTest do
 
   defmodule Impl do
     @moduledoc false
-    use Guardian, otp_app: :guardian,
-                  issuer: "FooApp",
-                  mod_fun_args: {__MODULE__, :foo, [1]}
+    use Guardian,
+      otp_app: :guardian,
+      issuer: "FooApp",
+      mod_fun_args: {__MODULE__, :foo, [1]}
 
     use Guardian.TestHelper
 
@@ -23,8 +24,7 @@ defmodule Guardian.ConfigTest do
   end
 
   test "config with a default value" do
-    assert Impl.config(:not_a_thing, :this_is_a_thing) ==
-      :this_is_a_thing
+    assert Impl.config(:not_a_thing, :this_is_a_thing) == :this_is_a_thing
   end
 
   test "config with a {mod, fun, args}" do

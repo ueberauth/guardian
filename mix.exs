@@ -7,7 +7,7 @@ defmodule Guardian.Mixfile do
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
-    "Sean Callan",
+    "Sean Callan"
   ]
 
   def project do
@@ -16,20 +16,21 @@ defmodule Guardian.Mixfile do
       app: :guardian,
       version: @version,
       elixir: "~> 1.4 or ~> 1.5",
-      elixirc_paths: elixirc_paths(Mix.env),
+      elixirc_paths: elixirc_paths(Mix.env()),
       package: package(),
       source_url: @url,
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       maintainers: @maintainers,
       description: "Elixir Authentication framework",
       homepage_url: @url,
       docs: docs(),
       deps: deps(),
       xref: [exclude: [:phoenix]],
-      dialyzer: [plt_add_deps: :transitive,
-                 plt_add_apps: [:mix],
-                 flags: [:race_conditions, :no_opaque],
+      dialyzer: [
+        plt_add_deps: :transitive,
+        plt_add_apps: [:mix],
+        flags: [:race_conditions, :no_opaque]
       ]
     ]
   end

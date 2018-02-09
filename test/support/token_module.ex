@@ -114,11 +114,12 @@ defmodule Guardian.Support.TokenModule do
     else
       {:ok, old_claims} = decode_token(mod, old_token, opts)
       new_c = Map.put(old_claims, "typ", to_type)
+
       new_t =
         %{"claims" => new_c}
         |> Poison.encode!()
         |> Base.url_encode64(padding: true)
-        
+
       {:ok, {old_token, old_claims}, {new_t, new_c}}
     end
   end
