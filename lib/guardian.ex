@@ -293,10 +293,10 @@ defmodule Guardian do
               options :: options
             ) ::
               {
-                  :ok,
-                  {Guardian.Token.token(), Guardian.Token.claims()},
-                  {Guardian.Token.token(), Guardian.Token.claims()}
-                }
+                :ok,
+                {Guardian.Token.token(), Guardian.Token.claims()},
+                {Guardian.Token.token(), Guardian.Token.claims()}
+              }
               | {:error, any}
 
   @doc """
@@ -308,10 +308,10 @@ defmodule Guardian do
               options :: options
             ) ::
               {
-                  :ok,
-                  {Guardian.Token.token(), Guardian.Token.claims()},
-                  {Guardian.Token.token(), Guardian.Token.claims()}
-                }
+                :ok,
+                {Guardian.Token.token(), Guardian.Token.claims()},
+                {Guardian.Token.token(), Guardian.Token.claims()}
+              }
               | {:error, any}
 
   alias Guardian.Token.Verify
@@ -333,11 +333,11 @@ defmodule Guardian do
         __MODULE__
         |> Module.concat(:Plug)
         |> Module.create(
-             quote do
-               use Guardian.Plug, unquote(__MODULE__)
-             end,
-             Macro.Env.location(__ENV__)
-           )
+          quote do
+            use Guardian.Plug, unquote(__MODULE__)
+          end,
+          Macro.Env.location(__ENV__)
+        )
       end
 
       the_otp_app = unquote(otp_app)
@@ -366,9 +366,10 @@ defmodule Guardian do
 
       @spec config() :: Keyword.t()
       def config,
-        do: unquote(otp_app)
-            |> Application.get_env(__MODULE__, [])
-            |> Keyword.merge(unquote(opts))
+        do:
+          unquote(otp_app)
+          |> Application.get_env(__MODULE__, [])
+          |> Keyword.merge(unquote(opts))
 
       @doc """
       Returns a resolved value of the configuration found at a key
@@ -447,10 +448,10 @@ defmodule Guardian do
 
       @spec refresh(Guardian.Token.token(), Guardian.options()) ::
               {
-                  :ok,
-                  {Guardian.Token.token(), Guardian.Token.claims()},
-                  {Guardian.Token.token(), Guardian.Token.claims()}
-                }
+                :ok,
+                {Guardian.Token.token(), Guardian.Token.claims()},
+                {Guardian.Token.token(), Guardian.Token.claims()}
+              }
               | {:error, any}
       def refresh(old_token, opts \\ []), do: Guardian.refresh(__MODULE__, old_token, opts)
 
@@ -466,10 +467,10 @@ defmodule Guardian do
               options :: Guardian.options()
             ) ::
               {
-                  :ok,
-                  {Guardian.Token.token(), Guardian.Token.claims()},
-                  {Guardian.Token.token(), Guardian.Token.claims()}
-                }
+                :ok,
+                {Guardian.Token.token(), Guardian.Token.claims()},
+                {Guardian.Token.token(), Guardian.Token.claims()}
+              }
               | {:error, any}
       def exchange(token, from_type, to_type, opts \\ []),
         do: Guardian.exchange(__MODULE__, token, from_type, to_type, opts)
@@ -661,6 +662,7 @@ defmodule Guardian do
           {:ok, Guardian.Token.claims()} | {:error, any}
   def revoke(mod, token, opts \\ []) do
     token_mod = Guardian.token_module(mod)
+
     with %{claims: claims} <- mod.peek(token),
          {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
          {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
@@ -690,10 +692,10 @@ defmodule Guardian do
 
   @spec refresh(module, Guardian.Token.token(), options) ::
           {
-              :ok,
-              {Guardian.Token.token(), Guardian.Token.claims()},
-              {Guardian.Token.token(), Guardian.Token.claims()}
-            }
+            :ok,
+            {Guardian.Token.token(), Guardian.Token.claims()},
+            {Guardian.Token.token(), Guardian.Token.claims()}
+          }
           | {:error, any}
   def refresh(mod, old_token, opts) do
     with token_mod <- Guardian.token_module(mod),
@@ -731,10 +733,10 @@ defmodule Guardian do
           options
         ) ::
           {
-              :ok,
-              {Guardian.Token.token(), Guardian.Token.claims()},
-              {Guardian.Token.token(), Guardian.Token.claims()}
-            }
+            :ok,
+            {Guardian.Token.token(), Guardian.Token.claims()},
+            {Guardian.Token.token(), Guardian.Token.claims()}
+          }
           | {:error, any}
   def exchange(mod, old_token, from_type, to_type, opts) do
     with token_mod <- Guardian.token_module(mod),
@@ -762,9 +764,10 @@ defmodule Guardian do
 
       resp ->
         raise MalformedReturnValueError,
-          message: "Expected `{:ok, result}` or `{:error, reason}` from #{mod}##{func}, got: #{
-            inspect(resp)
-          }"
+          message:
+            "Expected `{:ok, result}` or `{:error, reason}` from #{mod}##{func}, got: #{
+              inspect(resp)
+            }"
     end
   end
 
