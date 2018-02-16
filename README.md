@@ -120,6 +120,9 @@ With Plug
 # If no session is loaded, the token/resource/claims only go onto the connection
 conn = MyApp.Guardian.Plug.sign_in(conn, resource)
 
+# Optionally with claims and options
+conn = MyApp.Guardian.Plug.sign_in(conn, resource, %{some: "claim"}, token_ttl: {1, :minute})
+
 # remove from session (if fetched) and revoke the token
 conn = MyApp.Guardian.Plug.sign_out(conn)
 
