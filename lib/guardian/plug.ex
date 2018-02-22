@@ -78,11 +78,11 @@ if Code.ensure_loaded?(Plug) do
 
         def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
 
-        def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []),
-          do: GPlug.remember_me(conn, mod, resource, claims, opts)
+        def remember_me(conn, resource, claims \\ %{}, opts \\ []),
+          do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
 
-        def remember_me_from_token(conn, mod, token, claims \\ %{}, opts \\ []),
-          do: GPlug.remember_me_from_token(conn, mod, token, claims, opts)
+        def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
+          do: GPlug.remember_me_from_token(conn, implementation(), token, claims, opts)
       end
     end
 
