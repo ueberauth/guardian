@@ -69,6 +69,9 @@ defmodule Guardian.Mixfile do
       "guides/tokens/start-tokens.md":
         [group: "Tokens", filename: "tokens-start", title: "Start"],
 
+      "guides/tokens/jwt/start.md":
+        [group: "JWT Tokens", filename: "tokens-jwt-start", title: "Start"],
+
       "guides/plug/start-plug.md":
         [group: "Plug", filename: "plug-start", title: "Start"],
       "guides/plug/pipelines.md":
