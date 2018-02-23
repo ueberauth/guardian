@@ -22,8 +22,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     def subject_for_token(%{id: id}, _claims), do: {:ok, id}
     def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
@@ -53,7 +54,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       :get
       |> conn("/")
       |> put_req_header("authorization", ctx.token)
-      |> VerifyHeader.call([module: ctx.impl])
+      |> VerifyHeader.call(module: ctx.impl)
 
     refute conn.status == 401
     assert GPlug.current_token(conn, []) == ctx.token

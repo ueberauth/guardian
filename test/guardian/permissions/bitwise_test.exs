@@ -8,12 +8,13 @@ defmodule Guardian.Permissions.BitwiseTest do
   alias Guardian.Permissions.Bitwise, as: GBits
 
   defmodule Impl do
-    use Guardian, otp_app: :guardian,
-                  permissions: %{
-                    user: [:read, :write],
-                    profile: %{read: 0b1, write: 0b10}
-                  },
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      permissions: %{
+        user: [:read, :write],
+        profile: %{read: 0b1, write: 0b10}
+      },
+      token_module: Guardian.Support.TokenModule
 
     use Guardian.Permissions.Bitwise
 
@@ -37,7 +38,7 @@ defmodule Guardian.Permissions.BitwiseTest do
   end
 
   test "max is -1" do
-    assert Impl.max == -1
+    assert Impl.max() == -1
   end
 
   describe "any_permissions?" do
@@ -63,35 +64,39 @@ defmodule Guardian.Permissions.BitwiseTest do
   describe "normalize_permissions" do
     test "it normalizes a list of permissions" do
       result = GBits.normalize_permissions(%{some: [:read, :write], other: [:one, :two]})
+
       assert result == %{
-        "some" => %{"read" => 0b1, "write" => 0b10},
-        "other" => %{"one" => 0b1, "two" => 0b10},
-      }
+               "some" => %{"read" => 0b1, "write" => 0b10},
+               "other" => %{"one" => 0b1, "two" => 0b10}
+             }
     end
 
     test "it normalizes a map of permissions" do
       perms = %{
         some: %{read: 0b1, write: 0b10},
-        other: %{"one" => 0b1, "two" => 0b10},
+        other: %{"one" => 0b1, "two" => 0b10}
       }
 
       result = GBits.normalize_permissions(perms)
+
       assert result == %{
-        "some" => %{"read" => 0b1, "write" => 0b10},
-        "other" => %{"one" => 0b1, "two" => 0b10},
-      }
+               "some" => %{"read" => 0b1, "write" => 0b10},
+               "other" => %{"one" => 0b1, "two" => 0b10}
+             }
     end
 
     test "it normalizes a mix" do
       perms = %{
         some: %{read: 0b1, write: 0b10},
-        other: [:one, "two"],
+        other: [:one, "two"]
       }
+
       result = GBits.normalize_permissions(perms)
+
       assert result == %{
-        "some" => %{"read" => 0b1, "write" => 0b10},
-        "other" => %{"one" => 0b1, "two" => 0b10},
-      }
+               "some" => %{"read" => 0b1, "write" => 0b10},
+               "other" => %{"one" => 0b1, "two" => 0b10}
+             }
     end
   end
 
@@ -127,19 +132,20 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "it is ok with using max permissions" do
-      perms = %{profile: Impl.max, user: 0b1}
+      perms = %{profile: Impl.max(), user: 0b1}
       result = Impl.encode_permissions!(perms)
       assert result == %{profile: -1, user: 0b1}
     end
 
     test "when setting from an integer it does not lose resolution" do
-      perms = %{profile: Impl.max, user: 0b111111}
+      perms = %{profile: Impl.max(), user: 0b111111}
       result = Impl.encode_permissions!(perms)
       assert result == %{profile: -1, user: 0b111111}
     end
 
     test "it raises on unknown permission set" do
-      msg = "#{to_string Impl} - Type: not_a_thing"
+      msg = "#{to_string(Impl)} - Type: not_a_thing"
+
       assert_raise GBits.PermissionNotFoundError, msg, fn ->
         perms = %{not_a_thing: [:not_a_thing]}
         Impl.encode_permissions!(perms)
@@ -215,10 +221,13 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "it does not allow when none of the one_of permissions match", ctx do
-      opts = GBits.init(one_of: [
-        %{profile: [:write]},
-        %{user: [:read], profile: [:write]},
-      ])
+      opts =
+        GBits.init(
+          one_of: [
+            %{profile: [:write]},
+            %{user: [:read], profile: [:write]}
+          ]
+        )
 
       conn = GBits.call(ctx.conn, opts)
 
@@ -240,20 +249,28 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "it allows when one of the one of permissions from one_of match", ctx do
-      opts = GBits.init(one_of: [
-        %{user: [:write]},
-        %{profile: [:write]},
-        %{user: [:read]},
-      ])
+      opts =
+        GBits.init(
+          one_of: [
+            %{user: [:write]},
+            %{profile: [:write]},
+            %{user: [:read]}
+          ]
+        )
+
       conn = GBits.call(ctx.conn, opts)
 
       refute conn.halted
 
-      opts = GBits.init(one_of: [
-        %{user: [:write]},
-        %{profile: [:write]},
-        %{profile: [:read]},
-      ])
+      opts =
+        GBits.init(
+          one_of: [
+            %{user: [:write]},
+            %{profile: [:write]},
+            %{profile: [:read]}
+          ]
+        )
+
       conn = GBits.call(ctx.conn, opts)
 
       refute conn.halted
@@ -272,6 +289,7 @@ defmodule Guardian.Permissions.BitwiseTest do
 
     test "when looking in a different location with correct permissions", ctx do
       opts = GBits.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
+
       conn =
         ctx.conn
         |> GPlug.put_current_claims(ctx.claims, key: :secret)

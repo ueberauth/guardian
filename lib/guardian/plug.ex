@@ -78,9 +78,11 @@ if Code.ensure_loaded?(Plug) do
 
         def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
 
-        def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []), do: GPlug.remember_me(conn, mod, resource, claims, opts)
-        
-        def remember_me_from_token(conn, mod, token, claims \\ %{}, opts \\ []), do: GPlug.remember_me_from_token(conn, mod, token, claims, opts)
+        def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []),
+          do: GPlug.remember_me(conn, mod, resource, claims, opts)
+
+        def remember_me_from_token(conn, mod, token, claims \\ %{}, opts \\ []),
+          do: GPlug.remember_me_from_token(conn, mod, token, claims, opts)
       end
     end
 
@@ -213,22 +215,28 @@ if Code.ensure_loaded?(Plug) do
       key = fetch_token_key(conn, opts)
 
       case Guardian.encode_and_sign(mod, resource, claims, opts) do
-        {:ok, token, new_claims} -> 
+        {:ok, token, new_claims} ->
           put_resp_cookie(conn, key, token, cookie_options(mod, new_claims))
-        {:error, _} = err -> 
+
+        {:error, _} = err ->
           handle_unauthenticated(conn, err, opts)
       end
     end
 
-    @spec remember_me_from_token(Plug.Conn.t(), module, Guardian.Token.token(), Guardian.Token.claims(), Guardian.opts()) :: 
-            Plug.Conn.t()
+    @spec remember_me_from_token(
+            Plug.Conn.t(),
+            module,
+            Guardian.Token.token(),
+            Guardian.Token.claims(),
+            Guardian.opts()
+          ) :: Plug.Conn.t()
     def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
       token_type = Keyword.get(opts, :token_type, "refresh")
       key = fetch_token_key(conn, opts)
 
       with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-           {:ok, _old, {new_t, full_new_c}} <- Guardian.exchange(mod, token, claims["typ"], token_type, opts) 
-      do
+           {:ok, _old, {new_t, full_new_c}} <-
+             Guardian.exchange(mod, token, claims["typ"], token_type, opts) do
         put_resp_cookie(conn, key, new_t, cookie_options(mod, full_new_c))
       else
         {:error, _} = err -> handle_unauthenticated(conn, err, opts)
@@ -246,7 +254,7 @@ if Code.ensure_loaded?(Plug) do
       max_age = timestamp - Guardian.timestamp()
       [max_age: max_age] ++ cookie_options(mod, %{})
     end
-    
+
     defp cookie_options(mod, _claims) do
       mod.config(:cookie_options, []) ++ @default_cookie_options
     end

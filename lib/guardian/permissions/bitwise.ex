@@ -383,7 +383,7 @@ defmodule Guardian.Permissions.Bitwise do
       alias GPlug.Pipeline
 
       @doc false
-      @spec init([GBits.plug_option]) :: [GBits.plug_option]
+      @spec init([GBits.plug_option()]) :: [GBits.plug_option()]
       def init(opts) do
         ensure = Keyword.get(opts, :ensure)
         one_of = Keyword.get(opts, :one_of)
@@ -406,7 +406,7 @@ defmodule Guardian.Permissions.Bitwise do
       end
 
       @doc false
-      @spec call(Plug.Conn.t(), [GBits.plug_option]) :: Plug.Conn.t()
+      @spec call(Plug.Conn.t(), [GBits.plug_option()]) :: Plug.Conn.t()
       def call(conn, opts) do
         context = %{
           claims: GPlug.current_claims(conn, opts),

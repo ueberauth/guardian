@@ -22,8 +22,9 @@ defmodule Guardian.Plug.VerifySessionTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     def subject_for_token(%{id: id}, _claims), do: {:ok, id}
     def subject_for_token(%{"id" => id}, _claims), do: {:ok, id}
@@ -51,7 +52,7 @@ defmodule Guardian.Plug.VerifySessionTest do
       :get
       |> conn("/")
       |> init_test_session(%{guardian_default_token: ctx.token})
-      |> VerifySession.call([module: ctx.impl])
+      |> VerifySession.call(module: ctx.impl)
 
     assert GPlug.current_token(conn, []) == ctx.token
     assert GPlug.current_claims(conn, []) == ctx.claims

@@ -11,8 +11,9 @@ defmodule Guardian.PlugTest do
   defmodule Impl do
     @moduledoc false
 
-    use Guardian, otp_app: :guardian,
-                  token_module: Guardian.Support.TokenModule
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule
 
     import Guardian.Support.Utils, only: [send_function_call: 1]
 
@@ -47,6 +48,7 @@ defmodule Guardian.PlugTest do
         :before_sign_out,
         [:conn, key, opts]
       })
+
       {:ok, conn}
     end
   end
@@ -68,9 +70,13 @@ defmodule Guardian.PlugTest do
       conn = GPlug.put_current_claims(ctx.conn, %{my: "claims"}, [])
       assert conn.private[:guardian_default_claims] == %{my: "claims"}
 
-      conn = GPlug.put_current_claims(
-        ctx.conn, %{bob: "claims"}, key: :bob
-      )
+      conn =
+        GPlug.put_current_claims(
+          ctx.conn,
+          %{bob: "claims"},
+          key: :bob
+        )
+
       assert conn.private[:guardian_bob_claims] == %{bob: "claims"}
     end
 
@@ -78,9 +84,13 @@ defmodule Guardian.PlugTest do
       conn = GPlug.put_current_resource(ctx.conn, "resource", [])
       assert conn.private[:guardian_default_resource] == "resource"
 
-      conn = GPlug.put_current_resource(
-        ctx.conn, "resource2", key: :bob
-      )
+      conn =
+        GPlug.put_current_resource(
+          ctx.conn,
+          "resource2",
+          key: :bob
+        )
+
       assert conn.private[:guardian_bob_resource] == "resource2"
     end
 
@@ -148,7 +158,7 @@ defmodule Guardian.PlugTest do
         {ctx.impl, :subject_for_token, [@resource, %{}]},
         {Guardian.Support.TokenModule, :build_claims, [ctx.impl, @resource, "bob", %{}, []]},
         {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, []]},
-        {ctx.impl, :after_sign_in, [:conn, @resource, token, claims, []]},
+        {ctx.impl, :after_sign_in, [:conn, @resource, token, claims, []]}
       ]
 
       assert gather_function_calls() == expected
@@ -156,7 +166,7 @@ defmodule Guardian.PlugTest do
 
     test "it stores the information in the correct location", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, key: :bob)
 
       refute GPlug.session_active?(conn)
 
@@ -192,7 +202,7 @@ defmodule Guardian.PlugTest do
         {ctx.impl, :subject_for_token, [@resource, %{}]},
         {Guardian.Support.TokenModule, :build_claims, [ctx.impl, @resource, "bob", %{}, []]},
         {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, []]},
-        {ctx.impl, :after_sign_in, [:conn, @resource, token, claims, []]},
+        {ctx.impl, :after_sign_in, [:conn, @resource, token, claims, []]}
       ]
 
       assert gather_function_calls() == expected
@@ -233,7 +243,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, key: :bob)
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -270,7 +280,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl, :before_sign_out, [:conn, :bob, []]},
-        {ctx.impl, :before_sign_out, [:conn, :jane, []]},
+        {ctx.impl, :before_sign_out, [:conn, :jane, []]}
       ]
 
       assert gather_function_calls() == expected
@@ -308,7 +318,7 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [key: :bob])
+      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, key: :bob)
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -336,8 +346,9 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, []]},
-        {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :jane, []]},
+        {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :jane, []]}
       ]
+
       assert gather_function_calls() == expected
     end
   end
@@ -349,19 +360,20 @@ defmodule Guardian.PlugTest do
       conn = ctx.conn
       assert %Plug.Conn{} = xconn = GPlug.remember_me(conn, ctx.impl, @resource, %{}, [])
 
-      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
       %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
-      
-      #default max age
-      assert max_age == 2419200
+
+      # default max age
+      assert max_age == 2_419_200
       assert token
 
       claims = %{"sub" => @resource.id, "typ" => "refresh"}
       ops = [token_type: "refresh"]
+
       expected = [
         {ctx.impl, :subject_for_token, [@resource, %{}]},
         {Guardian.Support.TokenModule, :build_claims, [ctx.impl, @resource, "bobby", %{}, ops]},
-        {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, ops]},
+        {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, ops]}
       ]
 
       assert gather_function_calls() == expected
@@ -372,29 +384,31 @@ defmodule Guardian.PlugTest do
       claims = %{"sub" => @resource.id, "typ" => "refresh"}
       old_token = Poison.encode!(%{claims: claims}) |> Base.encode64()
 
-      assert %Plug.Conn{} = xconn = GPlug.remember_me_from_token(conn, ctx.impl, old_token, claims)
+      assert %Plug.Conn{} =
+               xconn = GPlug.remember_me_from_token(conn, ctx.impl, old_token, claims)
 
-      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")    
-      %{value: new_token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
-      
-      #default max age
-      assert max_age == 2419200
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
+
+      %{value: new_token, max_age: max_age} =
+        Map.get(xconn.resp_cookies, "guardian_default_token")
+
+      # default max age
+      assert max_age == 2_419_200
       assert new_token
+
       expected = [
-        #decode and verify the old token
-        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
+        # decode and verify the old token
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, old_token, []]},
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        #as part of the exchange we decode and verify the old token again
-        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]},
+        # as part of the exchange we decode and verify the old token again
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, old_token, []]},
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        {Guardian.Support.TokenModule, :exchange,      [ctx.impl, old_token, "refresh", "refresh", []]},
-        #as part of the exchange we decode the old token to get the claims
-        {Guardian.Support.TokenModule, :decode_token,  [ctx.impl, old_token, []]}
+        {Guardian.Support.TokenModule, :exchange, [ctx.impl, old_token, "refresh", "refresh", []]},
+        # as part of the exchange we decode the old token to get the claims
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, old_token, []]}
       ]
 
       assert gather_function_calls() == expected
     end
-    
   end
-
 end
