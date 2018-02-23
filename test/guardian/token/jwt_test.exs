@@ -14,6 +14,7 @@ defmodule Guardian.Token.JwtTest do
       secret_key: "foo-de-fafa",
       allowed_algos: ["HS512", "ES512"],
       ttl: {4, :weeks},
+      secret_fetcher: Guardian.Support.TokenModule.SecretFetcher,
       token_ttl: %{
         "access" => {1, :day},
         "refresh" => {2, :weeks}
@@ -421,6 +422,25 @@ defmodule Guardian.Token.JwtTest do
       refute new_t == very_new_t
       assert very_new_c["exp"] == very_new_c["iat"] + 78
       assert very_new_c["typ"] == "other"
+    end
+  end
+
+  describe "with secret fetcher" do
+    alias Guardian.Token.Jwt
+    alias JOSE.{JWK, JWT}
+
+    test "uses the custom secret fetcher", ctx do
+      secret = "this_secret_yo"
+      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, fetched_secret: secret)
+      jwt_secret = secret |> JWK.from_oct()
+      {true, jwt, _} = JWT.verify_strict(jwt_secret, ["HS512"], token)
+      assert jwt.fields == ctx.claims
+
+      assert {:ok, _decoded_claims} = Jwt.decode_token(ctx.impl, token, fetched_secret: secret)
+
+      assert {:error, :invalid_token} = Jwt.decode_token(ctx.impl, token, [])
+
+      assert_received({:secret_fetcher, _headers})
     end
   end
 end
