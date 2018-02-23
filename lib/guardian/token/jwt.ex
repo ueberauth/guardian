@@ -73,7 +73,7 @@ defmodule Guardian.Token.Jwt do
 
   # decode a token and check literal claims with options
   {:ok, claims} =
-    MyApp.Tokens.decode_and_verify(token, %{"typ" => "refresh"} secret: {MyModule, :get_my_secret, ["some", "args"]})
+    MyApp.Tokens.decode_and_verify(token, %{"typ" => "refresh"}, secret: {MyModule, :get_my_secret, ["some", "args"]})
 
   # exchange a token
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
