@@ -1,3 +1,3 @@
-# not yet implemented
+# JWT Tokens
 
-if you'd like to help with this guide please submit a pull request to (guardian)[https://github.com/ueberauth/guardian] in the `guides/tokens/jwt/start.md` file.
+The default implementation of a Token in Guardian is JWT.

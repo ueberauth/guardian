@@ -60,6 +60,8 @@ defmodule Guardian.Mixfile do
         [group: "Introduction", filename: "introduction-overview"],
       "guides/introduction/installation.md":
         [group: "Introduction", filename: "introduction-installation"],
+      "guides/introduction/implementation.md":
+        [group: "Introduction", filename: "introduction-implementation", title: "Implementation Modules"],
       "guides/introduction/community.md":
         [group: "Introduction", filename: "introduction-community"],
 

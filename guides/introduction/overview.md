@@ -24,6 +24,60 @@ It also provides
 * [Phoenix integration](phoenix-start.html)
 * [Permissions](permissions-start.html)
 
+## Tokens in your application
+
+Guardian provides behaviours so that different implementations can be created.
+
+For example you could have two token types for different purposes both backed by the default (JWT).
+
+```elixir
+defmodule MyApp.TokenModuleOne do
+  use Guardian, otp_app: :my_app
+
+  # ...
+end
+
+defmodule MyApp.TokenModuleTwo do
+  use Guardian, otp_app: :my_app
+
+  # ...
+end
+```
+
+By allowing different modules to be implemented you can have multiple configurations inside your application for different purposes.
+
+Token implementations are provided via an adapter pattern. By implementing the [Guardian.Token](Guardian.Token.html) behaviour your backend can be implemented any way you need, and specified in your configuration via the `token_module` option as either an option to the `use` call or in your configuration.
+
+```elixir
+defmodule MyApp.TokenModuleCustom do
+  use Guardian, otp_app: :my_app,
+      token_module: MyApp.CusomTokenBackend
+
+  # ...
+end
+```
+
+or via configuration
+
+```elixir
+defmodule MyApp.TokenModuleCustom do
+  use Guardian, otp_app: :my_app
+
+  # ...
+end
+```
+
+```elixir
+use Mix.Config
+
+config :my_app, MyApp.TokenModuleCustom,
+  token_module: MyApp.CustomTokenBackend
+```
+
+All configuration for your implementation module can be done this way - either via arguments to `use` or inside configuration.
+
+Check the [implementation module docs](introduction-implementation.html) for more information.
+
 ## Guides
 
 To contribute to the guides, please submit a pull request to the [guardian](https://github.com/ueberauth/guardian) project on GitHub.
