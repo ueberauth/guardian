@@ -168,25 +168,13 @@ defmodule Guardian.Token.Jwt do
 
     defmacro __using__(_opts \\ []) do
       quote do
-        def fetch_signing_secret(mod, opts) do
-          secret = Keyword.get(opts, :secret)
-          secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+        alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl, as: DI
 
-          case secret do
-            nil -> {:error, :secret_not_found}
-            val -> {:ok, val}
-          end
-        end
+        def fetch_signing_secret(mod, opts),
+          do: DI.fetch_signing_secret(mod, opts)
 
-        def fetch_verifying_secret(mod, token_headers, opts) do
-          secret = Keyword.get(opts, :secret)
-          secret = Config.resolve_value(secret) || mod.config(:secret_key)
-
-          case secret do
-            nil -> {:error, :secret_not_found}
-            val -> {:ok, val}
-          end
-        end
+        def fetch_verifying_secret(mod, token_headers, opts),
+          do: DI.fetch_verifying_secret(mod, token_headers, opts)
 
         defoverridable fetch_signing_secret: 2, fetch_verifying_secret: 3
       end
@@ -196,6 +184,26 @@ defmodule Guardian.Token.Jwt do
   defmodule SecretFetcher.SecretFetcherDefaultImpl do
     @moduledoc false
     use Guardian.Token.Jwt.SecretFetcher
+
+    def fetch_signing_secret(mod, opts) do
+      secret = Keyword.get(opts, :secret)
+      secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
+
+    def fetch_verifying_secret(mod, token_headers, opts) do
+      secret = Keyword.get(opts, :secret)
+      secret = Config.resolve_value(secret) || mod.config(:secret_key)
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
   end
 
   @doc """
