@@ -78,6 +78,10 @@ All configuration for your implementation module can be done this way - either v
 
 Check the [implementation module docs](introduction-implementation.html) for more information.
 
+# Tutorials
+
+* [Getting started](tutorial-start.html)
+
 ## Guides
 
 To contribute to the guides, please submit a pull request to the [guardian](https://github.com/ueberauth/guardian) project on GitHub.
