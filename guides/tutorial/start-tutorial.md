@@ -2,8 +2,8 @@
 
 Getting started with Guaridan is easy. This tutorial will cover
 
-* Setting up the basics
-* HTTP based setup
+* Setting up the basics of Guardian
+* HTTP integration
 * Login/Logout
 
 We'll use Phoenix for this tutorial since most folks will be using it. There is no requirement to use Phoenix with Guardian but it makes this tutorial easier.
@@ -12,7 +12,7 @@ This tutorial was based on [this article](https://medium.com/@tylerpachal/sessio
 
 We'll also use the default token type of JWT. Again with this you don't _have_ to use JWT for your token backend. See the [token documentation](tokens-start.html) for more information.
 
-Authentication consists of a challenge phase (prove who you are) and then followed by a verification phase (has this actor proven who they are?). Guardian looks after the second part for you. It's up to your application to implement the challenge phase after which Guardian will do the rest. In this tutorial we'll use [comonin](https://github.com/riverrun/comeonin) with [bcrypt](https://en.wikipedia.org/wiki/Bcrypt) for the challenge phase.
+Authentication consists of a challenge phase (prove who you are) and then followed by a verification phase (has this actor proven who they are?). Guardian looks after the second part for you. It's up to your application to implement the challenge phase after which Guardian will do the rest. In this tutorial we'll use [comeonin](https://github.com/riverrun/comeonin) with [bcrypt](https://en.wikipedia.org/wiki/Bcrypt) for the challenge phase.
 
 Lets generate an application.
 
@@ -36,12 +36,12 @@ defp deps do
 end
 ```
 
-## Create a user model
+## Create a user manager
 
 We'll need something to authenticate. How Users are created and what they can do is outside the scope of this tutorial. If you already have a user model you can skip this part.
 
 ```sh
-$ mix phx.gen.context Auth User users username:string password:string
+$ mix phx.gen.context UserManager User users username:string password:string
 ```
 
 ## Create implementation module
@@ -60,17 +60,17 @@ You can have as many implementation modules as you need to depending on your app
 ```elixir
 ## lib/auth_me/auth/guardian.ex
 
-defmodule AuthMe.Auth.Guardian do
+defmodule AuthMe.UserManager.Guardian do
   use Guardian, otp_app: :auth_me
 
-  alias AuthMe.Auth
+  alias AuthMe.UserManager
 
   def subject_for_token(user, _claims) do
     {:ok, to_string(user.id)}
   end
 
   def resource_from_claims(%{"sub" => id}) do
-    case Auth.get_user!(id) do
+    case UserManager.get_user!(id) do
       nil -> {:error, :resource_not_found}
       user -> {:ok, user}
     end
@@ -97,7 +97,7 @@ Copy the output from the previous command and add it to your configuration.
 ```elixir
 ## config.exs
 
-config :auth_me, AuthMe.Auth.Guardian,
+config :auth_me, AuthMe.UserManager.Guardian,
   issuer: "auth_me",
   secret_key: "" # put the result of the mix command above here
 ```
@@ -110,7 +110,7 @@ This too is not strictly required for Guardian. If you already have a way for yo
 
 We'll implement a simple version of password hashing for this tutorial. This is up to your application and is only shown here for example purposes.
 
-We added `:comonin` and `:bcrypt_elixir` to our mix deps at the start. We're going to use them in two places.
+We added `:comeonin` and `:bcrypt_elixir` to our mix deps at the start. We're going to use them in two places.
 
 1. When setting the password for the user
 2. When verifying the login credentials
@@ -127,11 +127,11 @@ def changeset(%User{} = user, attrs) do
   |> put_password_hash()
 end
 
-defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: password}} = cset) do
-  change(cset, password: Bcrypt.hashpwsalt(password))
+defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset) do
+  change(changeset, password: Bcrypt.hashpwsalt(password))
 end
 
-defp put_password_hash(cset), do: cset
+defp put_password_hash(changeset), do: changeset
 ```
 
 Now we need a way to verify the username/password credentials.
@@ -172,11 +172,11 @@ We want our pipeline to look after session and header authentication (where to l
 ```elixir
 ## lib/auth_me/auth/pipeline.ex
 
-defmodule AuthMe.Auth.Pipeline do
+defmodule AuthMe.UserManager.Pipeline do
   use Guardian.Plug.Pipeline,
     otp_app: :auth_me,
-    error_handler: AuthMe.Auth.ErrorHandler,
-    module: AuthMe.Auth.Guardian
+    error_handler: AuthMe.UserManager.ErrorHandler,
+    module: AuthMe.UserManager.Guardian
 
   # If there is a session token, restrict it to an access token and validate it
   plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
@@ -192,7 +192,7 @@ We'll also need the error handler referenced in our pipeline to handle the case 
 ```elixir
 ## lib/auth_me/auth/error_handler.ex
 
-defmodule AuthMe.Auth.ErrorHandler do
+defmodule AuthMe.UserManager.ErrorHandler do
   import Plug.Conn
 
   def auth_error(conn, {type, _reason}, _opts) do
@@ -214,21 +214,21 @@ This pipeline is now ready for us to use. Now we need some way to login/logout t
 defmodule AuthMeWeb.SessionController do
   use AuthMeWeb, :controller
 
-  alias AuthMe.{Auth, Auth.User, Auth.Guardian}
+  alias AuthMe.{UserManager, UserManager.User, UserManager.Guardian}
 
   def new(conn, _) do
-    cset = Auth.change_user(%User{})
+    changeset = UserManager.change_user(%User{})
     maybe_user = Guardian.Plug.current_resource(conn)
     if maybe_user do
       redirect(conn, to: "/secret")
     else
-      render(conn, "new.html", changeset: cset, action: session_path(conn, :login))
+      render(conn, "new.html", changeset: changeset, action: session_path(conn, :login))
     end
   end
 
 
   def login(conn, %{"user" => %{"username" => username, "password" => password}}) do
-    Auth.authenticate_user(username, password)
+    UserManager.authenticate_user(username, password)
     |> login_reply(conn)
   end
 
@@ -321,7 +321,7 @@ Ok. So the controller and views are not strictly part of Guardian but we need so
 ```elixir
 # Our pipeline implements "maybe" authenticated. We'll use the `:ensure_auth` below for when we need to make sure someone is logged in.
 pipeline :auth do
-  plug AuthMe.Auth.Pipeline
+  plug AuthMe.UserManager.Pipeline
 end
 
 # We use ensure_auth to fail if there is no one logged in
@@ -372,7 +372,7 @@ iex -S mix
 Create the user:
 
 ```sh
-AuthMe.Auth.create_user(%{username: "me", password: "secret"})
+AuthMe.UserManager.create_user(%{username: "me", password: "secret"})
 ```
 
 Now exit and start up your server:
