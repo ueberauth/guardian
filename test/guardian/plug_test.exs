@@ -226,9 +226,9 @@ defmodule Guardian.PlugTest do
     setup %{conn: conn} do
       conn = init_test_session(conn, %{})
       bob_claims = %{"sub" => "User:#{@bob.id}"}
-      bob_token = Poison.encode!(%{claims: bob_claims})
+      bob_token = Poison.encode!(%{claims: bob_claims}) |> Base.encode64()
       jane_claims = %{"sub" => "User:#{@jane.id}"}
-      jane_token = Poison.encode!(%{claims: jane_claims})
+      jane_token = Poison.encode!(%{claims: jane_claims}) |> Base.encode64()
 
       conn =
         conn
@@ -270,6 +270,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl, :before_sign_out, [:conn, :bob, [key: :bob]]},
+        {Guardian.Support.TokenModule, :revoke, [ctx.impl, bob_claims, bob_token, [key: :bob]]},
         {ctx.impl, :on_revoke, [bob_claims, bob_token, [key: :bob]]}
       ]
 
@@ -299,8 +300,10 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl, :before_sign_out, [:conn, :bob, []]},
+        {Guardian.Support.TokenModule, :revoke, [ctx.impl, bob_claims, bob_token, []]},
         {ctx.impl, :on_revoke, [bob_claims, bob_token, []]},
         {ctx.impl, :before_sign_out, [:conn, :jane, []]},
+        {Guardian.Support.TokenModule, :revoke, [ctx.impl, jane_claims, jane_token, []]},
         {ctx.impl, :on_revoke, [jane_claims, jane_token, []]}
       ]
 
@@ -314,9 +317,9 @@ defmodule Guardian.PlugTest do
 
     setup %{conn: conn} do
       bob_claims = %{"sub" => "User:#{@bob.id}"}
-      bob_token = Poison.encode!(%{claims: bob_claims})
+      bob_token = Poison.encode!(%{claims: bob_claims}) |> Base.encode64()
       jane_claims = %{"sub" => "User:#{@jane.id}"}
-      jane_token = Poison.encode!(%{claims: jane_claims})
+      jane_token = Poison.encode!(%{claims: jane_claims}) |> Base.encode64()
 
       conn =
         conn
@@ -352,6 +355,8 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, [key: :bob]]},
+        {Guardian.Support.TokenModule, :revoke,
+         [Guardian.PlugTest.Impl, bob_claims, bob_token, [key: :bob]]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, [key: :bob]]}
       ]
 
@@ -377,8 +382,12 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, []]},
+        {Guardian.Support.TokenModule, :revoke,
+         [Guardian.PlugTest.Impl, bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :jane, []]},
+        {Guardian.Support.TokenModule, :revoke,
+         [Guardian.PlugTest.Impl, jane_claims, jane_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [jane_claims, jane_token, []]}
       ]
 

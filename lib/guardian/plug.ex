@@ -307,12 +307,9 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp revoke_token(conn, impl, key, opts) do
-      claims = current_claims(conn, key: key)
       token = current_token(conn, key: key)
 
-      with {:ok, _} <-
-          returning_tuple({impl, :on_revoke, [claims, token, opts]}),
-        do: {:ok, conn}
+      with {:ok, _} <- impl.revoke(token, opts), do: {:ok, conn}
     end
 
     defp do_sign_out(%{private: private} = conn, impl, :all, opts) do
