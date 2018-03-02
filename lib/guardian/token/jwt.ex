@@ -27,6 +27,7 @@ defmodule Guardian.Token.Jwt do
   * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
   * `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
   * `verify_issuer` Verify that the token was issued by the configured issuer. Default false
+  * `secret_fetcher` A module used to fetch the secret. Default: `Guardian.Token.Jwt.SecretFetcher`
 
   Options:
 
@@ -110,11 +111,32 @@ defmodule Guardian.Token.Jwt do
                   token_verify_module: MyVerifyModule
     # ... snip
   end
+
+  ### SecretFetcher
+
+  When you need dynamic secret verification, you should use a custom
+  `Guardian.Token.Jwt.SecretFetcher` module.
+  This will allow you to use the header values to determine dynamically the
+  key that should be used.
+
+  ```
+  defmodule MyCustomSecretFetcher do
+    use Guardian.Token.Jwt.SecretFetcher
+
+    def fetch_signing_secret(impl_module, opts) do
+      # fetch the secret for sigining
+    end
+
+    def fetch_verifying_secret(impl_module, token_headers, opts) do
+      # fetch the secret for verifying the token
+    end
+  end
+  ```
   """
 
   @behaviour Guardian.Token
 
-  alias Guardian.{Config, Token.Jwt.Verify}
+  alias Guardian.{Config, Token.Jwt.Verify, Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl}
   alias JOSE.{JWT, JWS, JWK}
 
   import Guardian, only: [stringify_keys: 1]
@@ -123,6 +145,66 @@ defmodule Guardian.Token.Jwt do
   @default_token_type "access"
   @type_key "typ"
   @default_ttl {4, :weeks}
+
+  defmodule SecretFetcher do
+    @moduledoc """
+    Provides a behaviour that specifies how to fetch the secret for the token
+
+    `use Guardian.Token.JWT.SecretFetcher` to provide default implementations of each function
+    """
+
+    @doc """
+    fetch_siginig_secret fetches the secret to sign.
+    """
+    @callback fetch_signing_secret(module, opts :: Guardian.options()) ::
+                {:ok, term} | {:error, :secret_not_found}
+
+    @doc """
+    fetch_verifying_secret fetches the secret to verify a token.
+    It is provided with the tokens headers in order to lookup the secret.
+    """
+    @callback fetch_verifying_secret(module, token_headers :: map, opts :: Guardian.options()) ::
+                {:ok, term} | {:error, :secret_not_found}
+
+    defmacro __using__(_opts \\ []) do
+      quote do
+        alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl, as: DI
+
+        def fetch_signing_secret(mod, opts),
+          do: DI.fetch_signing_secret(mod, opts)
+
+        def fetch_verifying_secret(mod, token_headers, opts),
+          do: DI.fetch_verifying_secret(mod, token_headers, opts)
+
+        defoverridable fetch_signing_secret: 2, fetch_verifying_secret: 3
+      end
+    end
+  end
+
+  defmodule SecretFetcher.SecretFetcherDefaultImpl do
+    @moduledoc false
+    use Guardian.Token.Jwt.SecretFetcher
+
+    def fetch_signing_secret(mod, opts) do
+      secret = Keyword.get(opts, :secret)
+      secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
+
+    def fetch_verifying_secret(mod, token_headers, opts) do
+      secret = Keyword.get(opts, :secret)
+      secret = Config.resolve_value(secret) || mod.config(:secret_key)
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
+  end
 
   @doc """
   Inspect the JWT without any validation or signature checking.
@@ -160,15 +242,16 @@ defmodule Guardian.Token.Jwt do
 
   """
   def create_token(mod, claims, options \\ []) do
-    secret = fetch_secret(mod, options)
+    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
+         {:ok, secret} <- secret_fetcher.fetch_signing_secret(mod, options) do
+      {_, token} =
+        secret
+        |> jose_jwk()
+        |> JWT.sign(jose_jws(mod, options), claims)
+        |> JWS.compact()
 
-    {_, token} =
-      secret
-      |> jose_jwk()
-      |> JWT.sign(jose_jws(mod, options), claims)
-      |> JWS.compact()
-
-    {:ok, token}
+      {:ok, token}
+    end
   end
 
   @doc """
@@ -210,18 +293,17 @@ defmodule Guardian.Token.Jwt do
   * `allowed_algos` - a list of allowable algos
   """
   def decode_token(mod, token, options \\ []) do
-    secret =
-      mod
-      |> fetch_secret(options)
-      |> jose_jwk()
+    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
+         %{headers: headers} <- peek(mod, token),
+         {:ok, raw_secret} <- secret_fetcher.fetch_verifying_secret(mod, headers, options),
+         secret <- jose_jwk(raw_secret),
+         algos = fetch_allowed_algos(mod, options) do
+      verify_result = JWT.verify_strict(secret, algos, token)
 
-    algos = fetch_allowed_algos(mod, options)
-
-    verify_result = JWT.verify_strict(secret, algos, token)
-
-    case verify_result do
-      {true, jose_jwt, _} -> {:ok, jose_jwt.fields}
-      {false, _, _} -> {:error, :invalid_token}
+      case verify_result do
+        {true, jose_jwt, _} -> {:ok, jose_jwt.fields}
+        {false, _, _} -> {:error, :invalid_token}
+      end
     end
   end
 
@@ -309,16 +391,6 @@ defmodule Guardian.Token.Jwt do
     opts
     |> Keyword.get(:allowed_algos)
     |> Config.resolve_value() || apply(mod, :config, [:allowed_algos, @default_algos])
-  end
-
-  defp fetch_secret(mod, opts) do
-    secret = Keyword.get(opts, :secret)
-    secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
-
-    case secret do
-      nil -> raise "No secret key configured for JWT"
-      val -> val
-    end
   end
 
   defp set_type(%{"typ" => typ} = claims, _mod, _opts) when not is_nil(typ), do: claims
@@ -427,5 +499,9 @@ defmodule Guardian.Token.Jwt do
     |> set_iat()
     |> set_iss(mod, options)
     |> set_ttl(mod, options)
+  end
+
+  defp fetch_secret_fetcher(mod) do
+    {:ok, mod.config(:secret_fetcher, SecretFetcherDefaultImpl)}
   end
 end

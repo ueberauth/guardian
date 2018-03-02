@@ -1,3 +1,7 @@
+# v 1.1.0
+
+* JWT secret fetcher behaviour added
+
 # v 1.0.0
 
 * Allow for multiple Guardian setups in a single applications

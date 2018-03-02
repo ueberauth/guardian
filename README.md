@@ -164,6 +164,8 @@ Decoding tokens
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
 ```
 
+If you need dynamic verification for JWT tokens, please see the documentation for `Guardian.Token.Jwt` and `Guardian.Token.Jwt.SecretFetcher`
+
 ## Configuration
 
 The following configuration is available to all implementation modules.
@@ -213,6 +215,8 @@ The default token type of `Guardian` is JWT. It accepts many options but you rea
 * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
 * `allowed_drift` The drift that is allowed when decoding/verifying a token in milliseconds
 * `verify_issuer` Default false
+* `secret_fetcher` A module used to fetch the secret. Default: `Guardian.Token.Jwt.SecretFetcher`
+
 
 ## Secrets (JWT)
 
