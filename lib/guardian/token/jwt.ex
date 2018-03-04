@@ -37,7 +37,7 @@ defmodule Guardian.Token.Jwt do
   * `headers` The Jose headers that should be used
   * `allowed_algos`
   * `token_type` - Override the default token type
-  * `token_ttl` - The time to live. See `Guardian.Token.ttl` type
+  * `ttl` - The time to live. See `Guardian.Token.ttl` type
 
   #### Example
 
@@ -60,7 +60,7 @@ defmodule Guardian.Token.Jwt do
       resource,
       %{},
       secret: {MyModule, :get_my_secret, ["some", "args"]},
-      token_ttl: {4, :weeks},
+      ttl: {4, :weeks},
       token_type: "refresh"
     )
 
@@ -82,14 +82,14 @@ defmodule Guardian.Token.Jwt do
 
   # exchange a token with options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.exchange(old_token, ["access", "refresh"], "access" secret: {MyModule, :get_my_secret, ["some", "args"]}, token_ttl: {1, :hour})
+    MyApp.Tokens.exchange(old_token, ["access", "refresh"], "access" secret: {MyModule, :get_my_secret, ["some", "args"]}, ttl: {1, :hour})
 
   # refresh a token using defaults
   {:ok, {old_token, old_claims}, {new_token, new_claims}} = MyApp.Tokens.refresh(old_token)
 
   # refresh a token using options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.refresh(old_token, token_ttl: {1, :week}, secret: {MyMod, :get_secret, ["some", "args"})
+    MyApp.Tokens.refresh(old_token, ttl: {1, :week}, secret: {MyMod, :get_secret, ["some", "args"})
   ```
 
   ### Token verify module
@@ -266,7 +266,7 @@ defmodule Guardian.Token.Jwt do
   Options may override the defaults found in the configuration.
 
   * `token_type` - Override the default token type
-  * `token_ttl` - The time to live. See `Guardian.Token.ttl` type
+  * `ttl` - The time to live. See `Guardian.Token.ttl` type
   """
   # credo:disable-for-next-line /\.Warning\./
   def build_claims(mod, _resource, sub, claims \\ %{}, options \\ []) do
@@ -341,7 +341,7 @@ defmodule Guardian.Token.Jwt do
 
   * `secret` - Override the configured secret. `Guardian.Config.config_value` is valid
   * `allowed_algos` - a list of allowable algos
-  * `token_ttl` - The time to live. See `Guardian.Token.ttl` type
+  * `ttl` - The time to live. See `Guardian.Token.ttl` type
   """
   def refresh(mod, old_token, options) do
     with {:ok, old_claims} <- apply(mod, :decode_and_verify, [old_token, %{}, options]),
@@ -363,7 +363,7 @@ defmodule Guardian.Token.Jwt do
 
   * `secret` - Override the configured secret. `Guardian.Config.config_value` is valid
   * `allowed_algos` - a list of allowable algos
-  * `token_ttl` - The time to live. See `Guardian.Token.ttl` type
+  * `ttl` - The time to live. See `Guardian.Token.ttl` type
   """
   def exchange(mod, old_token, from_type, to_type, options) do
     with {:ok, old_claims} <- apply(mod, :decode_and_verify, [old_token, %{}, options]),
