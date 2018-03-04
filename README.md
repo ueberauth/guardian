@@ -121,7 +121,7 @@ With Plug
 conn = MyApp.Guardian.Plug.sign_in(conn, resource)
 
 # Optionally with claims and options
-conn = MyApp.Guardian.Plug.sign_in(conn, resource, %{some: "claim"}, token_ttl: {1, :minute})
+conn = MyApp.Guardian.Plug.sign_in(conn, resource, %{some: "claim"}, ttl: {1, :minute})
 
 # remove from session (if fetched) and revoke the token
 conn = MyApp.Guardian.Plug.sign_out(conn)
@@ -146,7 +146,7 @@ Creating with custom claims and options
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_type: "refresh")
 
 # Customize the time to live (ttl) of the token
-{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, token_ttl: {1, :minute})
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, ttl: {1, :minute})
 
 # Customize the secret
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: "custom")
