@@ -1,6 +1,8 @@
 # v 1.1.0
 
 * JWT secret fetcher behaviour added
+* Let Guardian plug call :revoke on sign_out [#458](https://github.com/ueberauth/guardian/pull/458)
+* Fix an issue where Guardian.Plug tries to clear the wrong keys from the conn [#476](https://github.com/ueberauth/guardian/pull/476)
 
 # v 1.0.0
 
