@@ -195,7 +195,7 @@ defmodule Guardian.Token.Jwt do
       end
     end
 
-    def fetch_verifying_secret(mod, token_headers, opts) do
+    def fetch_verifying_secret(mod, _token_headers, opts) do
       secret = Keyword.get(opts, :secret)
       secret = Config.resolve_value(secret) || mod.config(:secret_key)
 
