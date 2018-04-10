@@ -61,7 +61,7 @@ if Code.ensure_loaded?(Plug) do
 
     * `:otp_app` - The otp app where the pipeline modules can be found
     * `:module` - The `Guardian` implementation module
-    * `:error_handler` - An error handling module. See `Guardian.Plug.Errors`
+    * `:error_handler` - The error handler module
     * `:key` - The key to use
 
     ### Keys
@@ -74,10 +74,18 @@ if Code.ensure_loaded?(Plug) do
 
     ### Error handler
 
-    When using plugs, you'll need to specify an error handler
+    When using plugs, you'll need to specify an error handler module
 
-    The error_handler requires an `auth_error` function that receives the conn
-    and the error reason
+    The error_handler module requires an `auth_error` function that receives the conn,
+    the reason tuple and the options
+
+    ```elixir
+    defmodule MyApp.AuthErrorHandler do
+      def auth_error(conn, {type, reason}, opts) do
+        ...
+      end
+    end
+    ```
 
     ### Inline pipelines
 
