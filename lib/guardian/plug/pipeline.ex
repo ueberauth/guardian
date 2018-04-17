@@ -20,10 +20,12 @@ if Code.ensure_loaded?(Plug) do
                                   module: MyApp.Tokens,
                                   error_handler: MyApp.AuthErrorHandler
 
+      @claims %{iss: "IssuerApp"}
+
       plug Guardian.Plug.VerifySession, claims: @claims
       plug Guardian.Plug.VerifyHeader, claims: @claims, realm: "Bearer"
       plug Guardian.Plug.EnsureAuthenticated
-      plug Guardian.Plug.LoadResource, ensure: true
+      plug Guardian.Plug.LoadResource, allow_blank: true
     end
     ```
 
