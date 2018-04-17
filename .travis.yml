@@ -1,23 +1,17 @@
 language: elixir
-
-elixir:
-  - 1.5
-  - 1.4
-
-otp_release:
-  - 20.1
-  - 19.3
-  - 18.3
-
-env:
-  global:
-    - MIX_ENV=test
-
+sudo: false
 notifications:
   email: false
 
-sudo: false
+elixir:
+  - 1.6
+
+otp_release:
+  - 20.2
 
 script:
-  - mix test
-  - mix credo
+  - make testing
+after_script:
+  - make docs
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

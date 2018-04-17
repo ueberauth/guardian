@@ -31,6 +31,11 @@ defmodule Guardian.Mixfile do
         plt_add_deps: :transitive,
         plt_add_apps: [:mix],
         flags: [:race_conditions, :no_opaque]
+      ],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.html": :test
       ]
     ]
   end
@@ -135,10 +140,12 @@ defmodule Guardian.Mixfile do
       {:phoenix, "~> 1.0 or ~> 1.2 or ~> 1.3", optional: true},
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
-      # Dev and Test dependencies
-      {:credo, "~> 0.8.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.16", only: :dev}
+      # Tools
+      {:dialyxir, ">= 0.0.0", only: [:dev], runtime: false},
+      {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false},
+      {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false}
     ]
   end
 

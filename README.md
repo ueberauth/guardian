@@ -3,6 +3,8 @@
 > An authentication library for use with Elixir applications.
 
 [![Build Status](https://travis-ci.org/ueberauth/guardian.svg?branch=master)](https://travis-ci.org/ueberauth/guardian)
+[![Codecov](https://codecov.io/gh/ueberauth/guardian/branch/master/graph/badge.svg)](https://codecov.io/gh/ueberauth/guardian)
+[![Inline docs](http://inch-ci.org/github/ueberauth/guardian.svg)](http://inch-ci.org/github/ueberauth/guardian)
 
 > Looking for [Guardian pre 1.0](https://github.com/ueberauth/guardian/tree/v0.14.x)?
 
