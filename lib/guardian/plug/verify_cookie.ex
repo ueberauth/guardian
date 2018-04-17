@@ -49,7 +49,11 @@ if Code.ensure_loaded?(Plug) do
     def init(opts), do: opts
 
     @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
-    def call(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, _opts), do: conn
+    def call(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
+      conn
+      |> fetch_cookies()
+      |> call(opts)
+    end
 
     def call(conn, opts) do
       with nil <- GPlug.current_token(conn, opts),
