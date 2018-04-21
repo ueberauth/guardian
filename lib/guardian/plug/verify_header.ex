@@ -45,7 +45,7 @@ if Code.ensure_loaded?(Plug) do
 
     This will check the authorization header for a token
 
-    `Authorization Bearer: <token>`
+    `Authorization: Bearer <token>`
 
     This token will be placed into the connection depending on the key and can be accessed with
     `Guardian.Plug.current_token` and `Guardian.Plug.current_claims`
