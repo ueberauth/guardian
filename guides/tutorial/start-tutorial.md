@@ -174,7 +174,7 @@ For HTTP Guardian makes use of the Plug architecture and uses it to construct pi
 
 Please read the [pipeline guide](../plug/pipelines.md) for more information.
 
-We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](Guardian.Plug.EnsureAuthenticated.html) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
+We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](https://hexdocs.pm/guardian/Guardian.Plug.EnsureAuthenticated.html#content) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
 
 ```elixir
 ## lib/auth_me/auth/pipeline.ex
