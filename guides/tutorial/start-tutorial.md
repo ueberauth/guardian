@@ -36,6 +36,12 @@ defp deps do
 end
 ```
 
+Now let's get the dependencies
+
+```elixir
+$ mix deps.get
+```
+
 ## Create a user manager
 
 We'll need something to authenticate. How Users are created and what they can do is outside the scope of this tutorial. If you already have a user model you can skip this part.
@@ -53,7 +59,7 @@ Guardian needs an implementation. This implementation module encapsulates:
 * Encoding/Decoding
 * Callbacks
 
-For more information please reference the [implementation module docs](introduction-implementation.html).
+For more information please reference the [implementation module docs](../introduction/implementation.md).
 
 You can have as many implementation modules as you need to depending on your application. For this one though we only have a simple user system so we'll only need one.
 
