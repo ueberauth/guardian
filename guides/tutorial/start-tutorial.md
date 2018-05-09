@@ -86,7 +86,7 @@ end
 
 `subject_for_token` and `resource_from_claims` are inverses of one another. `subject_for_token` is used to encode the resource into the token, and `resource_from_claims` is used to rehydrate the resource from the claims.
 
-There are many other [callbacks](Guardian.html#callbacks) that you can use, but we're going basic.
+There are many other [callbacks](https://hexdocs.pm/guardian/Guardian.html#callbacks) that you can use, but we're going basic.
 
 ## Setup Guardian config
 
