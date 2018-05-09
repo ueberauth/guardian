@@ -270,7 +270,7 @@ defmodule AuthMeWeb.SessionView do
 end
 ```
 
-And for the login template and secret template:
+Now we have to create the login template:
 
 ```
 ## lib/auth_ex_web/templates/session/new.html.eex
@@ -297,6 +297,16 @@ And for the login template and secret template:
 <% end %>
 ```
 
+and secret template:
+
+```
+## lib/auth_me_web/templates/page/secret.html.eex
+<h2>Secret Page</h2>
+<p>You can only see this page if you are logged in</p>
+<p>You're logged in as <%= @current_user.username %></p>
+```
+
+
 Lets make the secret implementation.
 
 ```elixir
@@ -314,12 +324,6 @@ end
 
 We use the `Guardian.Plug.current_resource(conn)` function here to fetch the resource. You must load this first using the `Guardian.Plug.LoadResource` plug which we included in our auth pipeline earlier.
 
-```
-## lib/auth_me_web/templates/page/secret.html.eex
-<h2>Secret Page</h2>
-<p>You can only see this page if you are logged in</p>
-<p>You're logged in as <%= @current_user.username %></p>
-```
 
 ## Routes
 
