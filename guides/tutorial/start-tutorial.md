@@ -177,7 +177,7 @@ Please read the [pipeline guide](../plug/pipelines.md) for more information.
 We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](https://hexdocs.pm/guardian/Guardian.Plug.EnsureAuthenticated.html#content) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
 
 ```elixir
-## lib/auth_me/auth/pipeline.ex
+## lib/auth_me/user_manager/pipeline.ex
 
 defmodule AuthMe.UserManager.Pipeline do
   use Guardian.Plug.Pipeline,
@@ -197,7 +197,7 @@ end
 We'll also need the error handler referenced in our pipeline to handle the case where there was a failure to authenticate.
 
 ```elixir
-## lib/auth_me/auth/error_handler.ex
+## lib/auth_me/user_manager/error_handler.ex
 
 defmodule AuthMe.UserManager.ErrorHandler do
   import Plug.Conn
