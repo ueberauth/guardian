@@ -172,7 +172,7 @@ The next step is getting it into your application via HTTP.
 
 For HTTP Guardian makes use of the Plug architecture and uses it to construct pipelines. The pipeline provides downstream plugs with the implementation module and the error handler that the Guardian plugs require to do their job.
 
-Please read the [pipeline guide](plug-pipeline.html) for more information.
+Please read the [pipeline guide](../plug/pipelines.md) for more information.
 
 We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](Guardian.Plug.EnsureAuthenticated.html) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
 
