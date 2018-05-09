@@ -122,7 +122,7 @@ We added `:comeonin` and `:bcrypt_elixir` to our mix deps at the start. We're go
 2. When verifying the login credentials
 
 ```elixir
-## lib/user_manager/user_manager/user.ex
+## lib/auth_me/user_manager/user.ex
 
 alias Comeonin.Bcrypt
 
