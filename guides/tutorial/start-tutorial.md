@@ -64,7 +64,7 @@ For more information please reference the [implementation module docs](../introd
 You can have as many implementation modules as you need to depending on your application. For this one though we only have a simple user system so we'll only need one.
 
 ```elixir
-## lib/auth_me/auth/guardian.ex
+## lib/auth_me/user_manager/guardian.ex
 
 defmodule AuthMe.UserManager.Guardian do
   use Guardian, otp_app: :auth_me
@@ -122,7 +122,7 @@ We added `:comeonin` and `:bcrypt_elixir` to our mix deps at the start. We're go
 2. When verifying the login credentials
 
 ```elixir
-## lib/auth_me/auth/user.ex
+## lib/user_manager/user_manager/user.ex
 
 alias Comeonin.Bcrypt
 
@@ -141,9 +141,10 @@ defp put_password_hash(changeset), do: changeset
 ```
 
 Now we need a way to verify the username/password credentials.
+Edit the user manager to add authentication.
 
 ```elixir
-## lib/auth_me/auth.ex
+## lib/auth_me/user_manager/user_manager.ex
 
 alias Comeonin.Bcrypt
 
