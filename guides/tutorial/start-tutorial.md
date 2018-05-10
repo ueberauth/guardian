@@ -36,6 +36,12 @@ defp deps do
 end
 ```
 
+Now let's get the dependencies
+
+```elixir
+$ mix deps.get
+```
+
 ## Create a user manager
 
 We'll need something to authenticate. How Users are created and what they can do is outside the scope of this tutorial. If you already have a user model you can skip this part.
@@ -53,12 +59,12 @@ Guardian needs an implementation. This implementation module encapsulates:
 * Encoding/Decoding
 * Callbacks
 
-For more information please reference the [implementation module docs](introduction-implementation.html).
+For more information please reference the [implementation module docs](../introduction/implementation.md).
 
 You can have as many implementation modules as you need to depending on your application. For this one though we only have a simple user system so we'll only need one.
 
 ```elixir
-## lib/auth_me/auth/guardian.ex
+## lib/auth_me/user_manager/guardian.ex
 
 defmodule AuthMe.UserManager.Guardian do
   use Guardian, otp_app: :auth_me
@@ -80,7 +86,7 @@ end
 
 `subject_for_token` and `resource_from_claims` are inverses of one another. `subject_for_token` is used to encode the resource into the token, and `resource_from_claims` is used to rehydrate the resource from the claims.
 
-There are many other [callbacks](Guardian.html#callbacks) that you can use, but we're going basic.
+There are many other [callbacks](https://hexdocs.pm/guardian/Guardian.html#callbacks) that you can use, but we're going basic.
 
 ## Setup Guardian config
 
@@ -116,7 +122,7 @@ We added `:comeonin` and `:bcrypt_elixir` to our mix deps at the start. We're go
 2. When verifying the login credentials
 
 ```elixir
-## lib/auth_me/auth/user.ex
+## lib/auth_me/user_manager/user.ex
 
 alias Comeonin.Bcrypt
 
@@ -135,9 +141,10 @@ defp put_password_hash(changeset), do: changeset
 ```
 
 Now we need a way to verify the username/password credentials.
+Edit the user manager to add authentication.
 
 ```elixir
-## lib/auth_me/auth.ex
+## lib/auth_me/user_manager/user_manager.ex
 
 alias Comeonin.Bcrypt
 
@@ -165,12 +172,12 @@ The next step is getting it into your application via HTTP.
 
 For HTTP Guardian makes use of the Plug architecture and uses it to construct pipelines. The pipeline provides downstream plugs with the implementation module and the error handler that the Guardian plugs require to do their job.
 
-Please read the [pipeline guide](plug-pipeline.html) for more information.
+Please read the [pipeline guide](../plug/pipelines.md) for more information.
 
-We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](Guardian.Plug.EnsureAuthenticated.html) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
+We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](https://hexdocs.pm/guardian/Guardian.Plug.EnsureAuthenticated.html#content) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
 
 ```elixir
-## lib/auth_me/auth/pipeline.ex
+## lib/auth_me/user_manager/pipeline.ex
 
 defmodule AuthMe.UserManager.Pipeline do
   use Guardian.Plug.Pipeline,
@@ -190,7 +197,7 @@ end
 We'll also need the error handler referenced in our pipeline to handle the case where there was a failure to authenticate.
 
 ```elixir
-## lib/auth_me/auth/error_handler.ex
+## lib/auth_me/user_manager/error_handler.ex
 
 defmodule AuthMe.UserManager.ErrorHandler do
   import Plug.Conn
@@ -256,14 +263,14 @@ end
 Create a session view
 
 ```elixir
-## lib/auth_me_web/views/session.eex
+## lib/auth_me_web/views/session_view.ex
 
 defmodule AuthMeWeb.SessionView do
   use AuthMeWeb, :view
 end
 ```
 
-And for the login template and secret template:
+Now we have to create the login template:
 
 ```
 ## lib/auth_ex_web/templates/session/new.html.eex
@@ -290,6 +297,16 @@ And for the login template and secret template:
 <% end %>
 ```
 
+and secret template:
+
+```
+## lib/auth_me_web/templates/page/secret.html.eex
+<h2>Secret Page</h2>
+<p>You can only see this page if you are logged in</p>
+<p>You're logged in as <%= @current_user.username %></p>
+```
+
+
 Lets make the secret implementation.
 
 ```elixir
@@ -307,12 +324,6 @@ end
 
 We use the `Guardian.Plug.current_resource(conn)` function here to fetch the resource. You must load this first using the `Guardian.Plug.LoadResource` plug which we included in our auth pipeline earlier.
 
-```
-## lib/auth_me_web/templates/page/secret.html.eex
-<h2>Secret Page</h2>
-<p>You can only see this page if you are logged in</p>
-<p>You're logged in as <%= @current_user.username %></p>
-```
 
 ## Routes
 
