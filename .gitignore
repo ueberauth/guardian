@@ -6,3 +6,5 @@ erl_crash.dump
 doc
 .DS_Store
 .elixir_ls/
+/docs
+/cover

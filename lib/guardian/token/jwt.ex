@@ -170,8 +170,7 @@ defmodule Guardian.Token.Jwt do
       quote do
         alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl, as: DI
 
-        def fetch_signing_secret(mod, opts),
-          do: DI.fetch_signing_secret(mod, opts)
+        def fetch_signing_secret(mod, opts), do: DI.fetch_signing_secret(mod, opts)
 
         def fetch_verifying_secret(mod, token_headers, opts),
           do: DI.fetch_verifying_secret(mod, token_headers, opts)
