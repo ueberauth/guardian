@@ -35,11 +35,13 @@ defmodule Guardian.Plug.Keys do
     |> Regex.named_captures(other_key)
     |> extract_key()
   end
+
   def key_from_other(atom) do
     atom
     |> to_string()
     |> key_from_other()
   end
+
   defp extract_key(%{"key" => key}), do: String.to_atom(key)
   defp extract_key(_), do: nil
 end
