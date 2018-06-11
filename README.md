@@ -432,7 +432,6 @@ end
 ## Related projects
 
 * [GuardianDb](https://hex.pm/packages/guardian_db) - Token tracking in the database
-* [Sentinel](https://hex.pm/packages/sentinel) - Adds helpful extras to Guardian like default mailer support, as well as out of the box controllers and routes
 * [sans_password](https://hex.pm/packages/sans_password) - A simple, passwordless authentication system based on Guardian.
 * [protego](https://hex.pm/packages/protego) - Flexible authentication solution for Elixir/Phoenix with Guardian.
 
