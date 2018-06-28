@@ -1,6 +1,6 @@
 if Code.ensure_loaded?(Plug) do
   defmodule Guardian.Plug do
-    @moduledoc """
+    @moduledoc ~S"""
     Provides functions for the implementation module for dealing with
     Guardian in a Plug environment
 
