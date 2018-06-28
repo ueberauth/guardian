@@ -1,6 +1,6 @@
 # Getting started with Guardian
 
-Getting started with Guaridan is easy. This tutorial will cover
+Getting started with Guardian is easy. This tutorial will cover
 
 * Setting up the basics of Guardian
 * HTTP integration
