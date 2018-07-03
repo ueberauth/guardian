@@ -44,7 +44,7 @@ defmodule Guardian.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   def application do
-    [applications: [:logger, :poison, :jose, :elixir_uuid]]
+    [extra_applications: [:crypto, :logger]]
   end
 
   def docs do
@@ -140,7 +140,6 @@ defmodule Guardian.Mixfile do
     [
       {:jose, "~> 1.8"},
       {:poison, "~> 2.2 or ~> 3.0"},
-      {:elixir_uuid, "~> 1.2"},
 
       # Optional dependencies
       {:phoenix, "~> 1.0 or ~> 1.2 or ~> 1.3", optional: true},
