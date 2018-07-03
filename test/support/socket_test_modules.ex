@@ -29,5 +29,5 @@ defmodule Guardian.Phoenix.SocketTest.MySocket do
 
   def connect(_params, _socket), do: :error
 
-  def id(_), do: UUID.uuid4()
+  def id(_), do: Guardian.UUID.generate()
 end
