@@ -122,7 +122,7 @@ defmodule Guardian do
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token)
 
   # Decode and verify with literal claims check.
-  # If the cliams int he token do not match those given verification will fail
+  # If the cliams in the token do not match those given verification will fail
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"})
 
   # Decode and verify with literal claims check and options.
