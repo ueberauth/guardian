@@ -137,7 +137,7 @@ defp put_password_hash(changeset), do: changeset
 Now we need a way to verify the username/password credentials.
 
 ```elixir
-## lib/auth_me/user_manager.ex
+## lib/auth_me/user_manager/user_manager.ex
 
 alias Comeonin.Bcrypt
 
