@@ -29,7 +29,7 @@ defmodule Guardian do
   Any other option provided will be merged with the configuration in the config
   files.
 
-  It contains some generated functions, and some callbacks
+  The Guardian module contains some generated functions and some callbacks.
 
   ## Generated function
 
@@ -56,22 +56,22 @@ defmodule Guardian do
 
   Token type is encoded into the token in the `"typ"` field.
 
-  Return String.
+  Return - a string.
 
   #### `peek(token)`
 
   Inspect a tokens payload. Note that this function does no verification.
 
-  Return - A map including the `:claims` key
+  Return - a map including the `:claims` key.
 
   #### `config()`, `config(key, default \\ nil)`
 
-  Without argument, `config` will return the full configuration Keyword list.
+  Without argument `config` will return the full configuration Keyword list.
 
-  When given a `key` and optionally a default, will fetch a resolved value
+  When given a `key` and optionally a default, `config` will fetch a resolved value
   contained in the key.
 
-  See `Guardian.Config.resolve_value`
+  See `Guardian.Config.resolve_value/1`
 
   #### `encode_and_sign(resource, claims \\ %{}, opts \\ [])`
 
@@ -83,7 +83,7 @@ defmodule Guardian do
   * `claims` - Any custom claims that you want to use in your token
   * `opts` - Options for the token module and callbacks
 
-  For more information on options see the documentation for your Token Module.
+  For more information on options see the documentation for your TokenModule.
 
   ```elixir
   # Provide a token using the defaults including the default_token_type
@@ -98,7 +98,7 @@ defmodule Guardian do
   ```
 
   The `encode_and_sign` function calls a number of callbacks on
-  your implementation module. See `Guardian.encode_and_sign`
+  your implementation module. See `Guardian.encode_and_sign/4`
 
   #### `decode_and_verify(token, claims_to_check \\ %{}, opts \\ [])`
 
@@ -115,18 +115,18 @@ defmodule Guardian do
   Callbacks:
 
   `decode_and_verify` calls a number of callbacks on your implementation module,
-  See `Guardian.decode_and_verify`
+  See `Guardian.decode_and_verify/4`
 
   ```elixir
   # Decode and verify using the defaults
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token)
 
   # Decode and verify with literal claims check.
-  # If the cliams in the token do not match those given verification will fail
+  # If the claims in the token do not match those given verification will fail
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"})
 
   # Decode and verify with literal claims check and options.
-  # Options are passed to your Token Module and callbacks
+  # Options are passed to your TokenModule and callbacks
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"}, some: "secret")
   ```
 
@@ -134,7 +134,7 @@ defmodule Guardian do
 
   Revoke a token.
 
-  *Note:* this is entirely dependant on your Token Module and implementation
+  *Note:* this is entirely dependent on your TokenModule and implementation
   callbacks.
 
   ```elixir
@@ -215,7 +215,7 @@ defmodule Guardian do
   @doc """
   An optional callback that allows the claims to be modified
   while they're being built.
-  This is useful to hook into the encoding lifecycle
+  This is useful to hook into the encoding lifecycle.
   """
   @callback build_claims(
               claims :: Guardian.Token.claims(),
@@ -372,9 +372,9 @@ defmodule Guardian do
           |> Keyword.merge(unquote(opts))
 
       @doc """
-      Returns a resolved value of the configuration found at a key
+      Returns a resolved value of the configuration found at a key.
 
-      See `Guardian.Config.resolve_value`
+      See `Guardian.Config.resolve_value/1`.
       """
 
       @spec config(atom | String.t(), any) :: any
@@ -383,11 +383,11 @@ defmodule Guardian do
 
       @doc """
       Provides the content of the token but without verification
-      of either the claims or the signature
+      of either the claims or the signature.
 
       Claims will be present at the `:claims` key.
 
-      See `Guardian.peek` for more information
+      See `Guardian.peek/2` for more information
       """
       @spec peek(String.t()) :: map
       def peek(token) do
@@ -396,7 +396,7 @@ defmodule Guardian do
 
       @doc """
       Encodes the claims.
-      See `Guardian.encode_and_sign` for more information
+      See `Guardian.encode_and_sign/4` for more information
       """
 
       @spec encode_and_sign(any, Guardian.Token.claims(), Guardian.options()) ::
@@ -408,7 +408,7 @@ defmodule Guardian do
       Decodes and verifies a token using the configuration on the implementation
       module.
 
-      See `Guardian.decode_and_verify`
+      See `Guardian.decode_and_verify/4`
       """
 
       @spec decode_and_verify(Guardian.Token.token(), Guardian.Token.claims(), Guardian.options()) ::
@@ -524,10 +524,10 @@ defmodule Guardian do
   @doc """
   Returns an inspection of the token (at least claims)
   without any verification.
-  This should not be relied on since there is no verification
+  This should not be relied on since there is no verification.
 
   The implementation is provided by the implementation module specified.
-  See the documentation for your implementation / token module for full details
+  See the documentation for your implementation / token module for full details.
   """
 
   @spec peek(module, Guardian.Token.token()) :: %{claims: map}
@@ -538,13 +538,13 @@ defmodule Guardian do
   @doc """
   Creates a signed token for a resource.
   The actual encoding depends on the implementation module
-  which should be referenced for specifics
+  which should be referenced for specifics.
 
   ### Lifecycle
-  Once called, a number of callbacks will be invoked on the implementation module
+  Once called, a number of callbacks will be invoked on the implementation module:
 
   * `subject_for_token` - gets the subject from the resource
-  * `build_claims` - Once the implementation module has built it's default claims for custom claim building
+  * `build_claims` - allows the implementation module to add or modify claims before the token is created
   * `after_encode_and_sign`
 
   ### Options
@@ -552,7 +552,7 @@ defmodule Guardian do
   and the appropriate callbacks.
 
   * `ttl` - How long to keep the token alive for. If not included the default will be used.
-  * `token_type` - The type of token to generate if different from the default
+  * `token_type` - The type of token to generate if different from the default.
 
   The `ttl` option should take `{integer, unit}` where unit is one of:
 
@@ -587,18 +587,18 @@ defmodule Guardian do
   end
 
   @doc """
-  Decodes a token using the configuration of the implementation module
-  This will, using that configuration delegate to the token module.
+  Decodes a token using the configuration of the implementation module.
+  This will, using that configuration, delegate to the token module.
 
   Once the token module has decoded the token, your implementation module
   has an opportunity to further verify the claims contained in the token
   using the `verify_claims` callback.
 
   ### Lifecycle
-  Once called, a number of callbacks will be invoked on the implementation module
+  Once called, a number of callbacks will be invoked on the implementation module:
 
-  * `verify_claims` - Add your own custom claim verification. An error will mean the claims are not valid
-  * `on_verify` - After a successful verification this function is called
+  * `verify_claims` - add custom claim verification, returns an error if the claims are not valid
+  * `on_verify` - called after a successful verification
 
   ### Options
   The options will be passed through to the implementation / token modules
@@ -627,7 +627,7 @@ defmodule Guardian do
   @doc """
   Fetch the resource and claims directly from a token.
 
-  This is a convenience function that first decodes the token using `decode_and_verify/4` and then loads the resource.
+  This is a convenience function that first decodes the token using `Guardian.decode_and_verify/4` and then loads the resource.
   """
 
   @spec resource_from_token(
@@ -644,9 +644,9 @@ defmodule Guardian do
   end
 
   @doc """
-  Called to revoke a token.
+  Revoke a token.
 
-  Note: This is entirely dependant on the token module and callbacks.
+  Note: This is entirely dependent on the token module and callbacks.
 
   ### Lifecycle
 
@@ -656,7 +656,7 @@ defmodule Guardian do
   ### Options
 
   The options are passed through to the TokenModule and callback
-  so check the documentation for your TokenModule
+  so check the documentation for your TokenModule.
   """
   @spec revoke(module, Guardian.Token.token(), options) ::
           {:ok, Guardian.Token.claims()} | {:error, any}
@@ -709,7 +709,7 @@ defmodule Guardian do
   end
 
   @doc """
-  Exchanges one token for another with different token types
+  Exchanges one token for another with different token types.
 
   The token is first decoded and verified to ensure that there is no escalation
   Of privileges.
@@ -717,13 +717,12 @@ defmodule Guardian do
   Tokens must have their type included in the `from_type` argument.
 
   ### Lifecycle
-  The token module will exchange the token then on the
-  implementation module
-  * `on_exchange` - will be invoked after the exchange happens
+  * `<TokenModule>.exchange` - exchange the old token for the new one
+  * `<ImplModule>.on_exchange` - will be invoked after the exchange happens
 
   ### Options
   All options are passed through all calls to the token module and
-  appropriate callbacks
+  appropriate callbacks.
   """
   @spec exchange(
           module,
