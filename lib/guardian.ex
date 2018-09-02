@@ -83,7 +83,7 @@ defmodule Guardian do
   * `claims` - Any custom claims that you want to use in your token
   * `opts` - Options for the token module and callbacks
 
-  For more information on options see the documentation for your TokenModule.
+  For more information on options see the documentation for your token module.
 
   ```elixir
   # Provide a token using the defaults including the default_token_type
@@ -126,7 +126,7 @@ defmodule Guardian do
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"})
 
   # Decode and verify with literal claims check and options.
-  # Options are passed to your TokenModule and callbacks
+  # Options are passed to your token module and callbacks
   {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{match: "claim"}, some: "secret")
   ```
 
@@ -134,7 +134,7 @@ defmodule Guardian do
 
   Revoke a token.
 
-  *Note:* this is entirely dependent on your TokenModule and implementation
+  *Note:* this is entirely dependent on your token module and implementation
   callbacks.
 
   ```elixir
@@ -655,8 +655,8 @@ defmodule Guardian do
 
   ### Options
 
-  The options are passed through to the TokenModule and callback
-  so check the documentation for your TokenModule.
+  The options are passed through to the token module and callback
+  so check the documentation for your token module.
   """
   @spec revoke(module, Guardian.Token.token(), options) ::
           {:ok, Guardian.Token.claims()} | {:error, any}
@@ -687,7 +687,7 @@ defmodule Guardian do
   * `:hour` | `:hours`
   * `:week` | `:weeks`
 
-  See TokenModule documentation for your token module for other options.
+  See documentation for your token module for other options.
   """
 
   @spec refresh(module, Guardian.Token.token(), options) ::
