@@ -1,7 +1,7 @@
 defmodule Guardian.Mixfile do
   use Mix.Project
 
-  @version "0.14.5"
+  @version "0.14.6"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
@@ -30,7 +30,7 @@ defmodule Guardian.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :poison, :jose, :uuid]]
+    [applications: [:logger, :poison, :jose, :elixir_uuid]]
   end
 
   def docs do
@@ -45,7 +45,7 @@ defmodule Guardian.Mixfile do
      {:phoenix, "~> 1.2 and < 1.4.0", optional: true},
      {:plug, "~> 1.3"},
      {:poison, ">= 1.3.0 and < 4.0.0"},
-     {:uuid, ">=1.1.1"},
+     {:elixir_uuid, "~> 1.2"},
 
      # Dev and Test dependencies
      {:credo, "~> 0.6.1", only: [:dev, :test]},
