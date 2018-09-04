@@ -1,5 +1,5 @@
 defmodule Guardian do
-  @moduledoc """
+  @moduledoc ~S"""
   Guardian provides a singular interface for authentication in Elixir applications
   that is `token` based.
 
