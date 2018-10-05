@@ -111,13 +111,13 @@ defmodule Guardian.Mixfile do
 
   defp groups_for_extras do
     [
-      "Introduction": Path.wildcard("guides/introduction/*.md"),
-      "Tutorial": Path.wildcard("guides/tutorial/*.md"),
-      "Tokens": Path.wildcard("guides/tokens/*.md"),
+      Introduction: Path.wildcard("guides/introduction/*.md"),
+      Tutorial: Path.wildcard("guides/tutorial/*.md"),
+      Tokens: Path.wildcard("guides/tokens/*.md"),
       "JWT Tokens": Path.wildcard("guides/tokens/jwt/*.md"),
-      "Plug": Path.wildcard("guides/plug/*.md"),
-      "Phoenix": Path.wildcard("guides/phoenix/*.md"),
-      "Permissions": Path.wildcard("guides/permissions/*.md"),
+      Plug: Path.wildcard("guides/plug/*.md"),
+      Phoenix: Path.wildcard("guides/phoenix/*.md"),
+      Permissions: Path.wildcard("guides/permissions/*.md"),
       "Upgrade Guides": Path.wildcard("guides/upgrading/*.md")
     ]
   end
