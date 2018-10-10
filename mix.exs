@@ -55,53 +55,70 @@ defmodule Guardian.Mixfile do
       assets: "guides/assets",
       formatters: ["html", "epub"],
       groups_for_modules: groups_for_modules(),
-      extras: extras()
+      extras: extras(),
+      groups_for_extras: groups_for_extras()
     ]
   end
 
   defp extras do
     [
       "guides/introduction/overview.md": [
-        group: "Introduction",
         filename: "introduction-overview"
       ],
       "guides/introduction/installation.md": [
-        group: "Introduction",
         filename: "introduction-installation"
       ],
       "guides/introduction/implementation.md": [
-        group: "Introduction",
         filename: "introduction-implementation",
         title: "Implementation Modules"
       ],
       "guides/introduction/community.md": [
-        group: "Introduction",
         filename: "introduction-community"
       ],
       "guides/tutorial/start-tutorial.md": [
-        group: "Tutorial",
         filename: "tutorial-start",
         title: "Start"
       ],
-      "guides/tokens/start-tokens.md": [group: "Tokens", filename: "tokens-start", title: "Start"],
+      "guides/tokens/start-tokens.md": [
+        filename: "tokens-start",
+        title: "Start"
+      ],
       "guides/tokens/jwt/start.md": [
-        group: "JWT Tokens",
         filename: "tokens-jwt-start",
         title: "Start"
       ],
-      "guides/plug/start-plug.md": [group: "Plug", filename: "plug-start", title: "Start"],
-      "guides/plug/pipelines.md": [group: "Plug", filename: "plug-pipelines", title: "Pipelines"],
+      "guides/plug/start-plug.md": [
+        filename: "plug-start",
+        title: "Start"
+      ],
+      "guides/plug/pipelines.md": [
+        filename: "plug-pipelines",
+        title: "Pipelines"
+      ],
       "guides/phoenix/start-phoenix.md": [
-        group: "Phoenix",
         filename: "phoenix-start",
         title: "Start"
       ],
       "guides/permissions/start-permissions.md": [
-        group: "Permissions",
         filename: "permissions-start",
         title: "Start"
       ],
-      "guides/upgrading/v1.0.md": [group: "Upgrade Guides", filename: "upgrading-v1.0"]
+      "guides/upgrading/v1.0.md": [
+        filename: "upgrading-v1.0"
+      ]
+    ]
+  end
+
+  defp groups_for_extras do
+    [
+      Introduction: Path.wildcard("guides/introduction/*.md"),
+      Tutorial: Path.wildcard("guides/tutorial/*.md"),
+      Tokens: Path.wildcard("guides/tokens/*.md"),
+      "JWT Tokens": Path.wildcard("guides/tokens/jwt/*.md"),
+      Plug: Path.wildcard("guides/plug/*.md"),
+      Phoenix: Path.wildcard("guides/phoenix/*.md"),
+      Permissions: Path.wildcard("guides/permissions/*.md"),
+      "Upgrade Guides": Path.wildcard("guides/upgrading/*.md")
     ]
   end
 
