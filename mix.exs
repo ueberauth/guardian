@@ -159,7 +159,7 @@ defmodule Guardian.Mixfile do
       {:poison, "~> 2.2 or ~> 3.0"},
 
       # Optional dependencies
-      {:phoenix, "~> 1.0 or ~> 1.2 or ~> 1.3 or ~> 1.4.0-rc.3", optional: true},
+      {:phoenix, "~> 1.0 or ~> 1.2 or >= 1.3", optional: true},
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
       # Tools
