@@ -1,4 +1,4 @@
-# Implementation modules
+# Implementation Modules
 
 Implementation modules are the heart of how you interact with Guardian in your application.
 Almost all functions for using Guardian are done via your implementation module.

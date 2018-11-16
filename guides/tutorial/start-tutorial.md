@@ -1,4 +1,4 @@
-# Getting started with Guardian
+# Getting Started with Guardian
 
 Getting started with Guardian is easy. This tutorial will cover
 
