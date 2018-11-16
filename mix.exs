@@ -77,7 +77,7 @@ defmodule Guardian.Mixfile do
       ],
       "guides/tutorial/start-tutorial.md": [
         filename: "tutorial-start",
-        title: "Start"
+        title: "Getting Started with Guardian"
       ],
       "guides/tokens/start-tokens.md": [
         filename: "tokens-start",
