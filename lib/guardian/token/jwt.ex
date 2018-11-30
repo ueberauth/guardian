@@ -124,7 +124,7 @@ defmodule Guardian.Token.Jwt do
     use Guardian.Token.Jwt.SecretFetcher
 
     def fetch_signing_secret(impl_module, opts) do
-      # fetch the secret for sigining
+      # fetch the secret for signing
     end
 
     def fetch_verifying_secret(impl_module, token_headers, opts) do
