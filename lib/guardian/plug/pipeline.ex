@@ -83,6 +83,9 @@ if Code.ensure_loaded?(Plug) do
 
     ```elixir
     defmodule MyApp.AuthErrorHandler do
+      @behaviour Guardian.ErrorHandler
+
+      @impl Guardian.ErrorHandler
       def auth_error(conn, {type, reason}, opts) do
         ...
       end

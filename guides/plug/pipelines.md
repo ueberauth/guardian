@@ -147,6 +147,9 @@ defmodule AuthMeWeb.SnowflakeController do
 
   # ...
 
+  @behaviour Guardian.ErrorHandler
+
+  @impl Guardian.ErrorHandler
   def auth_error(conn, {type, reason}, opts) do
     # handle with a redirect or render
   end

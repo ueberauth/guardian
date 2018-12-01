@@ -30,7 +30,9 @@ defmodule Guardian.Permissions.BitwiseTest do
     @moduledoc false
 
     import Plug.Conn
+    @behaviour Guardian.ErrorHandler
 
+    @impl Guardian.ErrorHandler
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
       send_resp(conn, 403, body)
