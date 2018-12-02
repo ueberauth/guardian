@@ -35,7 +35,7 @@ if Code.ensure_loaded?(Plug) do
     def init(opts), do: opts
 
     @impl Plug
-    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+    @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       conn
       |> Guardian.Plug.current_token(opts)

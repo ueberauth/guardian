@@ -63,7 +63,7 @@ if Code.ensure_loaded?(Plug) do
     @behaviour Plug
 
     @impl Plug
-    @spec init(Keyword.t()) :: Keyword.t()
+    @spec init(opts :: Keyword.t()) :: Keyword.t()
     def init(opts \\ []) do
       realm = Keyword.get(opts, :realm, "Bearer")
 
