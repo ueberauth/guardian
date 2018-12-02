@@ -39,8 +39,14 @@ if Code.ensure_loaded?(Plug) do
     alias Guardian.Plug, as: GPlug
     alias Guardian.Plug.Pipeline
 
+    @behaviour Plug
+
+    @impl Plug
+    @spec init(Keyword.t()) :: Keyword.t()
     def init(opts), do: opts
 
+    @impl Plug
+    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       allow_blank = Keyword.get(opts, :allow_blank)
 

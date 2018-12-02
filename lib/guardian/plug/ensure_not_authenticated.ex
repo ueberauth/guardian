@@ -27,21 +27,23 @@ if Code.ensure_loaded?(Plug) do
       plug Guardian.Plug.EnsureNotAuthenticated, key: :secret
       ```
     """
-    import Plug.Conn
 
-    alias Guardian.Plug, as: GPlug
-    alias GPlug.{Pipeline}
+    @behaviour Plug
 
+    @impl Plug
+    @spec init(Keyword.t()) :: Keyword.t()
     def init(opts), do: opts
 
+    @impl Plug
+    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
-      token = GPlug.current_token(conn, opts)
+      token = Guardian.Plug.current_token(conn, opts)
 
       if token do
         conn
-        |> Pipeline.fetch_error_handler!(opts)
+        |> Guardian.Plug.Pipeline.fetch_error_handler!(opts)
         |> apply(:auth_error, [conn, {:already_authenticated, :already_authenticated}, opts])
-        |> halt()
+        |> Plug.Conn.halt()
       else
         conn
       end

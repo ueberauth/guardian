@@ -27,46 +27,51 @@ if Code.ensure_loaded?(Plug) do
     plug Guardian.Plug.EnsureAuthenticated, key: :secret
     ```
     """
-    alias Guardian.Plug, as: GPlug
-    alias Guardian.Plug.Pipeline
-    alias Guardian.Token.Verify
 
-    import Plug.Conn
+    @behaviour Plug
 
-    @doc false
+    @impl Plug
+    @spec init(Keyword.t()) :: Keyword.t()
     def init(opts), do: opts
 
-    @doc false
+    @impl Plug
+    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       conn
-      |> GPlug.current_token(opts)
+      |> Guardian.Plug.current_token(opts)
       |> verify(conn, opts)
       |> respond()
     end
 
+    @spec verify(token :: Guardian.Token.token(), conn :: Plug.Conn.t(), opts :: Keyword.t()) ::
+            {{:ok, Guardian.Token.claims()} | {:error, any}, Plug.Conn.t(), Keyword.t()}
     defp verify(nil, conn, opts), do: {{:error, :unauthenticated}, conn, opts}
 
     defp verify(_token, conn, opts) do
       result =
         conn
-        |> GPlug.current_claims(opts)
+        |> Guardian.Plug.current_claims(opts)
         |> verify_claims(opts)
 
       {result, conn, opts}
     end
 
-    def respond({{:ok, _}, conn, _opts}), do: conn
+    @spec respond({{:ok, Guardian.Token.claims()} | {:error, any}, Plug.Conn.t(), Keyword.t()}) ::
+            Plug.Conn.t()
+    defp respond({{:ok, _}, conn, _opts}), do: conn
 
-    def respond({{:error, reason}, conn, opts}) do
+    defp respond({{:error, reason}, conn, opts}) do
       conn
-      |> Pipeline.fetch_error_handler!(opts)
+      |> Guardian.Plug.Pipeline.fetch_error_handler!(opts)
       |> apply(:auth_error, [conn, {:unauthenticated, reason}, opts])
-      |> halt()
+      |> Plug.Conn.halt()
     end
 
+    @spec verify_claims(Guardian.Token.claims(), Keyword.t()) ::
+            {:ok, Guardian.Token.claims()} | {:error, any}
     defp verify_claims(claims, opts) do
       to_check = Keyword.get(opts, :claims)
-      Verify.verify_literal_claims(claims, to_check, opts)
+      Guardian.Token.Verify.verify_literal_claims(claims, to_check, opts)
     end
   end
 end
