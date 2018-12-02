@@ -226,9 +226,9 @@ defmodule Guardian.PlugTest do
     setup %{conn: conn} do
       conn = init_test_session(conn, %{})
       bob_claims = %{"sub" => "User:#{@bob.id}"}
-      bob_token = Poison.encode!(%{claims: bob_claims}) |> Base.encode64()
+      bob_token = Jason.encode!(%{claims: bob_claims}) |> Base.encode64()
       jane_claims = %{"sub" => "User:#{@jane.id}"}
-      jane_token = Poison.encode!(%{claims: jane_claims}) |> Base.encode64()
+      jane_token = Jason.encode!(%{claims: jane_claims}) |> Base.encode64()
 
       conn =
         conn
@@ -317,9 +317,9 @@ defmodule Guardian.PlugTest do
 
     setup %{conn: conn} do
       bob_claims = %{"sub" => "User:#{@bob.id}"}
-      bob_token = Poison.encode!(%{claims: bob_claims}) |> Base.encode64()
+      bob_token = Jason.encode!(%{claims: bob_claims}) |> Base.encode64()
       jane_claims = %{"sub" => "User:#{@jane.id}"}
-      jane_token = Poison.encode!(%{claims: jane_claims}) |> Base.encode64()
+      jane_token = Jason.encode!(%{claims: jane_claims}) |> Base.encode64()
 
       conn =
         conn
@@ -424,7 +424,7 @@ defmodule Guardian.PlugTest do
     test "it creates a cookie with the default token and key from an existing token", ctx do
       conn = ctx.conn
       claims = %{"sub" => @resource.id, "typ" => "refresh"}
-      old_token = Poison.encode!(%{claims: claims}) |> Base.encode64()
+      old_token = Jason.encode!(%{claims: claims}) |> Base.encode64()
 
       assert %Plug.Conn{} =
                xconn = Guardian.Plug.remember_me_from_token(conn, ctx.impl, old_token, claims)
