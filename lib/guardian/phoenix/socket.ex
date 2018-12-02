@@ -167,7 +167,7 @@ if Code.ensure_loaded?(Phoenix) do
             impl :: module,
             token :: Guardian.Token.token() | nil,
             claims_to_check :: Guardian.Token.claims(),
-            opts :: Guardian.opts()
+            opts :: Guardian.options()
           ) :: {:ok, Socket.t()} | {:error, atom | any}
     def authenticate(socket, impl, token, claims_to_check \\ %{}, opts \\ [])
 

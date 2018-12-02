@@ -93,7 +93,7 @@ if Code.ensure_loaded?(Plug) do
       ArgumentError -> false
     end
 
-    @spec authenticated?(Plug.Conn.t(), Guardian.opts()) :: true | false
+    @spec authenticated?(Plug.Conn.t(), Guardian.options()) :: true | false
     def authenticated?(conn, opts) do
       key =
         conn
@@ -110,7 +110,7 @@ if Code.ensure_loaded?(Plug) do
     @spec default_key() :: String.t()
     def default_key, do: @default_key
 
-    @spec current_claims(Plug.Conn.t(), Guardian.opts()) :: Guardian.Token.claims() | nil
+    @spec current_claims(Plug.Conn.t(), Guardian.options()) :: Guardian.Token.claims() | nil
     def current_claims(conn, opts \\ []) do
       key =
         conn
@@ -120,7 +120,7 @@ if Code.ensure_loaded?(Plug) do
       conn.private[key]
     end
 
-    @spec current_resource(Plug.Conn.t(), Guardian.opts()) :: any | nil
+    @spec current_resource(Plug.Conn.t(), Guardian.options()) :: any | nil
     def current_resource(conn, opts \\ []) do
       key =
         conn
@@ -130,7 +130,7 @@ if Code.ensure_loaded?(Plug) do
       conn.private[key]
     end
 
-    @spec current_token(Plug.Conn.t(), Guardian.opts()) :: Guardian.Token.token() | nil
+    @spec current_token(Plug.Conn.t(), Guardian.options()) :: Guardian.Token.token() | nil
     def current_token(conn, opts \\ []) do
       key =
         conn
@@ -140,7 +140,7 @@ if Code.ensure_loaded?(Plug) do
       conn.private[key]
     end
 
-    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.opts()) ::
+    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.options()) ::
             Plug.Conn.t()
     def put_current_token(conn, token, opts \\ []) do
       key =
@@ -151,7 +151,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, token)
     end
 
-    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.opts()) ::
+    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.options()) ::
             Plug.Conn.t()
     def put_current_claims(conn, claims, opts \\ []) do
       key =
@@ -162,7 +162,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, claims)
     end
 
-    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.opts()) ::
+    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.options()) ::
             Plug.Conn.t()
     def put_current_resource(conn, resource, opts \\ []) do
       key =
@@ -173,7 +173,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, resource)
     end
 
-    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.opts()) ::
+    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
             Plug.Conn.t()
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
       with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
@@ -197,7 +197,7 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    @spec sign_out(Plug.Conn.t(), module, Guardian.opts()) :: Plug.Conn.t()
+    @spec sign_out(Plug.Conn.t(), module, Guardian.options()) :: Plug.Conn.t()
     def sign_out(conn, impl, opts) do
       key = Keyword.get(opts, :key, :all)
       result = do_sign_out(conn, impl, key, opts)
@@ -208,7 +208,7 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.opts()) ::
+    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
             Plug.Conn.t()
     def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
       opts = Keyword.put_new(opts, :token_type, "refresh")
@@ -228,7 +228,7 @@ if Code.ensure_loaded?(Plug) do
             module,
             Guardian.Token.token(),
             Guardian.Token.claims(),
-            Guardian.opts()
+            Guardian.options()
           ) :: Plug.Conn.t()
     def remember_me_from_token(conn, mod, token, claims_to_check \\ %{}, opts \\ []) do
       token_type = Keyword.get(opts, :token_type, "refresh")

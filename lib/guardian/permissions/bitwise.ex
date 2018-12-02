@@ -114,7 +114,7 @@ defmodule Guardian.Permissions.Bitwise do
           {:ensure, permission_set}
           | {:one_of, [permission_set, ...]}
           | {:key, atom}
-          | {:module, Guardian.t()}
+          | {:module, module}
           | {:error_handler, module}
 
   defmodule PermissionNotFoundError do
@@ -379,6 +379,8 @@ defmodule Guardian.Permissions.Bitwise do
       @moduledoc false
 
       import Plug.Conn
+
+      alias Guardian.Permissions.Bitwise, as: GBits
       alias Guardian.Plug, as: GPlug
       alias GPlug.Pipeline
 
@@ -406,7 +408,7 @@ defmodule Guardian.Permissions.Bitwise do
       end
 
       @doc false
-      @spec call(Plug.Conn.t(), [GBits.plug_option()]) :: Plug.Conn.t()
+      @spec call(Plug.Conn.t(), [Guardian.Permissions.Bitwise.plug_option()]) :: Plug.Conn.t()
       def call(conn, opts) do
         context = %{
           claims: GPlug.current_claims(conn, opts),
