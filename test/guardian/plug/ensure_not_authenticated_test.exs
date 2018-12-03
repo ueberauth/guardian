@@ -13,9 +13,9 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     @moduledoc false
 
     import Plug.Conn
-    @behaviour Guardian.ErrorHandler
+    @behaviour Guardian.Plug.ErrorHandler
 
-    @impl Guardian.ErrorHandler
+    @impl Guardian.Plug.ErrorHandler
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
 

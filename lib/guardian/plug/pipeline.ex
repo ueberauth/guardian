@@ -78,7 +78,7 @@ if Code.ensure_loaded?(Plug) do
 
     When using plugs, you'll need to specify an error handler module
 
-    See `Guardian.ErrorHandler` documentation for more details.
+    See `Guardian.Plug.ErrorHandler` documentation for more details.
 
     ### Inline pipelines
 

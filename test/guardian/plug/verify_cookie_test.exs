@@ -13,9 +13,9 @@ defmodule Guardian.Plug.VerifyCookieTest do
 
     import Plug.Conn
 
-    @behaviour Guardian.ErrorHandler
+    @behaviour Guardian.Plug.ErrorHandler
 
-    @impl Guardian.ErrorHandler
+    @impl Guardian.Plug.ErrorHandler
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
       send_resp(conn, 401, body)

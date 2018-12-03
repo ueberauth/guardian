@@ -1,5 +1,5 @@
 if Code.ensure_loaded?(Plug) do
-  defmodule Guardian.ErrorHandler do
+  defmodule Guardian.Plug.ErrorHandler do
     @moduledoc """
     Optional Behaviour for creating error handlers for `Guardian.Plug.Pipeline`.
 
@@ -12,9 +12,9 @@ if Code.ensure_loaded?(Plug) do
 
     ```elixir
     defmodule MyApp.AuthErrorHandler do
-      @behaviour Guardian.ErrorHandler
+      @behaviour Guardian.Plug.ErrorHandler
 
-      @impl Guardian.ErrorHandler
+      @impl Guardian.Plug.ErrorHandler
       def auth_error(conn, {type, reason}, opts) do
         ...
       end

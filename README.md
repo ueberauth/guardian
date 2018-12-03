@@ -357,9 +357,9 @@ The error handler is a module that implements an `auth_error` function.
 defmodule MyApp.AuthErrorHandler do
   import Plug.Conn
 
-  @behaviour Guardian.ErrorHandler
+  @behaviour Guardian.Plug.ErrorHandler
 
-  @impl Guardian.ErrorHandler
+  @impl Guardian.Plug.ErrorHandler
   def auth_error(conn, {type, reason}, _opts) do
     body = Poison.encode!(%{message: to_string(type)})
     send_resp(conn, 401, body)
