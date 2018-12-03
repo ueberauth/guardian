@@ -13,6 +13,8 @@ defmodule Guardian.Token do
           | {pos_integer, :seconds}
           | {pos_integer, :minute}
           | {pos_integer, :minutes}
+          | {pos_integer, :hour}
+          | {pos_integer, :hours}
           | {pos_integer, :day}
           | {pos_integer, :days}
           | {pos_integer, :week}
