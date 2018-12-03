@@ -685,6 +685,7 @@ defmodule Guardian do
   * `:second` | `:seconds`
   * `:minute` | `:minutes`
   * `:hour` | `:hours`
+  * `:day` | `:days`
   * `:week` | `:weeks`
 
   See documentation for your token module for other options.
