@@ -406,7 +406,7 @@ defmodule Guardian.Permissions.Bitwise do
       end
 
       @doc false
-      @spec call(Plug.Conn.t(), [GBits.plug_option()]) :: Plug.Conn.t()
+      @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
       def call(conn, opts) do
         context = %{
           claims: GPlug.current_claims(conn, opts),
