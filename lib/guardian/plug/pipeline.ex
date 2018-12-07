@@ -78,16 +78,7 @@ if Code.ensure_loaded?(Plug) do
 
     When using plugs, you'll need to specify an error handler module
 
-    The error_handler module requires an `auth_error` function that receives the conn,
-    the reason tuple and the options
-
-    ```elixir
-    defmodule MyApp.AuthErrorHandler do
-      def auth_error(conn, {type, reason}, opts) do
-        ...
-      end
-    end
-    ```
+    See `Guardian.Plug.ErrorHandler` documentation for more details.
 
     ### Inline pipelines
 
@@ -185,8 +176,14 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
+    @behaviour Plug
+
+    @impl Plug
+    @spec init(opts :: Keyword.t()) :: Keyword.t()
     def init(opts), do: opts
 
+    @impl Plug
+    @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       conn
       |> maybe_put_key(:guardian_module, Keyword.get(opts, :module))

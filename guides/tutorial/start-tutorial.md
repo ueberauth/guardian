@@ -195,6 +195,9 @@ We'll also need the error handler referenced in our pipeline to handle the case 
 defmodule AuthMe.UserManager.ErrorHandler do
   import Plug.Conn
 
+  @behaviour Guardian.Plug.ErrorHandler
+
+  @impl Guardian.Plug.ErrorHandler
   def auth_error(conn, {type, _reason}, _opts) do
     body = to_string(type)
     conn

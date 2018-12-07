@@ -46,9 +46,14 @@ if Code.ensure_loaded?(Plug) do
     alias Guardian.Plug, as: GPlug
     alias GPlug.Pipeline
 
+    @behaviour Plug
+
+    @impl Plug
+    @spec init(opts :: Keyword.t()) :: Keyword.t()
     def init(opts), do: opts
 
-    @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+    @impl Plug
+    @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
     def call(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
       conn
       |> fetch_cookies()

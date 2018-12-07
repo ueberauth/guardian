@@ -60,7 +60,10 @@ if Code.ensure_loaded?(Plug) do
 
     import Plug.Conn
 
-    @spec init(Keyword.t()) :: Keyword.t()
+    @behaviour Plug
+
+    @impl Plug
+    @spec init(opts :: Keyword.t()) :: Keyword.t()
     def init(opts \\ []) do
       realm = Keyword.get(opts, :realm, "Bearer")
 
@@ -77,6 +80,7 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
+    @impl Plug
     @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
       with nil <- GPlug.current_token(conn, opts),
