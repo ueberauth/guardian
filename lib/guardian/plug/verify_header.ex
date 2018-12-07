@@ -56,7 +56,7 @@ if Code.ensure_loaded?(Plug) do
     """
 
     alias Guardian.Plug, as: GPlug
-    alias GPlug.Pipeline
+    alias Guardian.Plug.Pipeline
 
     import Plug.Conn
 

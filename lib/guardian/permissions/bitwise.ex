@@ -128,7 +128,7 @@ defmodule Guardian.Permissions.Bitwise do
       use Bitwise
 
       alias Guardian.Permissions.Bitwise, as: GBits
-      alias GBits.PermissionNotFoundError
+      alias Guardian.Permissions.Bitwise.PermissionNotFoundError
 
       defdelegate max(), to: Guardian.Permissions.Bitwise
 
@@ -382,7 +382,7 @@ defmodule Guardian.Permissions.Bitwise do
 
       alias Guardian.Permissions.Bitwise, as: GBits
       alias Guardian.Plug, as: GPlug
-      alias GPlug.Pipeline
+      alias Guardian.Plug.Pipeline
 
       @doc false
       @spec init([GBits.plug_option()]) :: [GBits.plug_option()]

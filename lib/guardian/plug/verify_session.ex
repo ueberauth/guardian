@@ -31,7 +31,7 @@ if Code.ensure_loaded?(Plug) do
     import Guardian.Plug.Keys
 
     alias Guardian.Plug, as: GPlug
-    alias GPlug.Pipeline
+    alias Guardian.Plug.Pipeline
 
     @behaviour Plug
 

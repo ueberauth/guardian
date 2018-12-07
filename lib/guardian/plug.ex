@@ -49,7 +49,8 @@ if Code.ensure_loaded?(Plug) do
     import Plug.Conn
 
     alias Guardian.Plug, as: GPlug
-    alias GPlug.Pipeline
+    alias Guardian.Plug.Pipeline
+
     alias __MODULE__.UnauthenticatedError
 
     defmacro __using__(impl) do
