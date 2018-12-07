@@ -8,3 +8,5 @@ doc
 .elixir_ls/
 /docs
 /cover
+/priv/plts/*.plt
+/priv/plts/*.plt.hash

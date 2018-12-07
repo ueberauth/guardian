@@ -17,6 +17,7 @@ cache:
   directories:
     - _build
     - deps
+    - priv/plts
 
 after_script:
   - make docs
