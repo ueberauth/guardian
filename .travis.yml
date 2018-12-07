@@ -12,6 +12,13 @@ otp_release:
 
 script:
   - make testing
+
+cache:
+  directories:
+    - _build
+    - deps
+    - priv/plts
+
 after_script:
   - make docs
 after_success:

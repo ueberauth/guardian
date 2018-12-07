@@ -30,6 +30,7 @@ defmodule Guardian.Mixfile do
       dialyzer: [
         plt_add_deps: :transitive,
         plt_add_apps: [:mix],
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         flags: [:race_conditions, :no_opaque]
       ],
       test_coverage: [tool: ExCoveralls],
@@ -163,7 +164,7 @@ defmodule Guardian.Mixfile do
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
       # Tools
-      {:dialyxir, ">= 0.0.0", only: [:dev], runtime: false},
+      {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false},
