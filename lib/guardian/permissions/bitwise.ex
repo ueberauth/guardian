@@ -127,7 +127,6 @@ defmodule Guardian.Permissions.Bitwise do
     quote do
       use Bitwise
 
-      alias Guardian.Permissions.Bitwise, as: GBits
       alias Guardian.Permissions.Bitwise.PermissionNotFoundError
 
       defdelegate max(), to: Guardian.Permissions.Bitwise
@@ -138,14 +137,16 @@ defmodule Guardian.Permissions.Bitwise do
         raise "Permissions are not defined for #{to_string(__MODULE__)}"
       end
 
-      @normalized_perms GBits.normalize_permissions(raw_perms)
-      @available_permissions GBits.available_from_normalized(@normalized_perms)
+      @normalized_perms Guardian.Permissions.Bitwise.normalize_permissions(raw_perms)
+      @available_permissions Guardian.Permissions.Bitwise.available_from_normalized(
+                               @normalized_perms
+                             )
 
       @doc """
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
       """
 
-      @spec available_permissions() :: GBits.t()
+      @spec available_permissions() :: Guardian.Permissions.Bitwise.t()
       def available_permissions, do: @available_permissions
 
       @doc """
@@ -163,7 +164,8 @@ defmodule Guardian.Permissions.Bitwise do
           iex> MyTokens.decode_permissions(%{"default" => -1})
           %{default: [:public_profile, :user_about_me]}
       """
-      @spec decode_permissions(GBits.input_permissions() | nil) :: GBits.t()
+      @spec decode_permissions(Guardian.Permissions.Bitwise.input_permissions() | nil) ::
+              Guardian.Permissions.Bitwise.t()
       def decode_permissions(nil), do: %{}
 
       def decode_permissions(map) when is_map(map) do
@@ -178,7 +180,8 @@ defmodule Guardian.Permissions.Bitwise do
       will fetch the permissions map from the `"pem"` key where `Guardian.Permissions.Bitwise` places them
       when it encodes them into claims.
       """
-      @spec decode_permissions_from_claims(Guardian.Token.claims()) :: GBits.t()
+      @spec decode_permissions_from_claims(Guardian.Token.claims()) ::
+              Guardian.Permissions.Bitwise.t()
       def decode_permissions_from_claims(%{"pem" => perms}), do: decode_permissions(perms)
       def decode_permissions_from_claims(_), do: %{}
 
@@ -189,7 +192,7 @@ defmodule Guardian.Permissions.Bitwise do
       """
       @spec encode_permissions_into_claims!(
               Guardian.Token.claims(),
-              GBits.input_permissions() | nil
+              Guardian.Permissions.Bitwise.input_permissions() | nil
             ) :: Guardian.Token.claims()
       def encode_permissions_into_claims!(claims, nil), do: claims
 
@@ -205,7 +208,10 @@ defmodule Guardian.Permissions.Bitwise do
       iex> claims |> MyTokens.decode_permissions() |> any_permissions?(%{user_actions: [:books, :music]})
       true
       """
-      @spec any_permissions?(GBits.input_permissions(), GBits.input_permissions()) :: boolean
+      @spec any_permissions?(
+              Guardian.Permissions.Bitwise.input_permissions(),
+              Guardian.Permissions.Bitwise.input_permissions()
+            ) :: boolean
       def any_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms = decode_permissions(has_perms)
         test_perms = decode_permissions(test_perms)
@@ -229,7 +235,10 @@ defmodule Guardian.Permissions.Bitwise do
       iex> claims |> MyTokens.decode_permissions() |> all_permissions?(%{user_actions: [:books, :music]})
       true
       """
-      @spec all_permissions?(GBits.input_permissions(), GBits.input_permissions()) :: boolean
+      @spec all_permissions?(
+              Guardian.Permissions.Bitwise.input_permissions(),
+              Guardian.Permissions.Bitwise.input_permissions()
+            ) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms_bits = encode_permissions!(has_perms)
         test_perms_bits = encode_permissions!(test_perms)
@@ -246,7 +255,8 @@ defmodule Guardian.Permissions.Bitwise do
       iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
       %{user_actions: 9}
       """
-      @spec encode_permissions!(GBits.input_permissions() | nil) :: GBits.t()
+      @spec encode_permissions!(Guardian.Permissions.Bitwise.input_permissions() | nil) ::
+              Guardian.Permissions.Bitwise.t()
       def encode_permissions!(nil), do: %{}
 
       def encode_permissions!(map) when is_map(map) do
@@ -380,12 +390,12 @@ defmodule Guardian.Permissions.Bitwise do
 
       import Plug.Conn
 
-      alias Guardian.Permissions.Bitwise, as: GBits
-      alias Guardian.Plug, as: GPlug
       alias Guardian.Plug.Pipeline
 
       @doc false
-      @spec init([GBits.plug_option()]) :: [GBits.plug_option()]
+      @spec init([Guardian.Permissions.Bitwise.plug_option()]) :: [
+              Guardian.Permissions.Bitwise.plug_option()
+            ]
       def init(opts) do
         ensure = Keyword.get(opts, :ensure)
         one_of = Keyword.get(opts, :one_of)
@@ -411,7 +421,7 @@ defmodule Guardian.Permissions.Bitwise do
       @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
       def call(conn, opts) do
         context = %{
-          claims: GPlug.current_claims(conn, opts),
+          claims: Guardian.Plug.current_claims(conn, opts),
           ensure: Keyword.get(opts, :ensure),
           handler: Pipeline.fetch_error_handler!(conn, opts),
           impl: Pipeline.fetch_module!(conn, opts),

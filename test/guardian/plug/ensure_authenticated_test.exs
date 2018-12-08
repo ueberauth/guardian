@@ -4,7 +4,6 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   use Plug.Test
   use ExUnit.Case
 
-  alias Guardian.Plug, as: GPlug
   alias Guardian.Plug.EnsureAuthenticated
 
   defmodule Handler do
@@ -54,8 +53,8 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
     setup ctx do
       conn =
         ctx.conn
-        |> GPlug.put_current_token(ctx.token, [])
-        |> GPlug.put_current_claims(ctx.claims, [])
+        |> Guardian.Plug.put_current_token(ctx.token, [])
+        |> Guardian.Plug.put_current_claims(ctx.claims, [])
 
       {:ok, %{conn: conn}}
     end

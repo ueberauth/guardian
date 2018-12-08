@@ -43,7 +43,6 @@ if Code.ensure_loaded?(Plug) do
     import Plug.Conn
     import Guardian.Plug.Keys
 
-    alias Guardian.Plug, as: GPlug
     alias Guardian.Plug.Pipeline
 
     @behaviour Plug
@@ -61,19 +60,19 @@ if Code.ensure_loaded?(Plug) do
     end
 
     def call(conn, opts) do
-      with nil <- GPlug.current_token(conn, opts),
+      with nil <- Guardian.Plug.current_token(conn, opts),
            {:ok, token} <- find_token_from_cookies(conn, opts),
            module <- Pipeline.fetch_module!(conn, opts),
            key <- storage_key(conn, opts),
            exchange_from <- Keyword.get(opts, :exchange_from, "refresh"),
            default_type <- module.default_token_type(),
            exchange_to <- Keyword.get(opts, :exchange_to, default_type),
-           active_session? <- GPlug.session_active?(conn),
+           active_session? <- Guardian.Plug.session_active?(conn),
            {:ok, _old, {new_t, new_c}} <-
              Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
         conn
-        |> GPlug.put_current_token(new_t, key: key)
-        |> GPlug.put_current_claims(new_c, key: key)
+        |> Guardian.Plug.put_current_token(new_t, key: key)
+        |> Guardian.Plug.put_current_claims(new_c, key: key)
         |> maybe_put_in_session(active_session?, new_t, opts)
       else
         :no_token_found ->

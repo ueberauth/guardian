@@ -4,8 +4,7 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   use Plug.Test
   use ExUnit.Case, async: true
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.{EnsureNotAuthenticated}
+  alias Guardian.Plug.EnsureNotAuthenticated
 
   @resource %{id: "bobby"}
 
@@ -47,8 +46,8 @@ defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
     setup ctx do
       conn =
         ctx.conn
-        |> GPlug.put_current_token(ctx.token, [])
-        |> GPlug.put_current_claims(ctx.claims, [])
+        |> Guardian.Plug.put_current_token(ctx.token, [])
+        |> Guardian.Plug.put_current_claims(ctx.claims, [])
 
       {:ok, %{conn: conn}}
     end

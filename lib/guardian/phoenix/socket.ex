@@ -52,7 +52,6 @@ if Code.ensure_loaded?(Phoenix) do
 
     import Guardian.Plug.Keys
 
-    alias Guardian.Plug, as: GPlug
     alias Phoenix.Socket
 
     @doc """
@@ -176,7 +175,7 @@ if Code.ensure_loaded?(Phoenix) do
     def authenticate(socket, impl, token, claims_to_check, opts) do
       with {:ok, resource, claims} <-
              Guardian.resource_from_token(impl, token, claims_to_check, opts),
-           key <- Keyword.get(opts, :key, GPlug.default_key()) do
+           key <- Keyword.get(opts, :key, Guardian.Plug.default_key()) do
         authed_socket = assign_rtc(socket, resource, token, claims, key)
 
         {:ok, authed_socket}

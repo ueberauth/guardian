@@ -48,7 +48,6 @@ if Code.ensure_loaded?(Plug) do
     import Guardian.Plug.Keys
     import Plug.Conn
 
-    alias Guardian.Plug, as: GPlug
     alias Guardian.Plug.Pipeline
 
     alias __MODULE__.UnauthenticatedError
@@ -58,32 +57,32 @@ if Code.ensure_loaded?(Plug) do
         def implementation, do: unquote(impl)
 
         def put_current_token(conn, token, opts \\ []),
-          do: GPlug.put_current_token(conn, token, opts)
+          do: Guardian.Plug.put_current_token(conn, token, opts)
 
         def put_current_claims(conn, claims, opts \\ []),
-          do: GPlug.put_current_claims(conn, claims, opts)
+          do: Guardian.Plug.put_current_claims(conn, claims, opts)
 
         def put_current_resource(conn, resource, opts \\ []),
-          do: GPlug.put_current_resource(conn, resource, opts)
+          do: Guardian.Plug.put_current_resource(conn, resource, opts)
 
-        def current_token(conn, opts \\ []), do: GPlug.current_token(conn, opts)
+        def current_token(conn, opts \\ []), do: Guardian.Plug.current_token(conn, opts)
 
-        def current_claims(conn, opts \\ []), do: GPlug.current_claims(conn, opts)
+        def current_claims(conn, opts \\ []), do: Guardian.Plug.current_claims(conn, opts)
 
-        def current_resource(conn, opts \\ []), do: GPlug.current_resource(conn, opts)
+        def current_resource(conn, opts \\ []), do: Guardian.Plug.current_resource(conn, opts)
 
-        def authenticated?(conn, opts \\ []), do: GPlug.authenticated?(conn, opts)
+        def authenticated?(conn, opts \\ []), do: Guardian.Plug.authenticated?(conn, opts)
 
         def sign_in(conn, resource, claims \\ %{}, opts \\ []),
-          do: GPlug.sign_in(conn, implementation(), resource, claims, opts)
+          do: Guardian.Plug.sign_in(conn, implementation(), resource, claims, opts)
 
-        def sign_out(conn, opts \\ []), do: GPlug.sign_out(conn, implementation(), opts)
+        def sign_out(conn, opts \\ []), do: Guardian.Plug.sign_out(conn, implementation(), opts)
 
         def remember_me(conn, resource, claims \\ %{}, opts \\ []),
-          do: GPlug.remember_me(conn, implementation(), resource, claims, opts)
+          do: Guardian.Plug.remember_me(conn, implementation(), resource, claims, opts)
 
         def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
-          do: GPlug.remember_me_from_token(conn, implementation(), token, claims, opts)
+          do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
       end
     end
 

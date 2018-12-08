@@ -109,8 +109,6 @@ if Code.ensure_loaded?(Plug) do
 
     import Plug.Conn
 
-    alias Guardian.Plug, as: GPlug
-
     @doc """
     Create your very own `Guardian.Plug.Pipeline`
 
@@ -123,8 +121,6 @@ if Code.ensure_loaded?(Plug) do
 
       quote do
         use Plug.Builder
-        alias Guardian.Config, as: GConfig
-        alias Guardian.Plug, as: GPlug
 
         import Pipeline
 
@@ -158,14 +154,14 @@ if Code.ensure_loaded?(Plug) do
           |> Keyword.merge(opts)
           |> config()
           |> Keyword.get(key)
-          |> GConfig.resolve_value()
+          |> Guardian.Config.resolve_value()
         end
 
         defp put_modules(conn, opts) do
           pipeline_opts = [
             module: config(opts, :module),
             error_handler: config(opts, :error_handler),
-            key: config(opts, :key, GPlug.default_key())
+            key: config(opts, :key, Guardian.Plug.default_key())
           ]
 
           Pipeline.call(conn, pipeline_opts)
@@ -204,7 +200,7 @@ if Code.ensure_loaded?(Plug) do
     def current_error_handler(conn), do: conn.private[:guardian_error_handler]
 
     def fetch_key(conn, opts),
-      do: Keyword.get(opts, :key, current_key(conn)) || GPlug.default_key()
+      do: Keyword.get(opts, :key, current_key(conn)) || Guardian.Plug.default_key()
 
     def fetch_module(conn, opts), do: Keyword.get(opts, :module, current_module(conn))
 

@@ -173,12 +173,15 @@ defmodule Guardian.Token.Jwt do
 
     defmacro __using__(_opts \\ []) do
       quote do
-        alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl, as: DI
+        alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl
 
-        def fetch_signing_secret(mod, opts), do: DI.fetch_signing_secret(mod, opts)
+        def fetch_signing_secret(mod, opts) do
+          SecretFetcherDefaultImpl.fetch_signing_secret(mod, opts)
+        end
 
-        def fetch_verifying_secret(mod, token_headers, opts),
-          do: DI.fetch_verifying_secret(mod, token_headers, opts)
+        def fetch_verifying_secret(mod, token_headers, opts) do
+          SecretFetcherDefaultImpl.fetch_verifying_secret(mod, token_headers, opts)
+        end
 
         defoverridable fetch_signing_secret: 2, fetch_verifying_secret: 3
       end

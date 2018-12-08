@@ -3,8 +3,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
   use Plug.Test
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.{VerifyHeader, Pipeline}
+  alias Guardian.Plug.Pipeline
+  alias Guardian.Plug.VerifyHeader
 
   use ExUnit.Case, async: true
 
@@ -48,8 +48,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     conn = :get |> conn("/") |> VerifyHeader.call([])
 
     refute conn.status == 401
-    assert GPlug.current_token(conn, []) == nil
-    assert GPlug.current_claims(conn, []) == nil
+    assert Guardian.Plug.current_token(conn, []) == nil
+    assert Guardian.Plug.current_claims(conn, []) == nil
   end
 
   test "it uses the module from options", ctx do
@@ -60,8 +60,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> VerifyHeader.call(module: ctx.impl)
 
     refute conn.status == 401
-    assert GPlug.current_token(conn, []) == ctx.token
-    assert GPlug.current_claims(conn, []) == ctx.claims
+    assert Guardian.Plug.current_token(conn, []) == ctx.token
+    assert Guardian.Plug.current_claims(conn, []) == ctx.claims
   end
 
   test "it finds the module from the pipeline", ctx do
@@ -73,8 +73,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> VerifyHeader.call([])
 
     refute conn.status == 401
-    assert GPlug.current_token(conn, []) == ctx.token
-    assert GPlug.current_claims(conn, []) == ctx.claims
+    assert Guardian.Plug.current_token(conn, []) == ctx.token
+    assert Guardian.Plug.current_claims(conn, []) == ctx.claims
   end
 
   test "with an existing token on the connection it leaves it intact", ctx do
@@ -84,13 +84,13 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       :get
       |> conn("/")
       |> put_req_header("authorization", ctx.token)
-      |> GPlug.put_current_token(token)
-      |> GPlug.put_current_claims(claims)
+      |> Guardian.Plug.put_current_token(token)
+      |> Guardian.Plug.put_current_claims(claims)
       |> VerifyHeader.call([])
 
     refute conn.status == 401
-    assert GPlug.current_token(conn) == token
-    assert GPlug.current_claims(conn) == claims
+    assert Guardian.Plug.current_token(conn) == token
+    assert Guardian.Plug.current_claims(conn) == claims
   end
 
   test "with no module", ctx do
@@ -109,11 +109,11 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> put_req_header("authorization", ctx.token)
       |> VerifyHeader.call(module: ctx.impl, key: :secret)
 
-    refute GPlug.current_token(conn)
-    refute GPlug.current_claims(conn)
+    refute Guardian.Plug.current_token(conn)
+    refute Guardian.Plug.current_claims(conn)
 
-    assert GPlug.current_token(conn, key: :secret) == ctx.token
-    assert GPlug.current_claims(conn, key: :secret) == ctx.claims
+    assert Guardian.Plug.current_token(conn, key: :secret) == ctx.token
+    assert Guardian.Plug.current_claims(conn, key: :secret) == ctx.claims
   end
 
   test "with a token and mismatching claims", ctx do
@@ -135,8 +135,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, claims: ctx.claims)
 
     refute conn.status == 401
-    assert GPlug.current_token(conn) == ctx.token
-    assert GPlug.current_claims(conn) == ctx.claims
+    assert Guardian.Plug.current_token(conn) == ctx.token
+    assert Guardian.Plug.current_claims(conn) == ctx.claims
   end
 
   test "with a token and no specified claims", ctx do
@@ -147,8 +147,8 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler)
 
     refute conn.status == 401
-    assert GPlug.current_token(conn) == ctx.token
-    assert GPlug.current_claims(conn) == ctx.claims
+    assert Guardian.Plug.current_token(conn) == ctx.token
+    assert Guardian.Plug.current_claims(conn) == ctx.claims
   end
 
   test "with an invalid token", ctx do

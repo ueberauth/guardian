@@ -1,8 +1,6 @@
 defmodule Guardian.PlugTest do
   @moduledoc false
 
-  alias Guardian.Plug, as: GPlug
-
   import Guardian.Support.Utils, only: [gather_function_calls: 0]
   use Plug.Test
 
@@ -69,19 +67,19 @@ defmodule Guardian.PlugTest do
 
   describe "getters and setters" do
     test "put_current_token", ctx do
-      conn = GPlug.put_current_token(ctx.conn, "ToKen", [])
+      conn = Guardian.Plug.put_current_token(ctx.conn, "ToKen", [])
       assert conn.private[:guardian_default_token] == "ToKen"
 
-      conn = GPlug.put_current_token(ctx.conn, "tOkEn", key: :bob)
+      conn = Guardian.Plug.put_current_token(ctx.conn, "tOkEn", key: :bob)
       assert conn.private[:guardian_bob_token] == "tOkEn"
     end
 
     test "put_current_claims", ctx do
-      conn = GPlug.put_current_claims(ctx.conn, %{my: "claims"}, [])
+      conn = Guardian.Plug.put_current_claims(ctx.conn, %{my: "claims"}, [])
       assert conn.private[:guardian_default_claims] == %{my: "claims"}
 
       conn =
-        GPlug.put_current_claims(
+        Guardian.Plug.put_current_claims(
           ctx.conn,
           %{bob: "claims"},
           key: :bob
@@ -91,11 +89,11 @@ defmodule Guardian.PlugTest do
     end
 
     test "put_current_resource", ctx do
-      conn = GPlug.put_current_resource(ctx.conn, "resource", [])
+      conn = Guardian.Plug.put_current_resource(ctx.conn, "resource", [])
       assert conn.private[:guardian_default_resource] == "resource"
 
       conn =
-        GPlug.put_current_resource(
+        Guardian.Plug.put_current_resource(
           ctx.conn,
           "resource2",
           key: :bob
@@ -105,46 +103,46 @@ defmodule Guardian.PlugTest do
     end
 
     test "current_token", ctx do
-      assert GPlug.current_token(ctx.conn, []) == nil
+      assert Guardian.Plug.current_token(ctx.conn, []) == nil
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_default_token, "tOkEn")
-      assert GPlug.current_token(conn, []) == "tOkEn"
+      assert Guardian.Plug.current_token(conn, []) == "tOkEn"
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_token, "token")
-      assert GPlug.current_token(conn, key: :bob) == "token"
+      assert Guardian.Plug.current_token(conn, key: :bob) == "token"
     end
 
     test "current_claims", ctx do
-      assert GPlug.current_claims(ctx.conn, []) == nil
+      assert Guardian.Plug.current_claims(ctx.conn, []) == nil
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_default_claims, %{a: "b"})
-      assert GPlug.current_claims(conn, []) == %{a: "b"}
+      assert Guardian.Plug.current_claims(conn, []) == %{a: "b"}
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_token, %{c: "d"})
-      assert GPlug.current_token(conn, key: :bob) == %{c: "d"}
+      assert Guardian.Plug.current_token(conn, key: :bob) == %{c: "d"}
     end
 
     test "current_resource", ctx do
-      assert GPlug.current_resource(ctx.conn, []) == nil
+      assert Guardian.Plug.current_resource(ctx.conn, []) == nil
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_default_resource, :r1)
-      assert GPlug.current_resource(conn, []) == :r1
+      assert Guardian.Plug.current_resource(conn, []) == :r1
 
       conn = Plug.Conn.put_private(ctx.conn, :guardian_bob_resource, :r2)
-      assert GPlug.current_resource(conn, key: :bob) == :r2
+      assert Guardian.Plug.current_resource(conn, key: :bob) == :r2
     end
 
     test "authenticated? is true when there is a token present", ctx do
-      refute GPlug.authenticated?(ctx.conn, [])
-      refute GPlug.authenticated?(ctx.conn, key: :bob)
+      refute Guardian.Plug.authenticated?(ctx.conn, [])
+      refute Guardian.Plug.authenticated?(ctx.conn, key: :bob)
 
       conn =
         ctx.conn
         |> Plug.Conn.put_private(:guardian_default_token, "a")
         |> Plug.Conn.put_private(:guardian_bob_token, "b")
 
-      assert GPlug.authenticated?(conn, [])
-      assert GPlug.authenticated?(conn, key: :bob)
+      assert Guardian.Plug.authenticated?(conn, [])
+      assert Guardian.Plug.authenticated?(conn, key: :bob)
     end
   end
 
@@ -153,9 +151,9 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_in(conn, ctx.impl, @resource, %{}, [])
 
-      refute GPlug.session_active?(xconn)
+      refute Guardian.Plug.session_active?(xconn)
 
       token = xconn.private[:guardian_default_token]
       claims = xconn.private[:guardian_default_claims]
@@ -176,9 +174,11 @@ defmodule Guardian.PlugTest do
 
     test "it stores the information in the correct location", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, key: :bob)
 
-      refute GPlug.session_active?(conn)
+      assert %Plug.Conn{} =
+               xconn = Guardian.Plug.sign_in(conn, ctx.impl, @resource, %{}, key: :bob)
+
+      refute Guardian.Plug.session_active?(conn)
 
       assert xconn.private[:guardian_bob_token]
       assert xconn.private[:guardian_bob_claims]
@@ -195,9 +195,9 @@ defmodule Guardian.PlugTest do
 
     test "it calls the right things", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.sign_in(conn, ctx.impl, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_in(conn, ctx.impl, @resource, %{}, [])
 
-      assert GPlug.session_active?(xconn)
+      assert Guardian.Plug.session_active?(xconn)
 
       token = xconn.private[:guardian_default_token]
       claims = xconn.private[:guardian_default_claims]
@@ -254,7 +254,7 @@ defmodule Guardian.PlugTest do
     test "it calls the right things", ctx do
       %{conn: conn, bob: %{token: bob_token, claims: bob_claims}} = ctx
 
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, key: :bob)
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_out(conn, ctx.impl, key: :bob)
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -284,7 +284,7 @@ defmodule Guardian.PlugTest do
         jane: %{token: jane_token, claims: jane_claims}
       } = ctx
 
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_out(conn, ctx.impl, [])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -343,7 +343,7 @@ defmodule Guardian.PlugTest do
     test "it calls the right things", ctx do
       %{conn: conn, bob: %{token: bob_token, claims: bob_claims}} = ctx
 
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, key: :bob)
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_out(conn, ctx.impl, key: :bob)
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -370,7 +370,7 @@ defmodule Guardian.PlugTest do
         jane: %{token: jane_token, claims: jane_claims}
       } = ctx
 
-      assert %Plug.Conn{} = xconn = GPlug.sign_out(conn, ctx.impl, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_out(conn, ctx.impl, [])
 
       refute xconn.private[:guardian_bob_token]
       refute xconn.private[:guardian_bob_claims]
@@ -400,7 +400,7 @@ defmodule Guardian.PlugTest do
 
     test "it creates a cookie with the default token and key", ctx do
       conn = ctx.conn
-      assert %Plug.Conn{} = xconn = GPlug.remember_me(conn, ctx.impl, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, [])
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
       %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
@@ -427,7 +427,7 @@ defmodule Guardian.PlugTest do
       old_token = Poison.encode!(%{claims: claims}) |> Base.encode64()
 
       assert %Plug.Conn{} =
-               xconn = GPlug.remember_me_from_token(conn, ctx.impl, old_token, claims)
+               xconn = Guardian.Plug.remember_me_from_token(conn, ctx.impl, old_token, claims)
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
 
@@ -470,7 +470,7 @@ defmodule Guardian.PlugTest do
   end
 
   defmodule PipelineImpl do
-    use GPlug.Pipeline,
+    use Guardian.Plug.Pipeline,
       otp_app: :guardian,
       module: __MODULE__.Impl,
       error_handler: __MODULE__.Handler

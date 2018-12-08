@@ -3,8 +3,9 @@ defmodule Guardian.Plug.VerifyCookieTest do
 
   use Plug.Test
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.{VerifyCookie, VerifySession, Pipeline}
+  alias Guardian.Plug.Pipeline
+  alias Guardian.Plug.VerifyCookie
+  alias Guardian.Plug.VerifySession
 
   use ExUnit.Case, async: true
 
@@ -47,8 +48,8 @@ defmodule Guardian.Plug.VerifyCookieTest do
   test "with no cookies fetched it does nothing", ctx do
     conn = VerifyCookie.call(ctx.conn, [])
     refute conn.halted
-    refute GPlug.current_token(conn, [])
-    refute GPlug.current_claims(conn, [])
+    refute Guardian.Plug.current_token(conn, [])
+    refute Guardian.Plug.current_claims(conn, [])
   end
 
   describe "with fetched cookies that are empty" do
@@ -60,8 +61,8 @@ defmodule Guardian.Plug.VerifyCookieTest do
     test "it does nothing", ctx do
       conn = VerifyCookie.call(ctx.conn, [])
       refute conn.halted
-      refute GPlug.current_token(conn, [])
-      refute GPlug.current_claims(conn, [])
+      refute Guardian.Plug.current_token(conn, [])
+      refute Guardian.Plug.current_claims(conn, [])
     end
   end
 
@@ -80,13 +81,13 @@ defmodule Guardian.Plug.VerifyCookieTest do
     test "with an existing token already found", ctx do
       conn =
         ctx.conn
-        |> GPlug.put_current_token(ctx.token)
-        |> GPlug.put_current_claims(ctx.claims)
+        |> Guardian.Plug.put_current_token(ctx.token)
+        |> Guardian.Plug.put_current_claims(ctx.claims)
 
       conn = VerifyCookie.call(conn, [])
       refute conn.halted
-      assert GPlug.current_token(conn, []) == ctx.token
-      assert GPlug.current_claims(conn, []) == ctx.claims
+      assert Guardian.Plug.current_token(conn, []) == ctx.token
+      assert Guardian.Plug.current_claims(conn, []) == ctx.claims
     end
 
     test "with an incorrect token type", ctx do
@@ -99,11 +100,11 @@ defmodule Guardian.Plug.VerifyCookieTest do
       conn = VerifyCookie.call(ctx.conn, [])
 
       refute conn.halted
-      refute GPlug.current_token(conn, []) == ctx.token
-      refute GPlug.current_claims(conn, []) == ctx.claims
+      refute Guardian.Plug.current_token(conn, []) == ctx.token
+      refute Guardian.Plug.current_claims(conn, []) == ctx.claims
 
-      new_t = GPlug.current_token(conn, [])
-      new_c = GPlug.current_claims(conn, [])
+      new_t = Guardian.Plug.current_token(conn, [])
+      new_c = Guardian.Plug.current_claims(conn, [])
 
       assert new_c["typ"] == "access"
       refute new_t == ctx.token
@@ -121,11 +122,11 @@ defmodule Guardian.Plug.VerifyCookieTest do
       conn = VerifyCookie.call(conn, encode_from: "refresh", key: :secret)
 
       refute conn.halted
-      refute GPlug.current_token(conn, key: :secret) == ctx.token
-      refute GPlug.current_claims(conn, key: :secret) == ctx.claims
+      refute Guardian.Plug.current_token(conn, key: :secret) == ctx.token
+      refute Guardian.Plug.current_claims(conn, key: :secret) == ctx.claims
 
-      new_t = GPlug.current_token(conn, key: :secret)
-      new_c = GPlug.current_claims(conn, key: :secret)
+      new_t = Guardian.Plug.current_token(conn, key: :secret)
+      new_c = Guardian.Plug.current_claims(conn, key: :secret)
 
       assert new_c["typ"] == "access"
       refute new_t == ctx.token
