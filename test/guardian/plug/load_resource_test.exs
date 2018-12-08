@@ -4,8 +4,7 @@ defmodule Guardian.Plug.LoadResourceTest do
   use Plug.Test
   use ExUnit.Case, async: true
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.{LoadResource}
+  alias Guardian.Plug.LoadResource
 
   @resource %{id: "bobby"}
 
@@ -70,8 +69,8 @@ defmodule Guardian.Plug.LoadResourceTest do
     setup %{conn: conn, token: token} do
       conn =
         conn
-        |> GPlug.put_current_token(token, [])
-        |> GPlug.put_current_claims(%{"no" => "sub"}, [])
+        |> Guardian.Plug.put_current_token(token, [])
+        |> Guardian.Plug.put_current_claims(%{"no" => "sub"}, [])
 
       {:ok, conn: conn}
     end
@@ -87,15 +86,15 @@ defmodule Guardian.Plug.LoadResourceTest do
     test "it lets the connection continue and adds the resource", ctx do
       conn =
         ctx.conn
-        |> GPlug.put_current_token(ctx.token, [])
-        |> GPlug.put_current_claims(ctx.claims, [])
+        |> Guardian.Plug.put_current_token(ctx.token, [])
+        |> Guardian.Plug.put_current_claims(ctx.claims, [])
 
       conn = LoadResource.call(conn, module: ctx.impl, error_handler: ctx.handler)
 
       refute conn.status == 401
       refute conn.halted
 
-      assert @resource == GPlug.current_resource(conn, [])
+      assert @resource == Guardian.Plug.current_resource(conn, [])
     end
   end
 end

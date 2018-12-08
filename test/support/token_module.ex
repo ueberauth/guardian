@@ -5,14 +5,14 @@ defmodule Guardian.Support.TokenModule do
   @behaviour Guardian.Token
 
   defmodule SecretFetcher do
-    alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl, as: DI
+    alias Guardian.Token.Jwt.SecretFetcher.SecretFetcherDefaultImpl
 
     def fetch_signing_secret(mod, opts) do
       if Keyword.has_key?(opts, :fetched_secret) do
         val = Keyword.get(opts, :fetched_secret)
         {:ok, val}
       else
-        DI.fetch_signing_secret(mod, opts)
+        SecretFetcherDefaultImpl.fetch_signing_secret(mod, opts)
       end
     end
 
@@ -22,7 +22,7 @@ defmodule Guardian.Support.TokenModule do
         send(self(), {:secret_fetcher, headers})
         {:ok, val}
       else
-        DI.fetch_verifying_secret(mod, headers, opts)
+        SecretFetcherDefaultImpl.fetch_verifying_secret(mod, headers, opts)
       end
     end
   end

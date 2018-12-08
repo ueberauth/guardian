@@ -55,7 +55,6 @@ if Code.ensure_loaded?(Plug) do
     `MyApp.ImplementationModule.current_token` and `MyApp.ImplementationModule.current_claims`
     """
 
-    alias Guardian.Plug, as: GPlug
     alias Guardian.Plug.Pipeline
 
     import Plug.Conn
@@ -83,15 +82,15 @@ if Code.ensure_loaded?(Plug) do
     @impl Plug
     @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
-      with nil <- GPlug.current_token(conn, opts),
+      with nil <- Guardian.Plug.current_token(conn, opts),
            {:ok, token} <- fetch_token_from_header(conn, opts),
            module <- Pipeline.fetch_module!(conn, opts),
            claims_to_check <- Keyword.get(opts, :claims, %{}),
            key <- storage_key(conn, opts),
            {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
         conn
-        |> GPlug.put_current_token(token, key: key)
-        |> GPlug.put_current_claims(claims, key: key)
+        |> Guardian.Plug.put_current_token(token, key: key)
+        |> Guardian.Plug.put_current_claims(claims, key: key)
       else
         :no_token_found ->
           conn

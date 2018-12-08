@@ -3,9 +3,7 @@ defmodule Guardian.Permissions.BitwiseTest do
 
   import Plug.Test
 
-  alias Guardian.Plug, as: GPlug
-  alias GPlug.Pipeline
-  alias Guardian.Permissions.Bitwise, as: GBits
+  alias Guardian.Plug.Pipeline
 
   defmodule Impl do
     use Guardian,
@@ -65,7 +63,11 @@ defmodule Guardian.Permissions.BitwiseTest do
 
   describe "normalize_permissions" do
     test "it normalizes a list of permissions" do
-      result = GBits.normalize_permissions(%{some: [:read, :write], other: [:one, :two]})
+      result =
+        Guardian.Permissions.Bitwise.normalize_permissions(%{
+          some: [:read, :write],
+          other: [:one, :two]
+        })
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -79,7 +81,7 @@ defmodule Guardian.Permissions.BitwiseTest do
         other: %{"one" => 0b1, "two" => 0b10}
       }
 
-      result = GBits.normalize_permissions(perms)
+      result = Guardian.Permissions.Bitwise.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -93,7 +95,7 @@ defmodule Guardian.Permissions.BitwiseTest do
         other: [:one, "two"]
       }
 
-      result = GBits.normalize_permissions(perms)
+      result = Guardian.Permissions.Bitwise.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -148,14 +150,14 @@ defmodule Guardian.Permissions.BitwiseTest do
     test "it raises on unknown permission set" do
       msg = "#{to_string(Impl)} - Type: not_a_thing"
 
-      assert_raise GBits.PermissionNotFoundError, msg, fn ->
+      assert_raise Guardian.Permissions.Bitwise.PermissionNotFoundError, msg, fn ->
         perms = %{not_a_thing: [:not_a_thing]}
         Impl.encode_permissions!(perms)
       end
     end
 
     test "it raises on unknown permissions" do
-      assert_raise GBits.PermissionNotFoundError, fn ->
+      assert_raise Guardian.Permissions.Bitwise.PermissionNotFoundError, fn ->
         perms = %{profile: [:wot, :now, :brown, :cow]}
         Impl.encode_permissions!(perms)
       end
@@ -208,14 +210,18 @@ defmodule Guardian.Permissions.BitwiseTest do
         :get
         |> conn("/")
         |> Pipeline.call(module: Impl, error_handler: Handler)
-        |> GPlug.put_current_claims(claims)
+        |> Guardian.Plug.put_current_claims(claims)
 
       {:ok, %{conn: conn, claims: claims}}
     end
 
     test "it does not allow when permissions are missing from ensure", ctx do
-      opts = GBits.init(ensure: %{user: [:write, :read], profile: [:read, :write]})
-      conn = GBits.call(ctx.conn, opts)
+      opts =
+        Guardian.Permissions.Bitwise.init(
+          ensure: %{user: [:write, :read], profile: [:read, :write]}
+        )
+
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
       assert body == "{:unauthorized, :unauthorized}"
@@ -224,14 +230,14 @@ defmodule Guardian.Permissions.BitwiseTest do
 
     test "it does not allow when none of the one_of permissions match", ctx do
       opts =
-        GBits.init(
+        Guardian.Permissions.Bitwise.init(
           one_of: [
             %{profile: [:write]},
             %{user: [:read], profile: [:write]}
           ]
         )
 
-      conn = GBits.call(ctx.conn, opts)
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
       assert body == "{:unauthorized, :unauthorized}"
@@ -239,20 +245,20 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "it allows the request when permissions from ensure match", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]})
-      conn = GBits.call(ctx.conn, opts)
+      opts = Guardian.Permissions.Bitwise.init(ensure: %{user: [:read], profile: [:read]})
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       refute conn.halted
 
-      opts = GBits.init(ensure: %{user: [:read]})
-      conn = GBits.call(ctx.conn, opts)
+      opts = Guardian.Permissions.Bitwise.init(ensure: %{user: [:read]})
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       refute conn.halted
     end
 
     test "it allows when one of the one of permissions from one_of match", ctx do
       opts =
-        GBits.init(
+        Guardian.Permissions.Bitwise.init(
           one_of: [
             %{user: [:write]},
             %{profile: [:write]},
@@ -260,12 +266,12 @@ defmodule Guardian.Permissions.BitwiseTest do
           ]
         )
 
-      conn = GBits.call(ctx.conn, opts)
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       refute conn.halted
 
       opts =
-        GBits.init(
+        Guardian.Permissions.Bitwise.init(
           one_of: [
             %{user: [:write]},
             %{profile: [:write]},
@@ -273,7 +279,7 @@ defmodule Guardian.Permissions.BitwiseTest do
           ]
         )
 
-      conn = GBits.call(ctx.conn, opts)
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       refute conn.halted
     end
@@ -281,8 +287,8 @@ defmodule Guardian.Permissions.BitwiseTest do
     test "when there is no logged in resource it fails" do
       conn = :get |> conn("/") |> Pipeline.call(module: Impl, error_handler: Handler)
 
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]})
-      conn = GBits.call(conn, opts)
+      opts = Guardian.Permissions.Bitwise.init(ensure: %{user: [:read], profile: [:read]})
+      conn = Guardian.Permissions.Bitwise.call(conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -290,28 +296,37 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "when looking in a different location with correct permissions", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
+      opts =
+        Guardian.Permissions.Bitwise.init(
+          ensure: %{user: [:read], profile: [:read]},
+          key: :secret
+        )
 
       conn =
         ctx.conn
-        |> GPlug.put_current_claims(ctx.claims, key: :secret)
-        |> GBits.call(opts)
+        |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
+        |> Guardian.Permissions.Bitwise.call(opts)
 
       refute conn.halted
 
-      opts = GBits.init(ensure: %{user: [:read]}, key: :secret)
+      opts = Guardian.Permissions.Bitwise.init(ensure: %{user: [:read]}, key: :secret)
 
       conn =
         ctx.conn
-        |> GPlug.put_current_claims(ctx.claims, key: :secret)
-        |> GBits.call(opts)
+        |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
+        |> Guardian.Permissions.Bitwise.call(opts)
 
       refute conn.halted
     end
 
     test "when looking in a different location with incorrect ensure permissions", ctx do
-      opts = GBits.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
-      conn = GBits.call(ctx.conn, opts)
+      opts =
+        Guardian.Permissions.Bitwise.init(
+          ensure: %{user: [:read], profile: [:read]},
+          key: :secret
+        )
+
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -319,8 +334,8 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "when looking in a different location with incorrect one_of permissions", ctx do
-      opts = GBits.init(one_of: [%{user: [:read]}], key: :secret)
-      conn = GBits.call(ctx.conn, opts)
+      opts = Guardian.Permissions.Bitwise.init(one_of: [%{user: [:read]}], key: :secret)
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -328,8 +343,8 @@ defmodule Guardian.Permissions.BitwiseTest do
     end
 
     test "with no permissions specified", ctx do
-      opts = GBits.init([])
-      conn = GBits.call(ctx.conn, opts)
+      opts = Guardian.Permissions.Bitwise.init([])
+      conn = Guardian.Permissions.Bitwise.call(ctx.conn, opts)
       refute conn.halted
     end
   end

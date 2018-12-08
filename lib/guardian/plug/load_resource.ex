@@ -36,7 +36,6 @@ if Code.ensure_loaded?(Plug) do
 
     import Plug.Conn
 
-    alias Guardian.Plug, as: GPlug
     alias Guardian.Plug.Pipeline
 
     @behaviour Plug
@@ -51,7 +50,7 @@ if Code.ensure_loaded?(Plug) do
       allow_blank = Keyword.get(opts, :allow_blank)
 
       conn
-      |> GPlug.current_claims(opts)
+      |> Guardian.Plug.current_claims(opts)
       |> resource(conn, opts)
       |> respond(allow_blank)
     end
@@ -72,7 +71,7 @@ if Code.ensure_loaded?(Plug) do
     defp respond({:error, reason, conn, opts}, _), do: return_error(conn, reason, opts)
 
     defp respond({:ok, resource, conn, opts}, _),
-      do: GPlug.put_current_resource(conn, resource, opts)
+      do: Guardian.Plug.put_current_resource(conn, resource, opts)
 
     defp return_error(conn, reason, opts) do
       handler = Pipeline.fetch_error_handler!(conn, opts)

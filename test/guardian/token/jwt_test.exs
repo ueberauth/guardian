@@ -116,7 +116,8 @@ defmodule Guardian.Token.JwtTest do
 
   describe "create_token" do
     alias Guardian.Token.Jwt
-    alias JOSE.{JWK, JWT}
+    alias JOSE.JWK
+    alias JOSE.JWT
 
     test "create a token plain token", ctx do
       secret = :secret_key |> ctx.impl.config() |> JWK.from_oct()
@@ -427,7 +428,8 @@ defmodule Guardian.Token.JwtTest do
 
   describe "with secret fetcher" do
     alias Guardian.Token.Jwt
-    alias JOSE.{JWK, JWT}
+    alias JOSE.JWK
+    alias JOSE.JWT
 
     test "uses the custom secret fetcher", ctx do
       secret = "this_secret_yo"

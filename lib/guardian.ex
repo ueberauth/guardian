@@ -321,8 +321,6 @@ defmodule Guardian do
   end
 
   defmacro __using__(opts \\ []) do
-    alias Guardian.Config, as: GConfig
-
     otp_app = Keyword.get(opts, :otp_app)
 
     # credo:disable-for-next-line Credo.Check.Refactor.LongQuoteBlocks
@@ -348,9 +346,11 @@ defmodule Guardian do
       @config fn ->
         the_otp_app |> Application.get_env(__MODULE__, []) |> Keyword.merge(the_opts)
       end
-      @config_with_key fn key -> @config.() |> Keyword.get(key) |> GConfig.resolve_value() end
+      @config_with_key fn key ->
+        @config.() |> Keyword.get(key) |> Guardian.Config.resolve_value()
+      end
       @config_with_key_and_default fn key, default ->
-        @config.() |> Keyword.get(key, default) |> GConfig.resolve_value()
+        @config.() |> Keyword.get(key, default) |> Guardian.Config.resolve_value()
       end
 
       @doc """
@@ -379,7 +379,7 @@ defmodule Guardian do
 
       @spec config(atom | String.t(), any) :: any
       def config(key, default \\ nil),
-        do: config() |> Keyword.get(key, default) |> GConfig.resolve_value()
+        do: config() |> Keyword.get(key, default) |> Guardian.Config.resolve_value()
 
       @doc """
       Provides the content of the token but without verification
