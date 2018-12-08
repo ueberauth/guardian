@@ -163,7 +163,7 @@ defmodule Guardian.Mixfile do
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
       # Test
-      {:jason, "~> 1.1", only: [:dev, :test], runtume: [:false]},
+      {:jason, "~> 1.1", only: [:dev, :test], runtume: [false]},
 
       # Tools
       {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
