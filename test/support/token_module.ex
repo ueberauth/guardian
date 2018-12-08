@@ -38,7 +38,7 @@ defmodule Guardian.Support.TokenModule do
     claims =
       token
       |> Base.decode64!()
-      |> Poison.decode!()
+      |> Jason.decode!()
       |> Map.get("claims")
 
     %{claims: claims}
@@ -70,7 +70,7 @@ defmodule Guardian.Support.TokenModule do
     else
       token =
         %{"claims" => claims}
-        |> Poison.encode!()
+        |> Jason.encode!()
         |> Base.url_encode64(padding: true)
 
       {:ok, token}
@@ -87,7 +87,7 @@ defmodule Guardian.Support.TokenModule do
         claims =
           token
           |> Base.decode64!()
-          |> Poison.decode!()
+          |> Jason.decode!()
           |> Map.get("claims")
 
         {:ok, claims}
@@ -140,7 +140,7 @@ defmodule Guardian.Support.TokenModule do
 
       new_t =
         %{"claims" => new_c}
-        |> Poison.encode!()
+        |> Jason.encode!()
         |> Base.url_encode64(padding: true)
 
       {:ok, {old_token, old_claims}, {new_t, new_c}}
