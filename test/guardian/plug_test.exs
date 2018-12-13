@@ -421,6 +421,42 @@ defmodule Guardian.PlugTest do
       assert gather_function_calls() == expected
     end
 
+    test "it creates a cookie with a default token and custom key", ctx do
+      conn = ctx.conn
+
+      assert %Plug.Conn{} =
+               xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, key: "test")
+
+      assert Map.has_key?(xconn.resp_cookies, "guardian_test_token")
+      %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_test_token")
+
+      # default max age
+      assert max_age == 2_419_200
+      assert token
+
+      claims = %{"sub" => @resource.id, "typ" => "refresh"}
+      ops = [token_type: "refresh", key: "test"]
+
+      expected = [
+        {ctx.impl, :subject_for_token, [@resource, %{}]},
+        {Guardian.Support.TokenModule, :build_claims, [ctx.impl, @resource, "bobby", %{}, ops]},
+        {Guardian.Support.TokenModule, :create_token, [ctx.impl, claims, ops]}
+      ]
+
+      assert gather_function_calls() == expected
+    end
+
+    test "it clears the cookie when calling clear remember me", ctx do
+      conn = ctx.conn
+      assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, [])
+
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
+      assert %Plug.Conn{} = clear_conn = Guardian.Plug.clear_remember_me(xconn, [])
+      res = Map.get(clear_conn.resp_cookies, "guardian_default_token")
+      assert Map.get(res, :max_age, nil) == 0
+      assert Map.get(res, :value, nil) == nil
+    end
+
     test "it creates a cookie with the default token and key from an existing token", ctx do
       conn = ctx.conn
       claims = %{"sub" => @resource.id, "typ" => "refresh"}
@@ -452,6 +488,23 @@ defmodule Guardian.PlugTest do
       ]
 
       assert gather_function_calls() == expected
+    end
+
+    test "it clears the remember me token in sign out", ctx do
+      conn = ctx.conn
+
+      assert %Plug.Conn{} =
+               remember_me_conn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{})
+
+      assert Map.has_key?(remember_me_conn.resp_cookies, "guardian_default_token")
+
+      assert %Plug.Conn{} =
+               signed_out_conn =
+               Guardian.Plug.sign_out(remember_me_conn, ctx.impl, clear_remember_me: true)
+
+      res = Map.get(signed_out_conn.resp_cookies, "guardian_default_token")
+      assert Map.get(res, :value, nil) == nil
+      assert Map.get(res, :max_age, nil) == 0
     end
   end
 

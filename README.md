@@ -126,6 +126,7 @@ conn = MyApp.Guardian.Plug.sign_in(conn, resource)
 conn = MyApp.Guardian.Plug.sign_in(conn, resource, %{some: "claim"}, ttl: {1, :minute})
 
 # remove from session (if fetched) and revoke the token
+# can also clear the remember me token, if the option :clear_remember_me is set
 conn = MyApp.Guardian.Plug.sign_out(conn)
 
 # Set a "refresh" token directly on a cookie.
