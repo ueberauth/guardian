@@ -83,6 +83,9 @@ if Code.ensure_loaded?(Plug) do
 
         def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
           do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
+
+        def clear_remember_me(conn, opts \\ []),
+          do: Guardian.Plug.clear_remember_me(conn, opts)
       end
     end
 
@@ -203,9 +206,22 @@ if Code.ensure_loaded?(Plug) do
       result = do_sign_out(conn, impl, key, opts)
 
       case result do
-        {:ok, conn} -> conn
-        {:error, reason} -> handle_unauthenticated(conn, reason, opts)
+        {:ok, conn} ->
+          if Keyword.get(opts, :clear_remember_me, false) do
+            clear_remember_me(conn, opts)
+          else
+            conn
+          end
+
+        {:error, reason} ->
+          handle_unauthenticated(conn, reason, opts)
       end
+    end
+
+    @spec clear_remember_me(Plug.Conn.t(), Guardian.options()) :: Plug.Conn.t()
+    def clear_remember_me(conn, opts) do
+      key = fetch_token_key(conn, opts)
+      delete_resp_cookie(conn, key, [])
     end
 
     @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
