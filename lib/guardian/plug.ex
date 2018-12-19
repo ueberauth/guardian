@@ -65,6 +65,9 @@ if Code.ensure_loaded?(Plug) do
         def put_current_resource(conn, resource, opts \\ []),
           do: Guardian.Plug.put_current_resource(conn, resource, opts)
 
+        def put_session_token(conn, token, opts \\ []),
+          do: Guardian.Plug.put_session_token(conn, implementation(), token, opts)
+
         def current_token(conn, opts \\ []), do: Guardian.Plug.current_token(conn, opts)
 
         def current_claims(conn, opts \\ []), do: Guardian.Plug.current_claims(conn, opts)
@@ -82,7 +85,7 @@ if Code.ensure_loaded?(Plug) do
           do: Guardian.Plug.remember_me(conn, implementation(), resource, claims, opts)
 
         def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
-          do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
+          do: Guardian.Plug.remember_me_from_token(conn, token, claims, opts)
 
         def clear_remember_me(conn, opts \\ []),
           do: Guardian.Plug.clear_remember_me(conn, opts)
@@ -176,6 +179,22 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, resource)
     end
 
+    @spec put_session_token(
+            Plug.Conn.t(),
+            Guardian.Token.token(),
+            Guardian.options()
+          ) :: Plug.Conn.t()
+    def put_session_token(conn, token, opts \\ []) do
+      key =
+        conn
+        |> fetch_key(opts)
+        |> token_key()
+
+      conn
+      |> put_session(key, token)
+      |> configure_session(renew: true)
+    end
+
     @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
             Plug.Conn.t()
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
@@ -184,14 +203,7 @@ if Code.ensure_loaded?(Plug) do
            {:ok, conn} <-
              returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
         if session_active?(conn) do
-          key =
-            conn
-            |> fetch_key(opts)
-            |> token_key()
-
-          conn
-          |> put_session(key, token)
-          |> configure_session(renew: true)
+          put_session_token(conn, token, opts)
         else
           conn
         end

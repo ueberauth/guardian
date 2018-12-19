@@ -219,6 +219,20 @@ defmodule Guardian.PlugTest do
     end
   end
 
+  describe "put_session_token" do
+    @resource %{id: "bob"}
+
+    setup %{conn: conn} do
+      {:ok, %{conn: init_test_session(conn, %{})}}
+    end
+
+    test "it puts the new token in the session", ctx do
+      conn = ctx.conn
+      new_conn = Guardian.Plug.put_session_token(conn, "hai bob")
+      assert get_session(new_conn, :guardian_default_token) == "hai bob"
+    end
+  end
+
   describe "sign_out with session" do
     @bob %{id: "bobby"}
     @jane %{id: "jane"}
