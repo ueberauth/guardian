@@ -85,7 +85,7 @@ if Code.ensure_loaded?(Plug) do
           do: Guardian.Plug.remember_me(conn, implementation(), resource, claims, opts)
 
         def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
-          do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
+          do: Guardian.Plug.remember_me_from_token(conn, token, claims, opts)
 
         def clear_remember_me(conn, opts \\ []),
           do: Guardian.Plug.clear_remember_me(conn, opts)
@@ -181,11 +181,10 @@ if Code.ensure_loaded?(Plug) do
 
     @spec put_session_token(
             Plug.Conn.t(),
-            module,
             Guardian.Token.token(),
             Guardian.options()
           ) :: Plug.Conn.t()
-    def put_session_token(conn, mod, token, opts \\ []) do
+    def put_session_token(conn, token, opts \\ []) do
       key =
         conn
         |> fetch_key(opts)
@@ -204,7 +203,7 @@ if Code.ensure_loaded?(Plug) do
            {:ok, conn} <-
              returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
         if session_active?(conn) do
-          put_session_token(conn, impl, token, opts)
+          put_session_token(conn, token, opts)
         else
           conn
         end

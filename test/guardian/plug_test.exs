@@ -228,7 +228,7 @@ defmodule Guardian.PlugTest do
 
     test "it puts the new token in the session", ctx do
       conn = ctx.conn
-      new_conn = Guardian.Plug.put_session_token(conn, ctx.impl, "hai bob")
+      new_conn = Guardian.Plug.put_session_token(conn, "hai bob")
       assert get_session(new_conn, :guardian_default_token) == "hai bob"
     end
   end
