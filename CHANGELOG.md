@@ -1,3 +1,7 @@
+# v 0.14.6
+
+Add put_session_token to allow folks to add a token to their session
+
 # v 0.14.5
 
 Update the poison and phoenix deps to allow a broader version setting

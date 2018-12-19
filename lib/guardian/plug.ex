@@ -118,8 +118,7 @@ defmodule Guardian.Plug do
     case Guardian.encode_and_sign(object, type, new_claims) do
       {:ok, jwt, full_claims} ->
         conn
-        |> Plug.Conn.configure_session(renew: true)
-        |> Plug.Conn.put_session(base_key(the_key), jwt)
+        |> put_session_token(jwt, %{key: the_key})
         |> set_current_resource(object, the_key)
         |> set_claims({:ok, full_claims}, the_key)
         |> set_current_token(jwt, the_key)
@@ -128,6 +127,17 @@ defmodule Guardian.Plug do
       {:error, reason} ->
         Plug.Conn.put_session(conn, base_key(the_key), {:error, reason})
     end
+  end
+
+  @doc """
+  Put a jwt into the session. Useful when you refresh a token.
+  """
+  def put_session_token(conn, jwt, opts \\ %{}) do
+    the_key = Map.get(opts, :key, :default)
+
+    conn
+    |> Plug.Conn.configure_session(renew: true)
+    |> Plug.Conn.put_session(base_key(the_key), jwt)
   end
 
   @doc """
