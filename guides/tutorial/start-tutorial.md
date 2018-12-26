@@ -259,7 +259,7 @@ end
 Create a session view
 
 ```elixir
-## lib/auth_me_web/views/session_view.eex
+## lib/auth_me_web/views/session_view.ex
 
 defmodule AuthMeWeb.SessionView do
   use AuthMeWeb, :view
