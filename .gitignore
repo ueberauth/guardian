@@ -10,3 +10,4 @@ doc
 /cover
 /priv/plts/*.plt
 /priv/plts/*.plt.hash
+*.swp
