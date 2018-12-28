@@ -44,7 +44,7 @@ defmodule Guardian.Token.Verify do
   configured for the provided module
 
   Allowed drift is measured in seconds and represents the maximum amount
-  of time a token may be expired for an still be considered valid.
+  Gof time a token may be expired for an still be considered valid.
   This is to deal with clock skew.
   """
   def time_within_drift?(mod, time) when is_integer(time) do
@@ -62,20 +62,41 @@ defmodule Guardian.Token.Verify do
         ) :: {:ok, Guardian.Token.claims()} | {:error, any}
   @doc """
   For claims, check the values against the values found in
-  `claims_to_check`. If there is a claim to check that does not match
-  verification fails.
+  `claims_to_check`. If there is a claim to check that does not pass
+  verification, it fails.
+
+  When the value of a claim is a list, it checks that all values of
+  the same claim in `claims_to_check` are members of the list.
   """
   def verify_literal_claims(claims, nil, _opts), do: {:ok, claims}
 
   def verify_literal_claims(claims, claims_to_check, _opts) do
-    results = for {k, v} <- claims_to_check, into: [], do: verify_literal_claim(claims, k, v)
+    results =
+      for {k, v} <- claims_to_check, into: [] do
+        claims
+        |> Map.get(k)
+        |> verify_literal_claim(v, k)
+      end
 
     errors = Enum.filter(results, &(elem(&1, 0) == :error))
 
     if Enum.any?(errors), do: hd(errors), else: {:ok, claims}
   end
 
-  defp verify_literal_claim(claims, key, v) do
-    if Map.get(claims, key) == v, do: {:ok, claims}, else: {:error, key}
+  @spec verify_literal_claims([binary()] | binary(), binary(), [binary()] | binary()) ::
+          {:ok, [binary()] | binary()} | {:error, binary()}
+  defp verify_literal_claim(claim_value, value, key) do
+    if valid_claims?(claim_value, value) do
+      {:ok, claim_value}
+    else
+      {:error, key}
+    end
   end
+
+  defp valid_claims?(claim_values, valid) when is_list(claim_values) and is_list(valid),
+    do: Enum.all?(valid, &(&1 in claim_values))
+
+  defp valid_claims?(claim_values, valid) when is_list(claim_values), do: valid in claim_values
+
+  defp valid_claims?(claim_value, valid), do: claim_value == valid
 end
