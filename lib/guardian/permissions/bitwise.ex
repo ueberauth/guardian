@@ -106,7 +106,7 @@ defmodule Guardian.Permissions.Bitwise do
   @type permission_set :: %{optional(label) => pos_integer}
   @type t :: %{optional(label) => permission_set}
 
-  @type input_label :: String.t() :: atom
+  @type input_label :: String.t() | atom
   @type input_set :: [input_label, ...] | pos_integer
   @type input_permissions :: %{optional(input_label) => input_set}
 
