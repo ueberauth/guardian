@@ -72,23 +72,25 @@ defmodule Guardian.Token.Verify do
 
   def verify_literal_claims(claims, claims_to_check, _opts) do
     errors =
-      claims_to_check
-      |> Enum.reduce([], fn {k, v}, acc ->
-        claims
-        |> Map.get(k)
-        |> verify_literal_claim(v, k)
-        |> case do
+      Enum.reduce(claims_to_check, [], fn {k, v}, acc ->
+        case verify_literal_claim(claims, k, v) do
           {:ok, _} -> acc
           error -> [error | acc]
         end
       end)
 
-    if Enum.empty?(errors), do: {:ok, claims}, else: hd(errors)
+    if Enum.empty?(errors) do
+      {:ok, claims}
+    else
+      hd(errors)
+    end
   end
 
-  @spec verify_literal_claims([binary()] | binary(), binary(), [binary()] | binary()) ::
+  @spec verify_literal_claims(map(), binary(), [binary()] | binary()) ::
           {:ok, [binary()] | binary()} | {:error, binary()}
-  defp verify_literal_claim(claim_value, value, key) do
+  defp verify_literal_claim(claims, key, value) do
+    claim_value = Map.get(claims, key)
+
     if valid_claims?(claim_value, value) do
       {:ok, claim_value}
     else
