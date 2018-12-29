@@ -71,16 +71,19 @@ defmodule Guardian.Token.Verify do
   def verify_literal_claims(claims, nil, _opts), do: {:ok, claims}
 
   def verify_literal_claims(claims, claims_to_check, _opts) do
-    results =
-      for {k, v} <- claims_to_check, into: [] do
+    errors =
+      claims_to_check
+      |> Enum.reduce([], fn {k, v}, acc ->
         claims
         |> Map.get(k)
         |> verify_literal_claim(v, k)
-      end
+        |> case do
+          {:ok, _} -> acc
+          error -> [error | acc]
+        end
+      end)
 
-    errors = Enum.filter(results, &(elem(&1, 0) == :error))
-
-    if Enum.any?(errors), do: hd(errors), else: {:ok, claims}
+    if Enum.empty?(errors), do: {:ok, claims}, else: hd(errors)
   end
 
   @spec verify_literal_claims([binary()] | binary(), binary(), [binary()] | binary()) ::
@@ -93,8 +96,9 @@ defmodule Guardian.Token.Verify do
     end
   end
 
-  defp valid_claims?(claim_values, valid) when is_list(claim_values) and is_list(valid),
-    do: Enum.all?(valid, &(&1 in claim_values))
+  defp valid_claims?(claim_values, valid) when is_list(claim_values) and is_list(valid) do
+    Enum.all?(valid, &(&1 in claim_values))
+  end
 
   defp valid_claims?(claim_values, valid) when is_list(claim_values), do: valid in claim_values
 
