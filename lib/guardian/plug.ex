@@ -93,7 +93,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     def session_active?(conn) do
-      key = :seconds |> System.os_time() |> to_string()
+      key = :second |> System.os_time() |> to_string()
       get_session(conn, key) == nil
     rescue
       ArgumentError -> false
