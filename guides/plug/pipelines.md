@@ -10,7 +10,7 @@ Guardians composable nature, coupled with the composable nature of Plug means th
 
 A pipeline provides two main pieces.
 
-1. Access to your [implementation module](introduction-implementation.html)
+1. Access to your [implementation module](../introduction/implementation.md)
 2. An error handler for when folks aren't authenticated
 
 The pipeline puts these two modules into the `Plug.Conn` struct so that they're available to all downstream plugs. This means that we can set these at the start of our plug chain and even swap them out downstream if we need to. More on that later though.
@@ -30,9 +30,9 @@ This injects the module and error handler into the `conn` struct and makes them 
 
 The next thing that we're going to want to do is find the token. Guardian provides plugs to find and validate tokens from a number of sources.
 
-* [VerifySession](Guardian.Plug.VerifySession.html) - For when the token is stored in the session
-* [VerifyHeader](Guardian.Plug.VerifyHeader.html) - `Authorization` header token location
-* [VerifyCookie](Guardian.Plug.VerifySession.html) - A cookie has the cookie stored
+* [VerifySession](https://hexdocs.pm/guardian/Guardian.Plug.VerifySession.html) - For when the token is stored in the session
+* [VerifyHeader](https://hexdocs.pm/guardian/Guardian.Plug.VerifyHeader.html) - `Authorization` header token location
+* [VerifyCookie](https://hexdocs.pm/guardian/Guardian.Plug.VerifyCookie.html) - A cookie has the cookie stored
 
 ```elixir
 # ...

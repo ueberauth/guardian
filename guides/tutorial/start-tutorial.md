@@ -10,7 +10,7 @@ We'll use Phoenix for this tutorial since most folks will be using it. There is 
 
 This tutorial was based on [this article](https://medium.com/@tylerpachal/session-authentication-example-for-phoenix-1-3-using-guardian-1-0-beta-a228c78478e6) by [Tyler Pachal](https://github.com/TylerPachal).
 
-We'll also use the default token type of JWT. Again with this you don't _have_ to use JWT for your token backend. See the [token documentation](tokens-start.html) for more information.
+We'll also use the default token type of JWT. Again with this you don't _have_ to use JWT for your token backend. See the [token documentation](../tokens/start-tokens.md) for more information.
 
 Authentication consists of a challenge phase (prove who you are) and then followed by a verification phase (has this actor proven who they are?). Guardian looks after the second part for you. It's up to your application to implement the challenge phase after which Guardian will do the rest. In this tutorial we'll use [comeonin](https://github.com/riverrun/comeonin) with [bcrypt](https://en.wikipedia.org/wiki/Bcrypt) for the challenge phase.
 
@@ -53,7 +53,7 @@ Guardian needs an implementation. This implementation module encapsulates:
 * Encoding/Decoding
 * Callbacks
 
-For more information please reference the [implementation module docs](introduction-implementation.html).
+For more information please reference the [implementation module docs](../introduction/implementation.md).
 
 You can have as many implementation modules as you need to depending on your application. For this one though we only have a simple user system so we'll only need one.
 
@@ -80,7 +80,7 @@ end
 
 `subject_for_token` and `resource_from_claims` are inverses of one another. `subject_for_token` is used to encode the resource into the token, and `resource_from_claims` is used to rehydrate the resource from the claims.
 
-There are many other [callbacks](Guardian.html#callbacks) that you can use, but we're going basic.
+There are many other [callbacks](https://hexdocs.pm/guardian/Guardian.html#callbacks) that you can use, but we're going basic.
 
 ## Setup Guardian config
 
@@ -163,11 +163,11 @@ The next step is getting it into your application via HTTP.
 
 ## Pipelines
 
-For HTTP Guardian makes use of the Plug architecture and uses it to construct pipelines. The pipeline provides downstream plugs with the implementation module and the error handler that the Guardian plugs require to do their job.
+For HTTP, Guardian makes use of the [Plug architecture](https://hexdocs.pm/plug/readme.html) and uses it to construct pipelines. The pipeline provides downstream plugs with the implementation module and the error handler that the Guardian plugs require to do their job.
 
-Please read the [pipeline guide](plug-pipeline.html) for more information.
+Please read the [pipeline guide](../plug/pipelines.md) for more information.
 
-We want our pipeline to look after session and header authentication (where to look for the token), load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [Guardian.Plug.EnsureAuthenticated](Guardian.Plug.EnsureAuthenticated.html) plug for those cases where we must have a logged in resource by using Phoenix pipelines in the router.
+We want our pipeline to look after session and header authentication, where it would look for the token and load the resource but not enforce it. By not enforcing it we can have a "logged in" or "maybe logged in". We can use the [`Guardian.Plug.EnsureAuthenticated` plug](https://hexdocs.pm/guardian/Guardian.Plug.EnsureAuthenticated.html) for those cases where we must have a logged in resource by using Phoenix pipelines in the router (see [`Phoenix.Router` documentation section "Pipelines and plugs"](https://hexdocs.pm/phoenix/Phoenix.Router.html#module-pipelines-and-plugs)).
 
 ```elixir
 ## lib/auth_me/user_manager/pipeline.ex
@@ -209,7 +209,7 @@ end
 
 ## Controller
 
-This pipeline is now ready for us to use. Now we need some way to login/logout the user and some resource to protect. For this we'll create a sessions controller, and use the PageController for our protected resource
+This pipeline is now ready for us to use. Now we need some way to login/logout the user and some resource to protect. For this we'll create a sessions controller, and use the `PageController` for our protected resource
 
 ```elixir
 ## lib/auth_me_web/controllers/session_controller.ex
@@ -308,7 +308,7 @@ defmodule AuthMeWeb.PageController do
 end
 ```
 
-We use the `Guardian.Plug.current_resource(conn)` function here to fetch the resource. You must load this first using the `Guardian.Plug.LoadResource` plug which we included in our auth pipeline earlier.
+We use the [`Guardian.Plug.current_resource/2`](https://hexdocs.pm/guardian/Guardian.Plug.html#current_resource/2) function here to fetch the resource. You must load this first using the [`Guardian.Plug.LoadResource`](https://hexdocs.pm/guardian/Guardian.Plug.LoadResource.html) plug which we included in our auth pipeline earlier.
 
 ```
 ## lib/auth_me_web/templates/page/secret.html.eex
@@ -322,7 +322,9 @@ We use the `Guardian.Plug.current_resource(conn)` function here to fetch the res
 Ok. So the controller and views are not strictly part of Guardian but we need some way to interact with it. From here the only thing left for us to do is to wire up our router.
 
 ```elixir
-# Our pipeline implements "maybe" authenticated. We'll use the `:ensure_auth` below for when we need to make sure someone is logged in.
+# Our pipeline implements "maybe" authenticated. We'll
+# use  the `:ensure_auth`  below for  when we  need to
+# make sure someone is logged in.
 pipeline :auth do
   plug AuthMe.UserManager.Pipeline
 end
