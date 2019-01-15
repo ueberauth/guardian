@@ -44,7 +44,7 @@ defmodule Guardian.Token.Verify do
   configured for the provided module
 
   Allowed drift is measured in seconds and represents the maximum amount
-  Gof time a token may be expired for an still be considered valid.
+  of time a token may be expired for an still be considered valid.
   This is to deal with clock skew.
   """
   def time_within_drift?(mod, time) when is_integer(time) do
