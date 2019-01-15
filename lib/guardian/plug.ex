@@ -66,7 +66,7 @@ if Code.ensure_loaded?(Plug) do
           do: Guardian.Plug.put_current_resource(conn, resource, opts)
 
         def put_session_token(conn, token, opts \\ []),
-          do: Guardian.Plug.put_session_token(conn, implementation(), token, opts)
+          do: Guardian.Plug.put_session_token(conn, token, opts)
 
         def current_token(conn, opts \\ []), do: Guardian.Plug.current_token(conn, opts)
 
