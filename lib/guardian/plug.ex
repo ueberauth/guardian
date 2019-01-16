@@ -54,6 +54,7 @@ if Code.ensure_loaded?(Plug) do
 
     defmacro __using__(impl) do
       quote do
+        @spec implementation() :: module
         def implementation, do: unquote(impl)
 
         def put_current_token(conn, token, opts \\ []),
@@ -84,8 +85,14 @@ if Code.ensure_loaded?(Plug) do
         def remember_me(conn, resource, claims \\ %{}, opts \\ []),
           do: Guardian.Plug.remember_me(conn, implementation(), resource, claims, opts)
 
+        @spec remember_me_from_token(
+                Plug.Conn.t(),
+                Guardian.Token.token(),
+                Guardian.Token.claims(),
+                Guardian.options()
+              ) :: Plug.Conn.t()
         def remember_me_from_token(conn, token, claims \\ %{}, opts \\ []),
-          do: Guardian.Plug.remember_me_from_token(conn, token, claims, opts)
+          do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
 
         def clear_remember_me(conn, opts \\ []),
           do: Guardian.Plug.clear_remember_me(conn, opts)
