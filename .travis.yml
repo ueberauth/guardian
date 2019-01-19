@@ -4,11 +4,24 @@ notifications:
   email: false
 
 elixir:
+  - 1.8
+  - 1.7
   - 1.6
 
 otp_release:
+  - 21.1
   - 20.3
-  - 21.0
+  - 19.3
+  - 18.3
+
+matrix:
+  exclude:
+    - elixir: 1.6
+      otp_release: 18.3
+    - elixir: 1.8
+      otp_release: 19.3
+    - elixir: 1.8
+      otp_release: 18.3
 
 script:
   - make testing
