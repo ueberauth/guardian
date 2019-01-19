@@ -4,11 +4,12 @@ notifications:
   email: false
 
 elixir:
-  - 1.6
+  - 1.7
+  - 1.8
 
 otp_release:
-  - 20.3
-  - 21.0
+  - 21.1
+  - 21.2
 
 script:
   - make testing
