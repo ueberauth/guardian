@@ -221,9 +221,9 @@ defmodule Guardian.Permissions.Bitwise do
         end)
       end
 
-      defp do_any_permissions?(nil, %MapSet{}), do: false
+      defp do_any_permissions?(nil, _), do: false
 
-      defp do_any_permissions?(list, %MapSet{} = needs) do
+      defp do_any_permissions?(list, needs) do
         matches = needs |> MapSet.intersection(MapSet.new(list))
         MapSet.size(matches) > 0
       end
