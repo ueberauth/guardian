@@ -3,6 +3,13 @@ sudo: false
 notifications:
   email: false
 
+before_cache:
+  - rm -rf _build/$MIX_HOME/lib
+
+cache:
+  directories:
+    - _build/$MIX_HOME
+
 elixir:
   - 1.8
   - 1.7
@@ -23,14 +30,8 @@ matrix:
 script:
   - make testing
 
-before_cache:
-  - rf -rf _build/$MIX_HOME/lib
-
-cache:
-  directories:
-    - _build/$MIX_HOME
-
 after_script:
   - make docs
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)

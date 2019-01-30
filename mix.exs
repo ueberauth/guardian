@@ -27,12 +27,7 @@ defmodule Guardian.Mixfile do
       docs: docs(),
       deps: deps(),
       xref: [exclude: [:phoenix]],
-      dialyzer: [
-        plt_add_deps: :transitive,
-        plt_add_apps: [:mix],
-        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        flags: [:race_conditions, :no_opaque]
-      ],
+      dialyzer: dialyxir(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
@@ -58,6 +53,14 @@ defmodule Guardian.Mixfile do
       groups_for_modules: groups_for_modules(),
       extras: extras(),
       groups_for_extras: groups_for_extras()
+    ]
+  end
+
+  defp dialyxir do
+    [
+      plt_add_deps: :transitive,
+      plt_add_apps: [:mix],
+      flags: [:race_conditions, :no_opaque]
     ]
   end
 
