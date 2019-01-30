@@ -23,11 +23,12 @@ matrix:
 script:
   - make testing
 
+before_cache:
+  - rf -rf _build/$MIX_HOME/lib
+
 cache:
   directories:
-    - _build
-    - deps
-    - priv/plts
+    - _build/$MIX_HOME
 
 after_script:
   - make docs
