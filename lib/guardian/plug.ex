@@ -54,7 +54,7 @@ if Code.ensure_loaded?(Plug) do
 
     defmacro __using__(impl) do
       quote do
-        @spec implementation() :: module
+        @spec implementation() :: unquote(impl)
         def implementation, do: unquote(impl)
 
         def put_current_token(conn, token, opts \\ []),
