@@ -165,7 +165,7 @@ defmodule Guardian.Mixfile do
       # Tools
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false},
+      {:ex_doc, ">= 0.19.1", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
       {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false},
       {:jason, "~> 1.1", only: [:dev, :test], runtime: false}
