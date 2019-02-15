@@ -26,6 +26,11 @@ matrix:
       otp_release: 19.3
     - elixir: 1.8
       otp_release: 18.3
+    - elixir: 1.7
+      otp_release: 18.3
+
+before_script:
+  - travis_wait mix dialyzer --plt
 
 script:
   - make testing
