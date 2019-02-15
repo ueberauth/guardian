@@ -3,23 +3,40 @@ sudo: false
 notifications:
   email: false
 
+before_cache:
+  - rm -rf _build/$MIX_HOME/lib
+
+cache:
+  directories:
+    - _build/$MIX_HOME
+
 elixir:
-  - 1.6
+  - 1.8
+  - 1.7
 
 otp_release:
+  - 21.1
   - 20.3
-  - 21.0
+  - 19.3
+  - 18.3
+
+matrix:
+  exclude:
+    - elixir: 1.8
+      otp_release: 19.3
+    - elixir: 1.8
+      otp_release: 18.3
+    - elixir: 1.7
+      otp_release: 18.3
+
+before_script:
+  - travis_wait mix dialyzer --plt
 
 script:
   - make testing
 
-cache:
-  directories:
-    - _build
-    - deps
-    - priv/plts
-
 after_script:
   - make docs
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
