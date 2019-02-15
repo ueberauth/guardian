@@ -291,7 +291,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp cookie_options(mod, _claims) do
-      mod.config(:cookie_options, []) ++ @default_cookie_options
+      Keyword.merge(@default_cookie_options, mod.config(:cookie_options, []))
     end
 
     defp add_data_to_conn(conn, resource, token, claims, opts) do
