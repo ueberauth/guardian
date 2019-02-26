@@ -29,9 +29,9 @@ You'll need to update the dependencies to whatever is latest.
 
 defp deps do
   [
-    {:guardian, "~> 1.0"},
-    {:comeonin, "~> 4.0"},
-    {:bcrypt_elixir, "~> 0.12"},
+    {:guardian, "~> 1.2"},
+    {:comeonin, "~> 5.0"},
+    {:bcrypt_elixir, "~> 2.0"},
   ]
 end
 ```
@@ -118,7 +118,7 @@ We added `:comeonin` and `:bcrypt_elixir` to our mix deps at the start. We're go
 ```elixir
 ## lib/auth_me/user_manager/user.ex
 
-alias Comeonin.Bcrypt
+alias Bcrypt
 
 def changeset(%User{} = user, attrs) do
   user
@@ -128,7 +128,7 @@ def changeset(%User{} = user, attrs) do
 end
 
 defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset) do
-  change(changeset, password: Bcrypt.hashpwsalt(password))
+  change(changeset, password: Bcrypt.hash_pwd_salt(password))
 end
 
 defp put_password_hash(changeset), do: changeset
@@ -139,16 +139,16 @@ Now we need a way to verify the username/password credentials.
 ```elixir
 ## lib/auth_me/user_manager/user_manager.ex
 
-alias Comeonin.Bcrypt
+alias Bcrypt
 
 def authenticate_user(username, plain_text_password) do
   query = from u in User, where: u.username == ^username
   case Repo.one(query) do
     nil ->
-      Bcrypt.dummy_checkpw()
+      Bcrypt.no_user_verify()
       {:error, :invalid_credentials}
     user ->
-      if Bcrypt.checkpw(plain_text_password, user.password) do
+      if Bcrypt.verify_pass(plain_text_password, user.password) do
         {:ok, user}
       else
         {:error, :invalid_credentials}
@@ -225,7 +225,7 @@ defmodule AuthMeWeb.SessionController do
     if maybe_user do
       redirect(conn, to: "/secret")
     else
-      render(conn, "new.html", changeset: changeset, action: session_path(conn, :login))
+      render(conn, "new.html", changeset: changeset, action: Routes.session_path(conn, :login))
     end
   end
 
