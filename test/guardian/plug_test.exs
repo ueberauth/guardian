@@ -522,6 +522,96 @@ defmodule Guardian.PlugTest do
     end
   end
 
+  defmodule ImplOverrides do
+    @moduledoc false
+
+    use Guardian,
+      otp_app: :guardian,
+      token_module: Guardian.Support.TokenModule,
+      cookie_options: [max_age: 100]
+
+    import Guardian.Support.Utils, only: [send_function_call: 1]
+
+    def subject_for_token(%{id: id} = r, claims) do
+      send_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
+
+    def subject_for_token(%{"id" => id} = r, claims) do
+      send_function_call({__MODULE__, :subject_for_token, [r, claims]})
+      {:ok, id}
+    end
+
+    def resource_from_claims(%{"sub" => id} = claims) do
+      send_function_call({__MODULE__, :subject_for_token, [claims]})
+      {:ok, %{id: id}}
+    end
+
+    def after_sign_in(conn, resource, token, claims, opts) do
+      send_function_call({
+        __MODULE__,
+        :after_sign_in,
+        [:conn, resource, token, claims, opts]
+      })
+
+      {:ok, conn}
+    end
+
+    def before_sign_out(conn, key, opts) do
+      send_function_call({
+        __MODULE__,
+        :before_sign_out,
+        [:conn, key, opts]
+      })
+
+      {:ok, conn}
+    end
+
+    def on_revoke(claims, token, opts) do
+      send_function_call({
+        __MODULE__,
+        :on_revoke,
+        [claims, token, opts]
+      })
+
+      {:ok, claims}
+    end
+  end
+
+  describe "custom config options" do
+    @resource %{id: "bobby"}
+
+    setup do
+      {:ok, %{impl_overrides: __MODULE__.ImplOverrides, conn: conn(:post, "/")}}
+    end
+
+    test "remember_me creates a cookie with a custom max_age", ctx do
+      conn = ctx.conn
+
+      assert %Plug.Conn{} =
+               xconn = Guardian.Plug.remember_me(conn, ctx.impl_overrides, @resource, %{}, [])
+
+      assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
+      %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
+
+      # custom max age
+      assert max_age == 100
+      assert token
+
+      claims = %{"sub" => @resource.id, "typ" => "refresh"}
+      ops = [token_type: "refresh"]
+
+      expected = [
+        {ctx.impl_overrides, :subject_for_token, [@resource, %{}]},
+        {Guardian.Support.TokenModule, :build_claims,
+         [ctx.impl_overrides, @resource, "bobby", %{}, ops]},
+        {Guardian.Support.TokenModule, :create_token, [ctx.impl_overrides, claims, ops]}
+      ]
+
+      assert gather_function_calls() == expected
+    end
+  end
+
   defmodule Handler do
     @moduledoc false
 
