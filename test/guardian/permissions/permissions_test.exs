@@ -219,7 +219,7 @@ defmodule Guardian.Permissions.PermissionsTest do
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
+      assert body == "{:unauthorized, :missing_claims}"
     end
 
     test "when looking in a different location with correct permissions", ctx do
