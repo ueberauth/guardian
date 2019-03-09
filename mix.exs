@@ -27,12 +27,7 @@ defmodule Guardian.Mixfile do
       docs: docs(),
       deps: deps(),
       xref: [exclude: [:phoenix]],
-      dialyzer: [
-        plt_add_deps: :transitive,
-        plt_add_apps: [:mix],
-        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        flags: [:race_conditions, :no_opaque]
-      ],
+      dialyzer: dialyxir(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
@@ -58,6 +53,14 @@ defmodule Guardian.Mixfile do
       groups_for_modules: groups_for_modules(),
       extras: extras(),
       groups_for_extras: groups_for_extras()
+    ]
+  end
+
+  defp dialyxir do
+    [
+      plt_add_deps: :transitive,
+      plt_add_apps: [:mix],
+      flags: [:race_conditions, :no_opaque]
     ]
   end
 
@@ -161,9 +164,10 @@ defmodule Guardian.Mixfile do
       # Tools
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false},
+      {:ex_doc, ">= 0.19.1", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
-      {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false}
+      {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false},
+      {:jason, "~> 1.1", only: [:dev, :test], runtime: false}
     ]
   end
 

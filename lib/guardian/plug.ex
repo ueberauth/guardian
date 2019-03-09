@@ -54,7 +54,7 @@ if Code.ensure_loaded?(Plug) do
 
     defmacro __using__(impl) do
       quote do
-        @spec implementation() :: module
+        @spec implementation() :: unquote(impl)
         def implementation, do: unquote(impl)
 
         def put_current_token(conn, token, opts \\ []),
@@ -291,7 +291,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp cookie_options(mod, _claims) do
-      mod.config(:cookie_options, []) ++ @default_cookie_options
+      Keyword.merge(@default_cookie_options, mod.config(:cookie_options, []))
     end
 
     defp add_data_to_conn(conn, resource, token, claims, opts) do
