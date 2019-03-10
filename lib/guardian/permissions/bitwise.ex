@@ -435,7 +435,7 @@ defmodule Guardian.Permissions.Bitwise do
 
       defp do_call(conn, %{claims: nil} = ctx, opts) do
         ctx.handler
-        |> apply(:auth_error, [conn, {:unauthorized, :missing_claims}, opts])
+        |> apply(:auth_error, [conn, {:unauthorized, "Missing claims"}, opts])
         |> halt()
       end
 
@@ -448,7 +448,7 @@ defmodule Guardian.Permissions.Bitwise do
           conn
         else
           ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
+          |> apply(:auth_error, [conn, {:unauthorized, "Insufficient permission"}, opts])
           |> halt()
         end
       end
@@ -466,7 +466,7 @@ defmodule Guardian.Permissions.Bitwise do
           conn
         else
           ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
+          |> apply(:auth_error, [conn, {:unauthorized, "Insufficient permission"}, opts])
           |> halt()
         end
       end
