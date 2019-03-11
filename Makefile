@@ -4,7 +4,7 @@ deps:
 	mix deps.get
 
 testing: deps
-	mix do compile --warnings-as-errors --force
+	mix compile --warnings-as-errors --force
 	mix format --check-formatted
 	mix credo --strict
 	MIX_ENV=test mix coveralls.json
