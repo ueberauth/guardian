@@ -126,13 +126,55 @@ defmodule Guardian.Permissions.Bitwise do
     # credo:disable-for-next-line /\.Refactor\./
     quote do
       use Bitwise
-      use Guardian.Permissions.BitwiseEncoding
 
-      defdelegate max(), to: Guardian.Permissions.BitwiseEncoding
+      alias Guardian.Permissions.Bitwise.PermissionNotFoundError
+      import Guardian.Permissions.BitwiseEncoding
+
+      defdelegate max(), to: Guardian.Permissions.Bitwise
+
+      raw_perms = @config_with_key.(:permissions)
+
+      unless raw_perms do
+        raise "Permissions are not defined for #{to_string(__MODULE__)}"
+      end
+
+      @normalized_perms Guardian.Permissions.Bitwise.normalize_permissions(raw_perms)
+      @available_permissions Guardian.Permissions.Bitwise.available_from_normalized(
+                               @normalized_perms
+                             )
 
       @doc """
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
       """
+
+      @spec available_permissions() :: Guardian.Permissions.Bitwise.t()
+      def available_permissions, do: @available_permissions
+
+      @doc """
+      Decodes permissions from the permissions found in claims (encoded to integers) or
+      from a list of permissions.
+
+         iex> MyTokens.decode_permissions(%{default: [:public_profile]})
+         %{default: [:public_profile]}
+
+         iex> MyTokens.decode_permissions{%{"default" => 1, "user_actions" => 1}}
+         %{default: [:public_profile], user_actions: [:books]}
+
+      When using integers (after encoding to claims), unknown bit positions are ignored.
+
+          iex> MyTokens.decode_permissions(%{"default" => -1})
+          %{default: [:public_profile, :user_about_me]}
+      """
+      @spec decode_permissions(Guardian.Permissions.Bitwise.input_permissions() | nil) ::
+              Guardian.Permissions.Bitwise.t()
+      def decode_permissions(nil), do: %{}
+
+      def decode_permissions(map) when is_map(map) do
+        for {k, v} <- map, Map.get(@normalized_perms, to_string(k)) != nil, into: %{} do
+          key = k |> to_string() |> String.to_atom()
+          {key, do_decode_permissions(v, k)}
+        end
+      end
 
       @doc """
       Decodes permissions directly from a claims map. This does the same as `decode_permissions` but
@@ -199,13 +241,30 @@ defmodule Guardian.Permissions.Bitwise do
               Guardian.Permissions.Bitwise.input_permissions()
             ) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
-        has_perms = decode_permissions(has_perms)
-        test_perms = decode_permissions(test_perms)
+        has_perms_bits = encode_permissions!(has_perms)
+        test_perms_bits = encode_permissions!(test_perms)
 
-        Enum.all?(test_perms, fn {k, needs} ->
-          has = Map.get(has_perms, k, 0)
-          MapSet.subset?(MapSet.new(needs), MapSet.new(has))
+        Enum.all?(test_perms_bits, fn {k, needs} ->
+          has = Map.get(has_perms_bits, k, 0)
+          Bitwise.band(has, needs) == needs
         end)
+      end
+
+      @doc """
+      Encodes the permissions provided into numeric form
+
+      iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
+      %{user_actions: 9}
+      """
+      @spec encode_permissions!(Guardian.Permissions.Bitwise.input_permissions() | nil) ::
+              Guardian.Permissions.Bitwise.t()
+      def encode_permissions!(nil), do: %{}
+
+      def encode_permissions!(map) when is_map(map) do
+        for {k, v} <- map, into: %{} do
+          key = String.to_atom(to_string(k))
+          {key, do_encode_permissions!(v, k)}
+        end
       end
 
       @doc """
@@ -218,6 +277,31 @@ defmodule Guardian.Permissions.Bitwise do
       """
       def validate_permissions!(map) when is_map(map) do
         Enum.all?(&do_validate_permissions!/1)
+      end
+
+      defp do_decode_permissions(other), do: do_decode_permissions(other, "default")
+
+      defp do_decode_permissions(value, type) when is_atom(type),
+        do: do_decode_permissions(value, to_string(type))
+
+      defp do_decode_permissions(value, type) when is_list(value) do
+        do_validate_permissions!({type, value})
+        decode(value, type, @normalized_perms)
+      end
+
+      defp do_decode_permissions(value, type) when is_integer(value) do
+        decode(value, type, @normalized_perms)
+      end
+
+      defp do_encode_permissions!(value, type) when is_atom(type),
+        do: do_encode_permissions!(value, to_string(type))
+
+      defp do_encode_permissions!(value, type) when is_integer(value),
+        do: encode(value, type, @normalized_perms)
+
+      defp do_encode_permissions!(value, type) when is_list(value) do
+        do_validate_permissions!({type, value})
+        encode(value, type, @normalized_perms)
       end
 
       defp do_validate_permissions!({type, value}) when is_atom(type),
@@ -258,6 +342,41 @@ defmodule Guardian.Permissions.Bitwise do
   Provides an encoded version of all permissions, and all possible future permissions
   for a permission set
   """
+  def max, do: -1
+
+  @doc false
+  def normalize_permissions(perms) do
+    perms = Enum.into(perms, %{})
+
+    for {k, v} <- perms, into: %{} do
+      case v do
+        # A list of permission names.
+        # Positional values
+        list
+        when is_list(list) ->
+          perms =
+            for {perm, idx} <- Enum.with_index(list), into: %{} do
+              {to_string(perm), trunc(:math.pow(2, idx))}
+            end
+
+          {to_string(k), perms}
+
+        # A map of permissions. The permissions should be name => bit value
+        map
+        when is_map(map) ->
+          perms = for {perm, val} <- map, into: %{}, do: {to_string(perm), val}
+          {to_string(k), perms}
+      end
+    end
+  end
+
+  @doc false
+  def available_from_normalized(perms) do
+    for {k, v} <- perms, into: %{} do
+      list = v |> Map.keys() |> Enum.map(&String.to_atom/1)
+      {String.to_atom(k), list}
+    end
+  end
 
   if Code.ensure_loaded?(Plug) do
     defmodule PlugImpl do
