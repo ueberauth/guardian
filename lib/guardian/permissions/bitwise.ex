@@ -121,14 +121,12 @@ defmodule Guardian.Permissions.Bitwise do
     defexception [:message]
   end
 
-  defmacro __using__(_opts \\ []) do
+  defmacro __using__(opts \\ []) do
     # Credo is incorrectly identifying an unless block with negated condition 2017-06-10
     # credo:disable-for-next-line /\.Refactor\./
     quote do
-      use Bitwise
-
       alias Guardian.Permissions.Bitwise.PermissionNotFoundError
-      import Guardian.Permissions.BitwiseEncoding
+      import unquote(Keyword.get(opts, :encoding, Guardian.Permissions.BitwiseEncoding))
 
       defdelegate max(), to: Guardian.Permissions.Bitwise
 
@@ -241,12 +239,12 @@ defmodule Guardian.Permissions.Bitwise do
               Guardian.Permissions.Bitwise.input_permissions()
             ) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
-        has_perms_bits = encode_permissions!(has_perms)
-        test_perms_bits = encode_permissions!(test_perms)
+        has_perms_bits = decode_permissions(has_perms)
+        test_perms_bits = decode_permissions(test_perms)
 
         Enum.all?(test_perms_bits, fn {k, needs} ->
           has = Map.get(has_perms_bits, k, 0)
-          Bitwise.band(has, needs) == needs
+          MapSet.subset?(MapSet.new(needs), MapSet.new(has))
         end)
       end
 

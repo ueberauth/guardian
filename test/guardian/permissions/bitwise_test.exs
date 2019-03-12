@@ -14,7 +14,7 @@ defmodule Guardian.Permissions.BitwiseTest do
       },
       token_module: Guardian.Support.TokenModule
 
-    use Guardian.Permissions.Bitwise
+    use Guardian.Permissions.Bitwise, encoding: Guardian.Permissions.BitwiseEncoding
 
     def subject_for_token(resource, _claims), do: {:ok, resource}
     def resource_from_claims(claims), do: {:ok, claims["sub"]}
