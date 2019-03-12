@@ -64,7 +64,7 @@ defmodule Guardian.Permissions.BitwiseTest do
   describe "normalize_permissions" do
     test "it normalizes a list of permissions" do
       result =
-        Guardian.Permissions.Bitwise.normalize_permissions(%{
+        Guardian.Permissions.BitwiseEncoding.normalize_permissions(%{
           some: [:read, :write],
           other: [:one, :two]
         })
@@ -81,7 +81,7 @@ defmodule Guardian.Permissions.BitwiseTest do
         other: %{"one" => 0b1, "two" => 0b10}
       }
 
-      result = Guardian.Permissions.Bitwise.normalize_permissions(perms)
+      result = Guardian.Permissions.BitwiseEncoding.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -95,7 +95,7 @@ defmodule Guardian.Permissions.BitwiseTest do
         other: [:one, "two"]
       }
 
-      result = Guardian.Permissions.Bitwise.normalize_permissions(perms)
+      result = Guardian.Permissions.BitwiseEncoding.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},

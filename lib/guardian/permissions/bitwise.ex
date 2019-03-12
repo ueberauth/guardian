@@ -207,6 +207,50 @@ defmodule Guardian.Permissions.Bitwise do
           MapSet.subset?(MapSet.new(needs), MapSet.new(has))
         end)
       end
+
+      @doc """
+      Validates that all permissions provided exist in the configuration.
+
+      iex> MyTokens.validate_permissions!(%{default: [:user_about_me]})
+
+      iex> MyTokens.validate_permissions!(%{not: [:a, :thing]})
+      raise Guardian.Permissions.Bitwise.PermissionNotFoundError
+      """
+      def validate_permissions!(map) when is_map(map) do
+        Enum.all?(&do_validate_permissions!/1)
+      end
+
+      defp do_validate_permissions!({type, value}) when is_atom(type),
+        do: do_validate_permissions!({to_string(type), value})
+
+      defp do_validate_permissions!({type, map}) when is_map(map) do
+        list = map |> Map.keys() |> Enum.map(&to_string/1)
+        do_validate_permissions!({type, list})
+      end
+
+      defp do_validate_permissions!({type, list}) do
+        perm_set = Map.get(@normalized_perms, type)
+
+        if perm_set do
+          provided_set = list |> Enum.map(&to_string/1) |> MapSet.new()
+          known_set = perm_set |> Map.keys() |> MapSet.new()
+
+          diff = MapSet.difference(provided_set, known_set)
+
+          if MapSet.size(diff) > 0 do
+            message =
+              "#{to_string(__MODULE__)} Type: #{type} Missing Permissions: #{
+                Enum.join(diff, ", ")
+              }"
+
+            raise PermissionNotFoundError, message: message
+          end
+
+          :ok
+        else
+          raise PermissionNotFoundError, message: "#{to_string(__MODULE__)} - Type: #{type}"
+        end
+      end
     end
   end
 
