@@ -2,7 +2,7 @@ defmodule Guardian.Mixfile do
   @moduledoc false
   use Mix.Project
 
-  @version "1.2.1"
+  @version "2.0.0"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
@@ -148,9 +148,6 @@ defmodule Guardian.Mixfile do
         Guardian.Plug.VerifyCookie,
         Guardian.Plug.Keys
       ],
-      Phoenix: [
-        Guardian.Phoenix.Socket
-      ],
       Permissions: [
         Guardian.Permissions.Bitwise
       ]
@@ -162,7 +159,6 @@ defmodule Guardian.Mixfile do
       {:jose, "~> 1.8"},
 
       # Optional dependencies
-      {:phoenix, "~> 1.3", optional: true},
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
 
       # Tools
@@ -179,8 +175,8 @@ defmodule Guardian.Mixfile do
     [
       maintainers: @maintainers,
       licenses: ["MIT"],
-      links: %{github: @url},
-      files: ~w(lib) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
+      links: %{Github: @url},
+      files: ~w(lib CHANGELOG.md LICENSE mix.exs README.md)
     ]
   end
 end
