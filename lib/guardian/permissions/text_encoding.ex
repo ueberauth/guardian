@@ -6,7 +6,7 @@ defmodule Guardian.Permissions.TextEncoding do
     perms = Map.get(perm_set, type)
 
     for {k, v} <- perms, band(value, v) == v, into: [] do
-      k |> to_string()
+      to_string(k)
     end
   end
 
@@ -22,6 +22,6 @@ defmodule Guardian.Permissions.TextEncoding do
     do: [value | acc]
 
   def decode(value, _type, _perm_set) when is_list(value) do
-    value |> Enum.map(&String.to_atom/1)
+    Enum.map(value, &String.to_atom/1)
   end
 end
