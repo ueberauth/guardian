@@ -1,4 +1,8 @@
 defmodule Guardian.Permissions.AtomEncoding do
+  @moduledoc """
+  Atom encoding for permissions
+  """
+
   @behaviour Guardian.Permissions.PermissionEncoding
   use Bitwise
 
