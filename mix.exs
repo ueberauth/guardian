@@ -153,7 +153,7 @@ defmodule Guardian.Mixfile do
         Guardian.Permissions.PermissionEncoding,
         Guardian.Permissions.BitwiseEncoding,
         Guardian.Permissions.AtomEncoding,
-        Guardian.Permissions.TextEncoding,
+        Guardian.Permissions.TextEncoding
       ]
     ]
   end

@@ -137,9 +137,7 @@ defmodule Guardian.Permissions do
       end
 
       @normalized_perms Guardian.Permissions.normalize_permissions(raw_perms)
-      @available_permissions Guardian.Permissions.available_from_normalized(
-                               @normalized_perms
-                             )
+      @available_permissions Guardian.Permissions.available_from_normalized(@normalized_perms)
 
       @doc """
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
@@ -179,8 +177,7 @@ defmodule Guardian.Permissions do
       will fetch the permissions map from the `"pem"` key where `Guardian.Permissions.Bitwise` places them
       when it encodes them into claims.
       """
-      @spec decode_permissions_from_claims(Guardian.Token.claims()) ::
-              Guardian.Permissions.t()
+      @spec decode_permissions_from_claims(Guardian.Token.claims()) :: Guardian.Permissions.t()
       def decode_permissions_from_claims(%{"pem" => perms}), do: decode_permissions(perms)
       def decode_permissions_from_claims(_), do: %{}
 

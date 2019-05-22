@@ -143,10 +143,7 @@ defmodule Guardian.PermissionsTest do
     end
 
     test "it does not allow when permissions are missing from ensure", ctx do
-      opts =
-        Guardian.Permissions.init(
-          ensure: %{user: [:write, :read], profile: [:read, :write]}
-        )
+      opts = Guardian.Permissions.init(ensure: %{user: [:write, :read], profile: [:read, :write]})
 
       conn = Guardian.Permissions.call(ctx.conn, opts)
 
