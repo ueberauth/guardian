@@ -13,12 +13,12 @@
 ### Breaking Change
 
 * Improved `Guardian.Permissions`. Now `Guardian.Permissions` accepts multiple
-  encoders. The interface is defined in `Guardian.Permissions.PermissionEncoding`.
+  encoders. The interface is defined in `Guardian.Permissions.PermissionEncoding`. [585](https://github.com/ueberauth/guardian/pull/585)
 
   To fix the breaking changes, do something as follow.
 
   1. Find `use Guardian.Permissions.Bitwise`
-  2. Replace with `use Guardian.Permissions.Permissions, encoding: Guardian.Permissions.BitwiseEncoding`
+  2. Replace with `use Guardian.Permissions, encoding: Guardian.Permissions.BitwiseEncoding`
 
   Notice that we added a key called `encoding`, this key will allow you pass
   the encoding strategy that fit yours needs.

@@ -1,4 +1,4 @@
-defmodule Guardian.Permissions.PermissionsTest do
+defmodule Guardian.PermissionsTest do
   use ExUnit.Case, async: true
 
   import Plug.Test
@@ -14,7 +14,7 @@ defmodule Guardian.Permissions.PermissionsTest do
       },
       token_module: Guardian.Support.TokenModule
 
-    use Guardian.Permissions.Permissions, encoding: Guardian.Permissions.BitwiseEncoding
+    use Guardian.Permissions, encoding: Guardian.Permissions.BitwiseEncoding
 
     def subject_for_token(resource, _claims), do: {:ok, resource}
     def resource_from_claims(claims), do: {:ok, claims["sub"]}
@@ -40,7 +40,7 @@ defmodule Guardian.Permissions.PermissionsTest do
   describe "normalize_permissions" do
     test "it normalizes a list of permissions" do
       result =
-        Guardian.Permissions.Permissions.normalize_permissions(%{
+        Guardian.Permissions.normalize_permissions(%{
           some: [:read, :write],
           other: [:one, :two]
         })
@@ -57,7 +57,7 @@ defmodule Guardian.Permissions.PermissionsTest do
         other: %{"one" => 0b1, "two" => 0b10}
       }
 
-      result = Guardian.Permissions.Permissions.normalize_permissions(perms)
+      result = Guardian.Permissions.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -71,7 +71,7 @@ defmodule Guardian.Permissions.PermissionsTest do
         other: [:one, "two"]
       }
 
-      result = Guardian.Permissions.Permissions.normalize_permissions(perms)
+      result = Guardian.Permissions.normalize_permissions(perms)
 
       assert result == %{
                "some" => %{"read" => 0b1, "write" => 0b10},
@@ -114,14 +114,14 @@ defmodule Guardian.Permissions.PermissionsTest do
   test "it raises on unknown permission set" do
     msg = "#{to_string(Impl)} - Type: not_a_thing"
 
-    assert_raise Guardian.Permissions.Permissions.PermissionNotFoundError, msg, fn ->
+    assert_raise Guardian.Permissions.PermissionNotFoundError, msg, fn ->
       perms = %{not_a_thing: [:not_a_thing]}
       Impl.encode_permissions!(perms)
     end
   end
 
   test "it raises on unknown permissions" do
-    assert_raise Guardian.Permissions.Permissions.PermissionNotFoundError, fn ->
+    assert_raise Guardian.Permissions.PermissionNotFoundError, fn ->
       perms = %{profile: [:wot, :now, :brown, :cow]}
       Impl.encode_permissions!(perms)
     end
@@ -144,11 +144,11 @@ defmodule Guardian.Permissions.PermissionsTest do
 
     test "it does not allow when permissions are missing from ensure", ctx do
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           ensure: %{user: [:write, :read], profile: [:read, :write]}
         )
 
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
       assert body == "{:unauthorized, :unauthorized}"
@@ -157,14 +157,14 @@ defmodule Guardian.Permissions.PermissionsTest do
 
     test "it does not allow when none of the one_of permissions match", ctx do
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           one_of: [
             %{profile: [:write]},
             %{user: [:read], profile: [:write]}
           ]
         )
 
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
       assert body == "{:unauthorized, :unauthorized}"
@@ -172,20 +172,20 @@ defmodule Guardian.Permissions.PermissionsTest do
     end
 
     test "it allows the request when permissions from ensure match", ctx do
-      opts = Guardian.Permissions.Permissions.init(ensure: %{user: [:read], profile: [:read]})
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:read]})
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       refute conn.halted
 
-      opts = Guardian.Permissions.Permissions.init(ensure: %{user: [:read]})
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      opts = Guardian.Permissions.init(ensure: %{user: [:read]})
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       refute conn.halted
     end
 
     test "it allows when one of the one of permissions from one_of match", ctx do
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           one_of: [
             %{user: [:write]},
             %{profile: [:write]},
@@ -193,12 +193,12 @@ defmodule Guardian.Permissions.PermissionsTest do
           ]
         )
 
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       refute conn.halted
 
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           one_of: [
             %{user: [:write]},
             %{profile: [:write]},
@@ -206,7 +206,7 @@ defmodule Guardian.Permissions.PermissionsTest do
           ]
         )
 
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       refute conn.halted
     end
@@ -214,8 +214,8 @@ defmodule Guardian.Permissions.PermissionsTest do
     test "when there is no logged in resource it fails" do
       conn = :get |> conn("/") |> Pipeline.call(module: Impl, error_handler: Handler)
 
-      opts = Guardian.Permissions.Permissions.init(ensure: %{user: [:read], profile: [:read]})
-      conn = Guardian.Permissions.Permissions.call(conn, opts)
+      opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:read]})
+      conn = Guardian.Permissions.call(conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -224,7 +224,7 @@ defmodule Guardian.Permissions.PermissionsTest do
 
     test "when looking in a different location with correct permissions", ctx do
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           ensure: %{user: [:read], profile: [:read]},
           key: :secret
         )
@@ -232,28 +232,28 @@ defmodule Guardian.Permissions.PermissionsTest do
       conn =
         ctx.conn
         |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
-        |> Guardian.Permissions.Permissions.call(opts)
+        |> Guardian.Permissions.call(opts)
 
       refute conn.halted
 
-      opts = Guardian.Permissions.Permissions.init(ensure: %{user: [:read]}, key: :secret)
+      opts = Guardian.Permissions.init(ensure: %{user: [:read]}, key: :secret)
 
       conn =
         ctx.conn
         |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
-        |> Guardian.Permissions.Permissions.call(opts)
+        |> Guardian.Permissions.call(opts)
 
       refute conn.halted
     end
 
     test "when looking in a different location with incorrect ensure permissions", ctx do
       opts =
-        Guardian.Permissions.Permissions.init(
+        Guardian.Permissions.init(
           ensure: %{user: [:read], profile: [:read]},
           key: :secret
         )
 
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -261,8 +261,8 @@ defmodule Guardian.Permissions.PermissionsTest do
     end
 
     test "when looking in a different location with incorrect one_of permissions", ctx do
-      opts = Guardian.Permissions.Permissions.init(one_of: [%{user: [:read]}], key: :secret)
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      opts = Guardian.Permissions.init(one_of: [%{user: [:read]}], key: :secret)
+      conn = Guardian.Permissions.call(ctx.conn, opts)
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
@@ -270,8 +270,8 @@ defmodule Guardian.Permissions.PermissionsTest do
     end
 
     test "with no permissions specified", ctx do
-      opts = Guardian.Permissions.Permissions.init([])
-      conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
+      opts = Guardian.Permissions.init([])
+      conn = Guardian.Permissions.call(ctx.conn, opts)
       refute conn.halted
     end
   end

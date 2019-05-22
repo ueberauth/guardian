@@ -1,4 +1,4 @@
-defmodule Guardian.Permissions.Permissions do
+defmodule Guardian.Permissions do
   @moduledoc """
   An optional plugin to Guardian to provide permissions for your tokens
 
@@ -125,10 +125,10 @@ defmodule Guardian.Permissions.Permissions do
     # Credo is incorrectly identifying an unless block with negated condition 2017-06-10
     # credo:disable-for-next-line /\.Refactor\./
     quote do
-      alias Guardian.Permissions.Permissions.PermissionNotFoundError
+      alias Guardian.Permissions.PermissionNotFoundError
       import unquote(Keyword.get(opts, :encoding, Guardian.Permissions.BitwiseEncoding))
 
-      defdelegate max(), to: Guardian.Permissions.Permissions
+      defdelegate max(), to: Guardian.Permissions
 
       raw_perms = @config_with_key.(:permissions)
 
@@ -136,8 +136,8 @@ defmodule Guardian.Permissions.Permissions do
         raise "Permissions are not defined for #{to_string(__MODULE__)}"
       end
 
-      @normalized_perms Guardian.Permissions.Permissions.normalize_permissions(raw_perms)
-      @available_permissions Guardian.Permissions.Permissions.available_from_normalized(
+      @normalized_perms Guardian.Permissions.normalize_permissions(raw_perms)
+      @available_permissions Guardian.Permissions.available_from_normalized(
                                @normalized_perms
                              )
 
@@ -145,7 +145,7 @@ defmodule Guardian.Permissions.Permissions do
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
       """
 
-      @spec available_permissions() :: Guardian.Permissions.Permissions.t()
+      @spec available_permissions() :: Guardian.Permissions.t()
       def available_permissions, do: @available_permissions
 
       @doc """
@@ -163,8 +163,8 @@ defmodule Guardian.Permissions.Permissions do
           iex> MyTokens.decode_permissions(%{"default" => -1})
           %{default: [:public_profile, :user_about_me]}
       """
-      @spec decode_permissions(Guardian.Permissions.Permissions.input_permissions() | nil) ::
-              Guardian.Permissions.Permissions.t()
+      @spec decode_permissions(Guardian.Permissions.input_permissions() | nil) ::
+              Guardian.Permissions.t()
       def decode_permissions(nil), do: %{}
 
       def decode_permissions(map) when is_map(map) do
@@ -180,7 +180,7 @@ defmodule Guardian.Permissions.Permissions do
       when it encodes them into claims.
       """
       @spec decode_permissions_from_claims(Guardian.Token.claims()) ::
-              Guardian.Permissions.Permissions.t()
+              Guardian.Permissions.t()
       def decode_permissions_from_claims(%{"pem" => perms}), do: decode_permissions(perms)
       def decode_permissions_from_claims(_), do: %{}
 
@@ -191,7 +191,7 @@ defmodule Guardian.Permissions.Permissions do
       """
       @spec encode_permissions_into_claims!(
               Guardian.Token.claims(),
-              Guardian.Permissions.Permissions.input_permissions() | nil
+              Guardian.Permissions.input_permissions() | nil
             ) :: Guardian.Token.claims()
       def encode_permissions_into_claims!(claims, nil), do: claims
 
@@ -208,8 +208,8 @@ defmodule Guardian.Permissions.Permissions do
       true
       """
       @spec any_permissions?(
-              Guardian.Permissions.Permissions.input_permissions(),
-              Guardian.Permissions.Permissions.input_permissions()
+              Guardian.Permissions.input_permissions(),
+              Guardian.Permissions.input_permissions()
             ) :: boolean
       def any_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms = decode_permissions(has_perms)
@@ -235,8 +235,8 @@ defmodule Guardian.Permissions.Permissions do
       true
       """
       @spec all_permissions?(
-              Guardian.Permissions.Permissions.input_permissions(),
-              Guardian.Permissions.Permissions.input_permissions()
+              Guardian.Permissions.input_permissions(),
+              Guardian.Permissions.input_permissions()
             ) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms_bits = decode_permissions(has_perms)
@@ -254,8 +254,8 @@ defmodule Guardian.Permissions.Permissions do
       iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
       %{user_actions: 9}
       """
-      @spec encode_permissions!(Guardian.Permissions.Permissions.input_permissions() | nil) ::
-              Guardian.Permissions.Permissions.t()
+      @spec encode_permissions!(Guardian.Permissions.input_permissions() | nil) ::
+              Guardian.Permissions.t()
       def encode_permissions!(nil), do: %{}
 
       def encode_permissions!(map) when is_map(map) do
@@ -385,8 +385,8 @@ defmodule Guardian.Permissions.Permissions do
       alias Guardian.Plug.Pipeline
 
       @doc false
-      @spec init([Guardian.Permissions.Permissions.plug_option()]) :: [
-              Guardian.Permissions.Permissions.plug_option()
+      @spec init([Guardian.Permissions.plug_option()]) :: [
+              Guardian.Permissions.plug_option()
             ]
       def init(opts) do
         ensure = Keyword.get(opts, :ensure)
