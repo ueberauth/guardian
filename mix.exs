@@ -149,7 +149,11 @@ defmodule Guardian.Mixfile do
         Guardian.Plug.Keys
       ],
       Permissions: [
-        Guardian.Permissions.Bitwise
+        Guardian.Permissions,
+        Guardian.Permissions.PermissionEncoding,
+        Guardian.Permissions.BitwiseEncoding,
+        Guardian.Permissions.AtomEncoding,
+        Guardian.Permissions.TextEncoding,
       ]
     ]
   end
