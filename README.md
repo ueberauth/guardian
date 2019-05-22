@@ -511,3 +511,4 @@ config :my_app, MyApp.Guardian,
   allowed_algos: ["Ed25519"],
   secret_key: {MySecretKey, :fetch, []}
 ```
+A full example of how to configure guardian to use private/public key files as secrets, can be found [here](https://github.com/ueberauth/guardian_pemfile_config_example)
