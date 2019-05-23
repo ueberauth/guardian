@@ -151,7 +151,7 @@ defmodule Guardian.Permissions.PermissionsTest do
       conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, \"Insufficient permission\"}"
+      assert body == "{:unauthorized, :insufficient_permission}"
       assert conn.halted
     end
 
@@ -167,7 +167,7 @@ defmodule Guardian.Permissions.PermissionsTest do
       conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
 
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, \"Insufficient permission\"}"
+      assert body == "{:unauthorized, :insufficient_permission}"
       assert conn.halted
     end
 
@@ -219,7 +219,7 @@ defmodule Guardian.Permissions.PermissionsTest do
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, \"Missing claims\"}"
+      assert body == "{:unauthorized, :missing_claims}"
     end
 
     test "when looking in a different location with correct permissions", ctx do
@@ -257,16 +257,17 @@ defmodule Guardian.Permissions.PermissionsTest do
 
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, \"Insufficient permission\"}"
+      assert body == "{:unauthorized, :insufficient_permission}"
     end
 
     test "when looking in a different location with incorrect one_of permissions", ctx do
       opts = Guardian.Permissions.Permissions.init(one_of: [%{user: [:read]}], key: :secret)
       conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
 
+
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, \"Insufficient permission\"}"
+      assert body == "{:unauthorized, :insufficient_permission}"
     end
 
     test "with no permissions specified", ctx do
