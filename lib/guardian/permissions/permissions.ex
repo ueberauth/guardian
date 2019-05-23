@@ -427,7 +427,7 @@ defmodule Guardian.Permissions.Permissions do
 
       defp do_call(conn, %{claims: nil} = ctx, opts) do
         ctx.handler
-        |> apply(:auth_error, [conn, {:unauthorized, "Missing claims"}, opts])
+        |> apply(:auth_error, [conn, {:unauthorized, :missing_claims}, opts])
         |> halt()
       end
 
@@ -440,7 +440,7 @@ defmodule Guardian.Permissions.Permissions do
           conn
         else
           ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, "Insufficient permission"}, opts])
+          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
           |> halt()
         end
       end
@@ -458,7 +458,7 @@ defmodule Guardian.Permissions.Permissions do
           conn
         else
           ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, "Insufficient permission"}, opts])
+          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
           |> halt()
         end
       end
