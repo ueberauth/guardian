@@ -264,7 +264,6 @@ defmodule Guardian.Permissions.PermissionsTest do
       opts = Guardian.Permissions.Permissions.init(one_of: [%{user: [:read]}], key: :secret)
       conn = Guardian.Permissions.Permissions.call(ctx.conn, opts)
 
-
       assert conn.halted
       assert {403, _headers, body} = sent_resp(conn)
       assert body == "{:unauthorized, :insufficient_permission}"
