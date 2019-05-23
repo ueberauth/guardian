@@ -137,9 +137,7 @@ defmodule Guardian.Permissions do
       end
 
       @normalized_perms Guardian.Permissions.normalize_permissions(raw_perms)
-      @available_permissions Guardian.Permissions.available_from_normalized(
-                               @normalized_perms
-                             )
+      @available_permissions Guardian.Permissions.available_from_normalized(@normalized_perms)
 
       @doc """
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
@@ -252,8 +250,7 @@ defmodule Guardian.Permissions do
       iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
       %{user_actions: 9}
       """
-      @spec encode_permissions!(Guardian.Permissions.input_permissions() | nil) ::
-              Guardian.Permissions.t()
+      @spec encode_permissions!(Guardian.Permissions.input_permissions() | nil) :: Guardian.Permissions.t()
       def encode_permissions!(nil), do: %{}
 
       def encode_permissions!(map) when is_map(map) do

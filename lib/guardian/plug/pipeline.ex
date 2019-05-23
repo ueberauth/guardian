@@ -106,7 +106,6 @@ defmodule Guardian.Plug.Pipeline do
   ```
   """
   if Code.ensure_loaded?(Plug) do
-
     import Plug.Conn
 
     @doc """
@@ -132,9 +131,9 @@ defmodule Guardian.Plug.Pipeline do
             |> Keyword.merge(unquote(opts))
             |> config()
 
-            unless Keyword.get(new_opts, :otp_app), do: raise_error(:otp_app)
+          unless Keyword.get(new_opts, :otp_app), do: raise_error(:otp_app)
 
-            new_opts
+          new_opts
         end
 
         defp config(opts) do
@@ -200,7 +199,7 @@ defmodule Guardian.Plug.Pipeline do
     def current_error_handler(conn), do: conn.private[:guardian_error_handler]
 
     def fetch_key(conn, opts),
-    do: Keyword.get(opts, :key, current_key(conn)) || Guardian.Plug.default_key()
+      do: Keyword.get(opts, :key, current_key(conn)) || Guardian.Plug.default_key()
 
     def fetch_module(conn, opts), do: Keyword.get(opts, :module, current_module(conn))
 
@@ -215,7 +214,7 @@ defmodule Guardian.Plug.Pipeline do
     end
 
     def fetch_error_handler(conn, opts),
-    do: Keyword.get(opts, :error_handler, current_error_handler(conn))
+      do: Keyword.get(opts, :error_handler, current_error_handler(conn))
 
     def fetch_error_handler!(conn, opts) do
       module = fetch_error_handler(conn, opts)

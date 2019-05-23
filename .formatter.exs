@@ -1,1 +1,5 @@
-[inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"]]
+[
+  inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"],
+  line_length: 120
+]
+

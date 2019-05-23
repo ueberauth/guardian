@@ -129,8 +129,7 @@ defmodule Guardian.Token.JwtTest do
     test "create a token with a custom secret %JOSE.JWK{} struct", ctx do
       secret = ctx.es512.jwk
 
-      {:ok, token} =
-        Jwt.create_token(ctx.impl, ctx.claims, secret: secret, allowed_algos: ["ES512"])
+      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret, allowed_algos: ["ES512"])
 
       {true, jwt, _} = JWT.verify_strict(secret, ["ES512"], token)
       assert jwt.fields == ctx.claims
@@ -141,8 +140,7 @@ defmodule Guardian.Token.JwtTest do
     test "create a token with a custom secret map", ctx do
       secret = ctx.es512.jwk |> JWK.to_map() |> elem(1)
 
-      {:ok, token} =
-        Jwt.create_token(ctx.impl, ctx.claims, secret: secret, allowed_algos: ["ES512"])
+      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret, allowed_algos: ["ES512"])
 
       {true, jwt, _} = JWT.verify_strict(secret, ["ES512"], token)
 
@@ -213,22 +211,19 @@ defmodule Guardian.Token.JwtTest do
     end
 
     test "sets the ttl when specified in seconds", ctx do
-      assert {:ok, result} =
-               Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {5, :seconds})
+      assert {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {5, :seconds})
 
       diff = Guardian.timestamp() + 5 - result["exp"]
       assert diff <= 1
     end
 
     test "sets the ttl when specified in minutes", ctx do
-      assert {:ok, result} =
-               Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {1, :minute})
+      assert {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {1, :minute})
 
       diff = Guardian.timestamp() + 60 - result["exp"]
       assert diff <= 1
 
-      assert {:ok, result} =
-               Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {1, :minutes})
+      assert {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, ttl: {1, :minutes})
 
       diff = Guardian.timestamp() + 60 - result["exp"]
       assert diff <= 1
@@ -278,8 +273,7 @@ defmodule Guardian.Token.JwtTest do
 
       expected = Guardian.timestamp() + 2 * 7 * 24 * 60 * 60
 
-      assert {:ok, result} =
-               Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, token_type: "refresh")
+      assert {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, token_type: "refresh")
 
       diff = expected - result["exp"]
       assert diff <= 1
@@ -287,8 +281,7 @@ defmodule Guardian.Token.JwtTest do
 
       expected = Guardian.timestamp() + 4 * 7 * 24 * 60 * 60
 
-      assert {:ok, result} =
-               Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, token_type: "other")
+      assert {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, token_type: "other")
 
       diff = expected - result["exp"]
       assert result["typ"] == "other"
@@ -310,8 +303,7 @@ defmodule Guardian.Token.JwtTest do
     end
 
     test "it verifies using the owner module", ctx do
-      assert {:error, :boo} =
-               Jwt.verify_claims(ctx.impl, ctx.claims, fail_owner_verify_claims: :boo)
+      assert {:error, :boo} = Jwt.verify_claims(ctx.impl, ctx.claims, fail_owner_verify_claims: :boo)
     end
 
     test "it is invalid when exp is too early", ctx do
@@ -342,8 +334,7 @@ defmodule Guardian.Token.JwtTest do
       old_token = ctx.jwt
       old_claims = ctx.claims
 
-      {:ok, {^old_token = old_t, ^old_claims = old_c}, {new_t, new_c}} =
-        Jwt.refresh(ctx.impl, ctx.jwt, [])
+      {:ok, {^old_token = old_t, ^old_claims = old_c}, {new_t, new_c}} = Jwt.refresh(ctx.impl, ctx.jwt, [])
 
       refute old_t == new_t
       assert new_c["sub"] == old_c["sub"]
@@ -371,8 +362,7 @@ defmodule Guardian.Token.JwtTest do
       refute new_c["exp"] == old_c["exp"]
       assert new_c["exp"] == new_c["iat"] + 30
 
-      {:ok, {^new_t, ^new_c}, {very_new_t, very_new_c}} =
-        Jwt.refresh(ctx.impl, new_t, ttl: {78, :seconds})
+      {:ok, {^new_t, ^new_c}, {very_new_t, very_new_c}} = Jwt.refresh(ctx.impl, new_t, ttl: {78, :seconds})
 
       refute new_t == very_new_t
       assert very_new_c["exp"] == very_new_c["iat"] + 78

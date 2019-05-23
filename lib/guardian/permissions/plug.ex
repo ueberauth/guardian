@@ -18,7 +18,7 @@ defmodule Guardian.Permissions.Plug do
         |> Keyword.get(:ensure, [])
         |> Enum.into(%{})
 
-        Keyword.put(opts, :ensure, ensure_map)
+      Keyword.put(opts, :ensure, ensure_map)
     else
       opts
     end
@@ -63,7 +63,8 @@ defmodule Guardian.Permissions.Plug do
   end
 
   defp handle_response(true, conn, _reason, _handler, _opts),
-  do: conn
+    do: conn
+
   defp handle_response(false, conn, reason, handler, opts),
-  do: apply(handler, :auth_error, [conn, {:unauthorized, reason}, opts])
+    do: apply(handler, :auth_error, [conn, {:unauthorized, reason}, opts])
 end

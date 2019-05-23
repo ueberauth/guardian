@@ -211,6 +211,7 @@ defmodule Guardian.PermissionsTest do
 
     test "when looking in a different location with incorrect one_of permissions", %{claims: claims, conn: conn} do
       opts = Guardian.Permissions.init(one_of: [%{profile: [:write]}], key: :secret)
+
       conn =
         conn
         |> Guardian.Plug.put_current_claims(claims, key: :secret)

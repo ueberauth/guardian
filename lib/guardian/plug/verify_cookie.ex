@@ -68,8 +68,7 @@ if Code.ensure_loaded?(Plug) do
            default_type <- module.default_token_type(),
            exchange_to <- Keyword.get(opts, :exchange_to, default_type),
            active_session? <- Guardian.Plug.session_active?(conn),
-           {:ok, _old, {new_t, new_c}} <-
-             Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
+           {:ok, _old, {new_t, new_c}} <- Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
         conn
         |> Guardian.Plug.put_current_token(new_t, key: key)
         |> Guardian.Plug.put_current_claims(new_c, key: key)

@@ -161,8 +161,7 @@ defmodule Guardian.Token.Jwt do
     @doc """
     fetch_signing_secret fetches the secret to sign.
     """
-    @callback fetch_signing_secret(module, opts :: Guardian.options()) ::
-                {:ok, term} | {:error, :secret_not_found}
+    @callback fetch_signing_secret(module, opts :: Guardian.options()) :: {:ok, term} | {:error, :secret_not_found}
 
     @doc """
     fetch_verifying_secret fetches the secret to verify a token.
