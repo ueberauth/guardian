@@ -8,7 +8,7 @@ defmodule Guardian.Permissions.TextEncodingTest do
         profile: %{read: 0b1, write: 0b10}
       }
 
-    use Guardian.Permissions.Permissions, encoding: Guardian.Permissions.TextEncoding
+    use Guardian.Permissions, encoding: Guardian.Permissions.TextEncoding
 
     def subject_for_token(resource, _claims), do: {:ok, resource}
     def resource_from_claims(claims), do: {:ok, claims["sub"]}

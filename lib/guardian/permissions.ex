@@ -1,4 +1,4 @@
-defmodule Guardian.Permissions.Permissions do
+defmodule Guardian.Permissions do
   @moduledoc """
   An optional plugin to Guardian to provide permissions for your tokens
 
@@ -78,23 +78,23 @@ defmodule Guardian.Permissions.Permissions do
 
   ### Using with Plug
 
-  To use a plug for ensuring permissions you can use the `Guardian.Permissions.Bitwise` module as part of a
+  To use a plug for ensuring permissions you can use the `Guardian.Permissions.BitwiseEncoding. module as part of a
   Guardian pipeline.
 
   ```elixir
   # After a pipeline has setup the implementation module and error handler
 
   # Ensure that both the `public_profile` and `user_actions.books` permissions are present in the token
-  plug Guardian.Permissions.Bitwise, ensure: %{default: [:public_profile], user_actions: [:books]}
+  plug Guardian.Permissions.BitwiseEncoding. ensure: %{default: [:public_profile], user_actions: [:books]}
 
   # Allow the request to continue when the token contains any of the permission sets specified
-  plug Guardian.Permissions.Bitwise, one_of: [
+  plug Guardian.Permissions.BitwiseEncoding. one_of: [
     %{default: [:public_profile], user_actions: [:books]},
     %{default: [:public_profile], user_actions: [:music]},
   ]
 
   # Look for permissions for a token in a different location
-  plug Guardian.Permissions.Bitwise, key: :impersonate, ensure: %{default: [:public_profile]}
+  plug Guardian.Permissions.BitwiseEncoding. key: :impersonate, ensure: %{default: [:public_profile]}
   ```
 
   If the token satisfies either the permissions listed in `ensure` or one of the sets in the `one_of` key
@@ -125,10 +125,10 @@ defmodule Guardian.Permissions.Permissions do
     # Credo is incorrectly identifying an unless block with negated condition 2017-06-10
     # credo:disable-for-next-line /\.Refactor\./
     quote do
-      alias Guardian.Permissions.Permissions.PermissionNotFoundError
+      alias Guardian.Permissions.PermissionNotFoundError
       import unquote(Keyword.get(opts, :encoding, Guardian.Permissions.BitwiseEncoding))
 
-      defdelegate max(), to: Guardian.Permissions.Permissions
+      defdelegate max(), to: Guardian.Permissions
 
       raw_perms = @config_with_key.(:permissions)
 
@@ -136,8 +136,8 @@ defmodule Guardian.Permissions.Permissions do
         raise "Permissions are not defined for #{to_string(__MODULE__)}"
       end
 
-      @normalized_perms Guardian.Permissions.Permissions.normalize_permissions(raw_perms)
-      @available_permissions Guardian.Permissions.Permissions.available_from_normalized(
+      @normalized_perms Guardian.Permissions.normalize_permissions(raw_perms)
+      @available_permissions Guardian.Permissions.available_from_normalized(
                                @normalized_perms
                              )
 
@@ -145,7 +145,7 @@ defmodule Guardian.Permissions.Permissions do
       Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
       """
 
-      @spec available_permissions() :: Guardian.Permissions.Permissions.t()
+      @spec available_permissions() :: Guardian.Permissions.t()
       def available_permissions, do: @available_permissions
 
       @doc """
@@ -163,8 +163,7 @@ defmodule Guardian.Permissions.Permissions do
           iex> MyTokens.decode_permissions(%{"default" => -1})
           %{default: [:public_profile, :user_about_me]}
       """
-      @spec decode_permissions(Guardian.Permissions.Permissions.input_permissions() | nil) ::
-              Guardian.Permissions.Permissions.t()
+      @spec decode_permissions(Guardian.Permissions.input_permissions() | nil) :: Guardian.Permissions.t()
       def decode_permissions(nil), do: %{}
 
       def decode_permissions(map) when is_map(map) do
@@ -176,11 +175,10 @@ defmodule Guardian.Permissions.Permissions do
 
       @doc """
       Decodes permissions directly from a claims map. This does the same as `decode_permissions` but
-      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions.Bitwise` places them
+      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions.BitwiseEncoding. places them
       when it encodes them into claims.
       """
-      @spec decode_permissions_from_claims(Guardian.Token.claims()) ::
-              Guardian.Permissions.Permissions.t()
+      @spec decode_permissions_from_claims(Guardian.Token.claims()) :: Guardian.Permissions.t()
       def decode_permissions_from_claims(%{"pem" => perms}), do: decode_permissions(perms)
       def decode_permissions_from_claims(_), do: %{}
 
@@ -191,7 +189,7 @@ defmodule Guardian.Permissions.Permissions do
       """
       @spec encode_permissions_into_claims!(
               Guardian.Token.claims(),
-              Guardian.Permissions.Permissions.input_permissions() | nil
+              Guardian.Permissions.input_permissions() | nil
             ) :: Guardian.Token.claims()
       def encode_permissions_into_claims!(claims, nil), do: claims
 
@@ -208,8 +206,8 @@ defmodule Guardian.Permissions.Permissions do
       true
       """
       @spec any_permissions?(
-              Guardian.Permissions.Permissions.input_permissions(),
-              Guardian.Permissions.Permissions.input_permissions()
+              Guardian.Permissions.input_permissions(),
+              Guardian.Permissions.input_permissions()
             ) :: boolean
       def any_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms = decode_permissions(has_perms)
@@ -223,7 +221,7 @@ defmodule Guardian.Permissions.Permissions do
       defp do_any_permissions?(nil, _), do: false
 
       defp do_any_permissions?(list, needs) do
-        matches = needs |> MapSet.intersection(MapSet.new(list))
+        matches = MapSet.intersection(needs, MapSet.new(list))
         MapSet.size(matches) > 0
       end
 
@@ -235,8 +233,8 @@ defmodule Guardian.Permissions.Permissions do
       true
       """
       @spec all_permissions?(
-              Guardian.Permissions.Permissions.input_permissions(),
-              Guardian.Permissions.Permissions.input_permissions()
+              Guardian.Permissions.input_permissions(),
+              Guardian.Permissions.input_permissions()
             ) :: boolean
       def all_permissions?(has_perms, test_perms) when is_map(test_perms) do
         has_perms_bits = decode_permissions(has_perms)
@@ -254,8 +252,8 @@ defmodule Guardian.Permissions.Permissions do
       iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
       %{user_actions: 9}
       """
-      @spec encode_permissions!(Guardian.Permissions.Permissions.input_permissions() | nil) ::
-              Guardian.Permissions.Permissions.t()
+      @spec encode_permissions!(Guardian.Permissions.input_permissions() | nil) ::
+              Guardian.Permissions.t()
       def encode_permissions!(nil), do: %{}
 
       def encode_permissions!(map) when is_map(map) do
@@ -271,7 +269,7 @@ defmodule Guardian.Permissions.Permissions do
       iex> MyTokens.validate_permissions!(%{default: [:user_about_me]})
 
       iex> MyTokens.validate_permissions!(%{not: [:a, :thing]})
-      raise Guardian.Permissions.Bitwise.PermissionNotFoundError
+      raise Guardian.Permissions.BitwiseEncoding.PermissionNotFoundError
       """
       def validate_permissions!(map) when is_map(map) do
         Enum.all?(&do_validate_permissions!/1)
@@ -320,11 +318,7 @@ defmodule Guardian.Permissions.Permissions do
           diff = MapSet.difference(provided_set, known_set)
 
           if MapSet.size(diff) > 0 do
-            message =
-              "#{to_string(__MODULE__)} Type: #{type} Missing Permissions: #{
-                Enum.join(diff, ", ")
-              }"
-
+            message = "#{to_string(__MODULE__)} Type: #{type} Missing Permissions: #{Enum.join(diff, ", ")}"
             raise PermissionNotFoundError, message: message
           end
 
@@ -335,6 +329,9 @@ defmodule Guardian.Permissions.Permissions do
       end
     end
   end
+
+  defdelegate init(opts), to: Guardian.Permissions.Plug
+  defdelegate call(conn, opts), to: Guardian.Permissions.Plug
 
   @doc """
   Provides an encoded version of all permissions, and all possible future permissions
@@ -374,97 +371,5 @@ defmodule Guardian.Permissions.Permissions do
       list = v |> Map.keys() |> Enum.map(&String.to_atom/1)
       {String.to_atom(k), list}
     end
-  end
-
-  if Code.ensure_loaded?(Plug) do
-    defmodule PlugImpl do
-      @moduledoc false
-
-      import Plug.Conn
-
-      alias Guardian.Plug.Pipeline
-
-      @doc false
-      @spec init([Guardian.Permissions.Permissions.plug_option()]) :: [
-              Guardian.Permissions.Permissions.plug_option()
-            ]
-      def init(opts) do
-        ensure = Keyword.get(opts, :ensure)
-        one_of = Keyword.get(opts, :one_of)
-
-        if ensure && one_of do
-          raise ":permissions and a :one_of cannot both be specified for plug #{
-                  to_string(__MODULE__)
-                } "
-        end
-
-        opts =
-          if Keyword.keyword?(ensure) do
-            ensure = ensure |> Enum.into(%{})
-            Keyword.put(opts, :ensure, ensure)
-          else
-            opts
-          end
-
-        opts
-      end
-
-      @doc false
-      @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
-      def call(conn, opts) do
-        context = %{
-          claims: Guardian.Plug.current_claims(conn, opts),
-          ensure: Keyword.get(opts, :ensure),
-          handler: Pipeline.fetch_error_handler!(conn, opts),
-          impl: Pipeline.fetch_module!(conn, opts),
-          one_of: Keyword.get(opts, :one_of)
-        }
-
-        do_call(conn, context, opts)
-      end
-
-      defp do_call(conn, %{ensure: nil, one_of: nil}, _), do: conn
-
-      defp do_call(conn, %{claims: nil} = ctx, opts) do
-        ctx.handler
-        |> apply(:auth_error, [conn, {:unauthorized, :missing_claims}, opts])
-        |> halt()
-      end
-
-      # single set of permissions to check
-      defp do_call(conn, %{one_of: nil} = ctx, opts) do
-        has_perms = apply(ctx.impl, :decode_permissions_from_claims, [ctx.claims])
-        is_ok? = apply(ctx.impl, :all_permissions?, [has_perms, ctx.ensure])
-
-        if is_ok? do
-          conn
-        else
-          ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
-          |> halt()
-        end
-      end
-
-      # one_of sets of permissions to check
-      defp do_call(conn, %{ensure: nil} = ctx, opts) do
-        has_perms = apply(ctx.impl, :decode_permissions_from_claims, [ctx.claims])
-
-        is_ok? =
-          Enum.any?(ctx.one_of, fn test_perms ->
-            apply(ctx.impl, :all_permissions?, [has_perms, test_perms])
-          end)
-
-        if is_ok? do
-          conn
-        else
-          ctx.handler
-          |> apply(:auth_error, [conn, {:unauthorized, :insufficient_permission}, opts])
-          |> halt()
-        end
-      end
-    end
-
-    defdelegate init(opts), to: PlugImpl
-    defdelegate call(conn, opts), to: PlugImpl
   end
 end
