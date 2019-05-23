@@ -175,8 +175,7 @@ defmodule Guardian.PlugTest do
     test "it stores the information in the correct location", ctx do
       conn = ctx.conn
 
-      assert %Plug.Conn{} =
-               xconn = Guardian.Plug.sign_in(conn, ctx.impl, @resource, %{}, key: :bob)
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_in(conn, ctx.impl, @resource, %{}, key: :bob)
 
       refute Guardian.Plug.session_active?(conn)
 
@@ -369,8 +368,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, [key: :bob]]},
-        {Guardian.Support.TokenModule, :revoke,
-         [Guardian.PlugTest.Impl, bob_claims, bob_token, [key: :bob]]},
+        {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, bob_claims, bob_token, [key: :bob]]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, [key: :bob]]}
       ]
 
@@ -396,12 +394,10 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, []]},
-        {Guardian.Support.TokenModule, :revoke,
-         [Guardian.PlugTest.Impl, bob_claims, bob_token, []]},
+        {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :jane, []]},
-        {Guardian.Support.TokenModule, :revoke,
-         [Guardian.PlugTest.Impl, jane_claims, jane_token, []]},
+        {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, jane_claims, jane_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [jane_claims, jane_token, []]}
       ]
 
@@ -438,8 +434,7 @@ defmodule Guardian.PlugTest do
     test "it creates a cookie with a default token and custom key", ctx do
       conn = ctx.conn
 
-      assert %Plug.Conn{} =
-               xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, key: "test")
+      assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, key: "test")
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_test_token")
       %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_test_token")
@@ -476,13 +471,11 @@ defmodule Guardian.PlugTest do
       claims = %{"sub" => @resource.id, "typ" => "refresh"}
       old_token = Jason.encode!(%{claims: claims}) |> Base.encode64()
 
-      assert %Plug.Conn{} =
-               xconn = Guardian.Plug.remember_me_from_token(conn, ctx.impl, old_token, claims)
+      assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me_from_token(conn, ctx.impl, old_token, claims)
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
 
-      %{value: new_token, max_age: max_age} =
-        Map.get(xconn.resp_cookies, "guardian_default_token")
+      %{value: new_token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
 
       # default max age
       assert max_age == 2_419_200
@@ -495,8 +488,7 @@ defmodule Guardian.PlugTest do
         # as part of the exchange we decode and verify the old token again
         {Guardian.Support.TokenModule, :decode_token, [ctx.impl, old_token, []]},
         {Guardian.Support.TokenModule, :verify_claims, [ctx.impl, claims, []]},
-        {Guardian.Support.TokenModule, :exchange,
-         [ctx.impl, old_token, "refresh", "refresh", []]},
+        {Guardian.Support.TokenModule, :exchange, [ctx.impl, old_token, "refresh", "refresh", []]},
         # as part of the exchange we decode the old token to get the claims
         {Guardian.Support.TokenModule, :decode_token, [ctx.impl, old_token, []]}
       ]
@@ -507,14 +499,12 @@ defmodule Guardian.PlugTest do
     test "it clears the remember me token in sign out", ctx do
       conn = ctx.conn
 
-      assert %Plug.Conn{} =
-               remember_me_conn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{})
+      assert %Plug.Conn{} = remember_me_conn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{})
 
       assert Map.has_key?(remember_me_conn.resp_cookies, "guardian_default_token")
 
       assert %Plug.Conn{} =
-               signed_out_conn =
-               Guardian.Plug.sign_out(remember_me_conn, ctx.impl, clear_remember_me: true)
+               signed_out_conn = Guardian.Plug.sign_out(remember_me_conn, ctx.impl, clear_remember_me: true)
 
       res = Map.get(signed_out_conn.resp_cookies, "guardian_default_token")
       assert Map.get(res, :value, nil) == nil
@@ -588,8 +578,7 @@ defmodule Guardian.PlugTest do
     test "remember_me creates a cookie with a custom max_age", ctx do
       conn = ctx.conn
 
-      assert %Plug.Conn{} =
-               xconn = Guardian.Plug.remember_me(conn, ctx.impl_overrides, @resource, %{}, [])
+      assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl_overrides, @resource, %{}, [])
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
       %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
@@ -603,8 +592,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl_overrides, :subject_for_token, [@resource, %{}]},
-        {Guardian.Support.TokenModule, :build_claims,
-         [ctx.impl_overrides, @resource, "bobby", %{}, ops]},
+        {Guardian.Support.TokenModule, :build_claims, [ctx.impl_overrides, @resource, "bobby", %{}, ops]},
         {Guardian.Support.TokenModule, :create_token, [ctx.impl_overrides, claims, ops]}
       ]
 
@@ -657,8 +645,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :subject_for_token, [@resource, %{}]},
-        {Guardian.Support.TokenModule, :build_claims,
-         [Guardian.PlugTest.Impl, @resource, "bob", %{}, []]},
+        {Guardian.Support.TokenModule, :build_claims, [Guardian.PlugTest.Impl, @resource, "bob", %{}, []]},
         {Guardian.Support.TokenModule, :create_token, [Guardian.PlugTest.Impl, claims, []]},
         {Guardian.PlugTest.Impl, :after_sign_in, [:conn, @resource, token, claims, []]},
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :default, []]},

@@ -153,8 +153,7 @@ if Code.ensure_loaded?(Plug) do
       conn.private[key]
     end
 
-    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_token(conn, token, opts \\ []) do
       key =
         conn
@@ -164,8 +163,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, token)
     end
 
-    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_claims(conn, claims, opts \\ []) do
       key =
         conn
@@ -175,8 +173,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, claims)
     end
 
-    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_resource(conn, resource, opts \\ []) do
       key =
         conn
@@ -202,13 +199,11 @@ if Code.ensure_loaded?(Plug) do
       |> configure_session(renew: true)
     end
 
-    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
-            Plug.Conn.t()
+    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
       with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
            {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
-           {:ok, conn} <-
-             returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
+           {:ok, conn} <- returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
         if session_active?(conn) do
           put_session_token(conn, token, opts)
         else
@@ -243,8 +238,7 @@ if Code.ensure_loaded?(Plug) do
       delete_resp_cookie(conn, key, [])
     end
 
-    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
-            Plug.Conn.t()
+    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
     def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
       opts = Keyword.put_new(opts, :token_type, "refresh")
       key = fetch_token_key(conn, opts)
@@ -270,8 +264,7 @@ if Code.ensure_loaded?(Plug) do
       key = fetch_token_key(conn, opts)
 
       with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-           {:ok, _old, {new_t, full_new_c}} <-
-             Guardian.exchange(mod, token, claims["typ"], token_type, opts) do
+           {:ok, _old, {new_t, full_new_c}} <- Guardian.exchange(mod, token, claims["typ"], token_type, opts) do
         put_resp_cookie(conn, key, new_t, cookie_options(mod, full_new_c))
       else
         {:error, _} = err -> handle_unauthenticated(conn, err, opts)

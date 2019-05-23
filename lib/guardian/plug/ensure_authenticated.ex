@@ -56,8 +56,7 @@ if Code.ensure_loaded?(Plug) do
       {result, conn, opts}
     end
 
-    @spec respond({{:ok, Guardian.Token.claims()} | {:error, any}, Plug.Conn.t(), Keyword.t()}) ::
-            Plug.Conn.t()
+    @spec respond({{:ok, Guardian.Token.claims()} | {:error, any}, Plug.Conn.t(), Keyword.t()}) :: Plug.Conn.t()
     defp respond({{:ok, _}, conn, _opts}), do: conn
 
     defp respond({{:error, reason}, conn, opts}) do
@@ -67,8 +66,7 @@ if Code.ensure_loaded?(Plug) do
       |> Plug.Conn.halt()
     end
 
-    @spec verify_claims(Guardian.Token.claims(), Keyword.t()) ::
-            {:ok, Guardian.Token.claims()} | {:error, any}
+    @spec verify_claims(Guardian.Token.claims(), Keyword.t()) :: {:ok, Guardian.Token.claims()} | {:error, any}
     defp verify_claims(claims, opts) do
       to_check = Keyword.get(opts, :claims)
       Guardian.Token.Verify.verify_literal_claims(claims, to_check, opts)
