@@ -229,7 +229,6 @@ defmodule AuthMeWeb.SessionController do
     end
   end
 
-
   def login(conn, %{"user" => %{"username" => username, "password" => password}}) do
     UserManager.authenticate_user(username, password)
     |> login_reply(conn)
@@ -237,14 +236,14 @@ defmodule AuthMeWeb.SessionController do
 
   def logout(conn, _) do
     conn
-    |> Guardian.Plug.sign_out()
+    |> Guardian.Plug.sign_out(Guardian, _opts = [])
     |> redirect(to: "/login")
   end
 
   defp login_reply({:ok, user}, conn) do
     conn
-    |> put_flash(:success, "Welcome back!")
-    |> Guardian.Plug.sign_in(user)
+    |> put_flash(:info, "Welcome back!")
+    |> Guardian.Plug.sign_in(Guardian, user)
     |> redirect(to: "/secret")
   end
 
@@ -293,7 +292,7 @@ And for the login template and secret template:
 <% end %>
 ```
 
-Lets make the secret implementation.
+Lets make the protected resource implementation.
 
 ```elixir
 ## lib/auth_me_web/controllers/page_controller.ex
@@ -301,9 +300,9 @@ Lets make the secret implementation.
 defmodule AuthMeWeb.PageController do
   use AuthMeWeb, :controller
 
-  def secret(conn, _) do
+  def protected(conn, _) do
     user = Guardian.Plug.current_resource(conn)
-    render(conn, "secret.html", current_user: user)
+    render(conn, "protected.html", current_user: user)
   end
 end
 ```
@@ -311,8 +310,8 @@ end
 We use the `Guardian.Plug.current_resource(conn)` function here to fetch the resource. You must load this first using the `Guardian.Plug.LoadResource` plug which we included in our auth pipeline earlier.
 
 ```
-## lib/auth_me_web/templates/page/secret.html.eex
-<h2>Secret Page</h2>
+## lib/auth_me_web/templates/page/protected.html.eex
+<h2>Protected Page</h2>
 <p>You can only see this page if you are logged in</p>
 <p>You're logged in as <%= @current_user.username %></p>
 ```
@@ -340,21 +339,21 @@ scope "/", AuthMeWeb do
 
   get "/login", SessionController, :new
   post "/login", SessionController, :login
-  post "/logout", SessionController, :logout
+  get "/logout", SessionController, :logout
 end
 
 # Definitely logged in scope
 scope "/", AuthMeWeb do
   pipe_through [:browser, :auth, :ensure_auth]
 
-  get "/secret", PageController, :secret
+  get "/protected", PageController, :protected
 end
 ```
 
 There's a little bit happening here.
 
 1. We created a Phoenix pipeline that just delegates to our Guardian pipeline to login someone if we find a token in the session or header. This does not restrict access.
-2. We restrict access using both our `:auth` and `:ensure_auth` phoenix pipelines and use that to protect our "secret" route.
+2. We restrict access using both our `:auth` and `:ensure_auth` phoenix pipelines and use that to protect our protected route.
 
 Note that you must use the `:auth` pipeline before the `:ensure_auth` one to make sure that we have fetched and verified the token. We're also loading the resource but that is not required for ensure auth.
 
