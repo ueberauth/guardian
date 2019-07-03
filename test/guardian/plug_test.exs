@@ -460,10 +460,10 @@ defmodule Guardian.PlugTest do
       assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{}, [])
 
       assert Map.has_key?(xconn.resp_cookies, "guardian_default_token")
-      assert %Plug.Conn{} = clear_conn = Guardian.Plug.clear_remember_me(xconn, [])
+      assert %Plug.Conn{} = clear_conn = Guardian.Plug.clear_remember_me(xconn, ctx.impl, [])
       res = Map.get(clear_conn.resp_cookies, "guardian_default_token")
       assert Map.get(res, :max_age, nil) == 0
-      assert Map.get(res, :value, nil) == nil
+      assert Map.get(res, :value, nil) == ""
     end
 
     test "it creates a cookie with the default token and key from an existing token", ctx do
@@ -507,7 +507,7 @@ defmodule Guardian.PlugTest do
                signed_out_conn = Guardian.Plug.sign_out(remember_me_conn, ctx.impl, clear_remember_me: true)
 
       res = Map.get(signed_out_conn.resp_cookies, "guardian_default_token")
-      assert Map.get(res, :value, nil) == nil
+      assert Map.get(res, :value, nil) == ""
       assert Map.get(res, :max_age, nil) == 0
     end
   end
