@@ -30,7 +30,8 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
-    * `realm` - The prefix for the token in the Authorization header. Defaults to `Bearer`. `:none` will not use a prefix.
+    * `header_name` - The name of the header to search for a token. Defaults to `authorization`. 
+    * `realm` - The prefix for the token in the header. Defaults to `Bearer`. `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
 
     ### Example
@@ -110,7 +111,8 @@ if Code.ensure_loaded?(Plug) do
             :no_token_found
             | {:ok, String.t()}
     defp fetch_token_from_header(conn, opts) do
-      headers = get_req_header(conn, "authorization")
+      header_name = Keyword.get(opts, :header_name, "authorization")
+      headers = get_req_header(conn, header_name)
       fetch_token_from_header(conn, opts, headers)
     end
 

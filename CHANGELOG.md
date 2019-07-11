@@ -1,3 +1,5 @@
+* Allow ability to verify token in custom header location
+
 # v 1.1.0
 
 * JWT secret fetcher behaviour added
