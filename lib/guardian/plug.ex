@@ -95,7 +95,7 @@ if Code.ensure_loaded?(Plug) do
           do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
 
         def clear_remember_me(conn, opts \\ []),
-          do: Guardian.Plug.clear_remember_me(conn, opts)
+          do: Guardian.Plug.clear_remember_me(conn, implementation(), opts)
       end
     end
 
@@ -222,7 +222,7 @@ if Code.ensure_loaded?(Plug) do
       case result do
         {:ok, conn} ->
           if Keyword.get(opts, :clear_remember_me, false) do
-            clear_remember_me(conn, opts)
+            clear_remember_me(conn, impl, opts)
           else
             conn
           end
@@ -232,10 +232,27 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    @spec clear_remember_me(Plug.Conn.t(), Guardian.options()) :: Plug.Conn.t()
-    def clear_remember_me(conn, opts) do
+    @doc """
+    Puts a response cookie which replaces the previous `remember_me` cookie
+    and is set to immediately expire on the client.
+
+    Note that while this can be used as a cheap way to sign out, a malicious client
+    could still access your server using the old JWT from the old cookie.
+    In other words, this does not in any way invalidate the token you issued, it just
+    makes a compliant client forget it.
+    """
+    @spec clear_remember_me(Plug.Conn.t(), module, Guardian.options()) :: Plug.Conn.t()
+    def clear_remember_me(conn, mod, opts) do
       key = fetch_token_key(conn, opts)
-      delete_resp_cookie(conn, key, [])
+      # Any value could be used here as the cookie is set to expire immediately anyway
+      token = ""
+
+      opts =
+        mod
+        |> cookie_options(%{})
+        |> Keyword.put(:max_age, 0)
+
+      put_resp_cookie(conn, key, token, opts)
     end
 
     @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
