@@ -209,8 +209,7 @@ defmodule Guardian do
 
   For JWT this would normally be found in the `sub` field
   """
-  @callback resource_from_claims(claims :: Guardian.Token.claims()) ::
-              {:ok, Guardian.Token.resource()} | {:error, atom}
+  @callback resource_from_claims(claims :: Guardian.Token.claims()) :: {:ok, Guardian.Token.resource()} | {:error, atom}
 
   @doc """
   An optional callback that allows the claims to be modified
@@ -436,8 +435,7 @@ defmodule Guardian do
       See `Guardian.revoke` for more information
       """
 
-      @spec revoke(Guardian.Token.token(), Guardian.options()) ::
-              {:ok, Guardian.Token.claims()} | {:error, any}
+      @spec revoke(Guardian.Token.token(), Guardian.options()) :: {:ok, Guardian.Token.claims()} | {:error, any}
       def revoke(token, opts \\ []), do: Guardian.revoke(__MODULE__, token, opts)
 
       @doc """
@@ -576,12 +574,10 @@ defmodule Guardian do
     token_mod = Guardian.token_module(mod)
 
     with {:ok, subject} <- returning_tuple({mod, :subject_for_token, [resource, claims]}),
-         {:ok, claims} <-
-           returning_tuple({token_mod, :build_claims, [mod, resource, subject, claims, opts]}),
+         {:ok, claims} <- returning_tuple({token_mod, :build_claims, [mod, resource, subject, claims, opts]}),
          {:ok, claims} <- returning_tuple({mod, :build_claims, [claims, resource, opts]}),
          {:ok, token} <- returning_tuple({token_mod, :create_token, [mod, claims, opts]}),
-         {:ok, _} <-
-           returning_tuple({mod, :after_encode_and_sign, [resource, claims, token, opts]}) do
+         {:ok, _} <- returning_tuple({mod, :after_encode_and_sign, [resource, claims, token, opts]}) do
       {:ok, token, claims}
     end
   end
@@ -658,8 +654,7 @@ defmodule Guardian do
   The options are passed through to the token module and callback
   so check the documentation for your token module.
   """
-  @spec revoke(module, Guardian.Token.token(), options) ::
-          {:ok, Guardian.Token.claims()} | {:error, any}
+  @spec revoke(module, Guardian.Token.token(), options) :: {:ok, Guardian.Token.claims()} | {:error, any}
   def revoke(mod, token, opts \\ []) do
     token_mod = Guardian.token_module(mod)
 
@@ -742,8 +737,7 @@ defmodule Guardian do
     with token_mod <- Guardian.token_module(mod),
          {:ok, claims} <- apply(mod, :decode_and_verify, [old_token, %{}, opts]),
          :ok <- validate_exchange_type(claims, from_type),
-         {:ok, old_stuff, new_stuff} <-
-           apply(token_mod, :exchange, [mod, old_token, from_type, to_type, opts]) do
+         {:ok, old_stuff, new_stuff} <- apply(token_mod, :exchange, [mod, old_token, from_type, to_type, opts]) do
       apply(mod, :on_exchange, [old_stuff, new_stuff, opts])
     else
       {:error, _} = err -> err
@@ -764,10 +758,7 @@ defmodule Guardian do
 
       resp ->
         raise MalformedReturnValueError,
-          message:
-            "Expected `{:ok, result}` or `{:error, reason}` from #{mod}##{func}, got: #{
-              inspect(resp)
-            }"
+          message: "Expected `{:ok, result}` or `{:error, reason}` from #{mod}##{func}, got: #{inspect(resp)}"
     end
   end
 

@@ -5,6 +5,7 @@
 ### Enhancement
 
 * Improve `Dialyzer` [572](https://github.com/ueberauth/guardian/pull/572)
+* Allow ability to verify token in custom header location [597](https://github.com/ueberauth/guardian/pull/597)
 
 ### Bug Fix
 

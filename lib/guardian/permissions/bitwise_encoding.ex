@@ -15,11 +15,16 @@ defmodule Guardian.Permissions.BitwiseEncoding do
     Enum.reduce(value, 0, &encode_value(&1, perms, &2))
   end
 
-  defp encode_value(value, perm_set, acc),
-    do: perm_set |> Map.get(to_string(value)) |> bor(acc)
+  defp encode_value(value, perm_set, acc) do
+    perm_set
+    |> Map.get(to_string(value))
+    |> bor(acc)
+  end
 
   def decode(value, _type, _perm_set) when is_list(value) do
-    value |> Enum.map(&to_string/1) |> Enum.map(&String.to_atom/1)
+    value
+    |> Enum.map(&to_string/1)
+    |> Enum.map(&String.to_atom/1)
   end
 
   def decode(value, type, perm_set) when is_integer(value) do

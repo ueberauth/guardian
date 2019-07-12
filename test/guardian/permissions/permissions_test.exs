@@ -33,7 +33,10 @@ defmodule Guardian.PermissionsTest do
     @impl Guardian.Plug.ErrorHandler
     def auth_error(conn, {type, reason}, _opts) do
       body = inspect({type, reason})
-      send_resp(conn, 403, body)
+
+      conn
+      |> send_resp(403, body)
+      |> halt()
     end
   end
 
@@ -129,9 +132,7 @@ defmodule Guardian.PermissionsTest do
 
   describe "when used as a plug" do
     setup do
-      claims =
-        %{"sub" => "user:1"}
-        |> Impl.build_claims(nil, permissions: %{user: [:read, :write], profile: [:read]})
+      claims = Impl.build_claims(%{"sub" => "user:1"}, nil, permissions: %{user: [:read, :write], profile: [:read]})
 
       conn =
         :get
@@ -142,133 +143,87 @@ defmodule Guardian.PermissionsTest do
       {:ok, %{conn: conn, claims: claims}}
     end
 
-    test "it does not allow when permissions are missing from ensure", ctx do
+    test "it does not allow when permissions are missing from ensure", %{conn: conn} do
       opts = Guardian.Permissions.init(ensure: %{user: [:write, :read], profile: [:read, :write]})
+      conn = Guardian.Permissions.call(conn, opts)
 
-      conn = Guardian.Permissions.call(ctx.conn, opts)
-
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
+      assert {403, _headers, "{:unauthorized, :insufficient_permission}"} = sent_resp(conn)
       assert conn.halted
     end
 
-    test "it does not allow when none of the one_of permissions match", ctx do
-      opts =
-        Guardian.Permissions.init(
-          one_of: [
-            %{profile: [:write]},
-            %{user: [:read], profile: [:write]}
-          ]
-        )
+    test "it does not allow when none of the one_of permissions match", %{conn: conn} do
+      opts = Guardian.Permissions.init(one_of: [%{profile: [:write]}, %{user: [:read], profile: [:write]}])
+      conn = Guardian.Permissions.call(conn, opts)
 
-      conn = Guardian.Permissions.call(ctx.conn, opts)
-
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
+      assert {403, _headers, "{:unauthorized, :insufficient_permission}"} = sent_resp(conn)
       assert conn.halted
     end
 
-    test "it allows the request when permissions from ensure match", ctx do
+    test "it allows the request when permissions from ensure match", %{conn: conn} do
       opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:read]})
-      conn = Guardian.Permissions.call(ctx.conn, opts)
-
-      refute conn.halted
-
-      opts = Guardian.Permissions.init(ensure: %{user: [:read]})
-      conn = Guardian.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(conn, opts)
 
       refute conn.halted
     end
 
-    test "it allows when one of the one of permissions from one_of match", ctx do
-      opts =
-        Guardian.Permissions.init(
-          one_of: [
-            %{user: [:write]},
-            %{profile: [:write]},
-            %{user: [:read]}
-          ]
-        )
-
-      conn = Guardian.Permissions.call(ctx.conn, opts)
-
-      refute conn.halted
-
-      opts =
-        Guardian.Permissions.init(
-          one_of: [
-            %{user: [:write]},
-            %{profile: [:write]},
-            %{profile: [:read]}
-          ]
-        )
-
-      conn = Guardian.Permissions.call(ctx.conn, opts)
+    test "it allows when one of the one of permissions from one_of match", %{conn: conn} do
+      opts = Guardian.Permissions.init(one_of: [%{user: [:write]}, %{profile: [:write]}, %{profile: [:read]}])
+      conn = Guardian.Permissions.call(conn, opts)
 
       refute conn.halted
     end
 
     test "when there is no logged in resource it fails" do
-      conn = :get |> conn("/") |> Pipeline.call(module: Impl, error_handler: Handler)
-
       opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:read]})
-      conn = Guardian.Permissions.call(conn, opts)
-
-      assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-    end
-
-    test "when looking in a different location with correct permissions", ctx do
-      opts =
-        Guardian.Permissions.init(
-          ensure: %{user: [:read], profile: [:read]},
-          key: :secret
-        )
 
       conn =
-        ctx.conn
-        |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
+        :get
+        |> conn("/")
+        |> Pipeline.call(module: Impl, error_handler: Handler)
         |> Guardian.Permissions.call(opts)
 
-      refute conn.halted
+      assert conn.halted
+      assert {403, _headers, "{:unauthorized, :missing_claims}"} = sent_resp(conn)
+    end
 
-      opts = Guardian.Permissions.init(ensure: %{user: [:read]}, key: :secret)
+    test "when looking in a different location with correct permissions", %{claims: claims, conn: conn} do
+      opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:read]}, key: :secret)
 
       conn =
-        ctx.conn
-        |> Guardian.Plug.put_current_claims(ctx.claims, key: :secret)
+        conn
+        |> Guardian.Plug.put_current_claims(claims, key: :secret)
         |> Guardian.Permissions.call(opts)
 
       refute conn.halted
     end
 
-    test "when looking in a different location with incorrect ensure permissions", ctx do
-      opts =
-        Guardian.Permissions.init(
-          ensure: %{user: [:read], profile: [:read]},
-          key: :secret
-        )
+    test "when looking in a different location with incorrect ensure permissions", %{claims: claims, conn: conn} do
+      opts = Guardian.Permissions.init(ensure: %{user: [:read], profile: [:write]}, key: :secret)
 
-      conn = Guardian.Permissions.call(ctx.conn, opts)
-
-      assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
-    end
-
-    test "when looking in a different location with incorrect one_of permissions", ctx do
-      opts = Guardian.Permissions.init(one_of: [%{user: [:read]}], key: :secret)
-      conn = Guardian.Permissions.call(ctx.conn, opts)
+      conn =
+        conn
+        |> Guardian.Plug.put_current_claims(claims, key: :secret)
+        |> Guardian.Permissions.call(opts)
 
       assert conn.halted
-      assert {403, _headers, body} = sent_resp(conn)
-      assert body == "{:unauthorized, :unauthorized}"
+      assert {403, _headers, "{:unauthorized, :insufficient_permission}"} = sent_resp(conn)
     end
 
-    test "with no permissions specified", ctx do
+    test "when looking in a different location with incorrect one_of permissions", %{claims: claims, conn: conn} do
+      opts = Guardian.Permissions.init(one_of: [%{profile: [:write]}], key: :secret)
+
+      conn =
+        conn
+        |> Guardian.Plug.put_current_claims(claims, key: :secret)
+        |> Guardian.Permissions.call(opts)
+
+      assert conn.halted
+      assert {403, _headers, "{:unauthorized, :insufficient_permission}"} = sent_resp(conn)
+    end
+
+    test "with no permissions specified", %{conn: conn} do
       opts = Guardian.Permissions.init([])
-      conn = Guardian.Permissions.call(ctx.conn, opts)
+      conn = Guardian.Permissions.call(conn, opts)
       refute conn.halted
     end
   end

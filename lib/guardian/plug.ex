@@ -95,7 +95,7 @@ if Code.ensure_loaded?(Plug) do
           do: Guardian.Plug.remember_me_from_token(conn, implementation(), token, claims, opts)
 
         def clear_remember_me(conn, opts \\ []),
-          do: Guardian.Plug.clear_remember_me(conn, opts)
+          do: Guardian.Plug.clear_remember_me(conn, implementation(), opts)
       end
     end
 
@@ -153,8 +153,7 @@ if Code.ensure_loaded?(Plug) do
       conn.private[key]
     end
 
-    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_token(Plug.Conn.t(), Guardian.Token.token() | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_token(conn, token, opts \\ []) do
       key =
         conn
@@ -164,8 +163,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, token)
     end
 
-    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_claims(Plug.Conn.t(), Guardian.Token.claims() | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_claims(conn, claims, opts \\ []) do
       key =
         conn
@@ -175,8 +173,7 @@ if Code.ensure_loaded?(Plug) do
       put_private(conn, key, claims)
     end
 
-    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.options()) ::
-            Plug.Conn.t()
+    @spec put_current_resource(Plug.Conn.t(), resource :: any | nil, Guardian.options()) :: Plug.Conn.t()
     def put_current_resource(conn, resource, opts \\ []) do
       key =
         conn
@@ -202,13 +199,11 @@ if Code.ensure_loaded?(Plug) do
       |> configure_session(renew: true)
     end
 
-    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
-            Plug.Conn.t()
+    @spec sign_in(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
     def sign_in(conn, impl, resource, claims \\ %{}, opts \\ []) do
       with {:ok, token, full_claims} <- Guardian.encode_and_sign(impl, resource, claims, opts),
            {:ok, conn} <- add_data_to_conn(conn, resource, token, full_claims, opts),
-           {:ok, conn} <-
-             returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
+           {:ok, conn} <- returning_tuple({impl, :after_sign_in, [conn, resource, token, full_claims, opts]}) do
         if session_active?(conn) do
           put_session_token(conn, token, opts)
         else
@@ -227,7 +222,7 @@ if Code.ensure_loaded?(Plug) do
       case result do
         {:ok, conn} ->
           if Keyword.get(opts, :clear_remember_me, false) do
-            clear_remember_me(conn, opts)
+            clear_remember_me(conn, impl, opts)
           else
             conn
           end
@@ -237,14 +232,30 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    @spec clear_remember_me(Plug.Conn.t(), Guardian.options()) :: Plug.Conn.t()
-    def clear_remember_me(conn, opts) do
+    @doc """
+    Puts a response cookie which replaces the previous `remember_me` cookie
+    and is set to immediately expire on the client.
+
+    Note that while this can be used as a cheap way to sign out, a malicious client
+    could still access your server using the old JWT from the old cookie.
+    In other words, this does not in any way invalidate the token you issued, it just
+    makes a compliant client forget it.
+    """
+    @spec clear_remember_me(Plug.Conn.t(), module, Guardian.options()) :: Plug.Conn.t()
+    def clear_remember_me(conn, mod, opts) do
       key = fetch_token_key(conn, opts)
-      delete_resp_cookie(conn, key, [])
+      # Any value could be used here as the cookie is set to expire immediately anyway
+      token = ""
+
+      opts =
+        mod
+        |> cookie_options(%{})
+        |> Keyword.put(:max_age, 0)
+
+      put_resp_cookie(conn, key, token, opts)
     end
 
-    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) ::
-            Plug.Conn.t()
+    @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
     def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
       opts = Keyword.put_new(opts, :token_type, "refresh")
       key = fetch_token_key(conn, opts)
@@ -270,8 +281,7 @@ if Code.ensure_loaded?(Plug) do
       key = fetch_token_key(conn, opts)
 
       with {:ok, claims} <- Guardian.decode_and_verify(mod, token, claims_to_check, opts),
-           {:ok, _old, {new_t, full_new_c}} <-
-             Guardian.exchange(mod, token, claims["typ"], token_type, opts) do
+           {:ok, _old, {new_t, full_new_c}} <- Guardian.exchange(mod, token, claims["typ"], token_type, opts) do
         put_resp_cookie(conn, key, new_t, cookie_options(mod, full_new_c))
       else
         {:error, _} = err -> handle_unauthenticated(conn, err, opts)
