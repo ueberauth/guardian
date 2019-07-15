@@ -248,7 +248,7 @@ defmodule Guardian.Token.Jwt do
 
   """
   def create_token(mod, claims, options \\ []) do
-    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
+    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod, options),
          {:ok, secret} <- secret_fetcher.fetch_signing_secret(mod, options) do
       {_, token} =
         secret
@@ -299,7 +299,7 @@ defmodule Guardian.Token.Jwt do
   * `allowed_algos` - a list of allowable algos
   """
   def decode_token(mod, token, options \\ []) do
-    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
+    with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod, options),
          %{headers: headers} <- peek(mod, token),
          {:ok, raw_secret} <- secret_fetcher.fetch_verifying_secret(mod, headers, options),
          secret <- jose_jwk(raw_secret),
@@ -507,7 +507,10 @@ defmodule Guardian.Token.Jwt do
     |> set_ttl(mod, options)
   end
 
-  defp fetch_secret_fetcher(mod) do
-    {:ok, mod.config(:secret_fetcher, SecretFetcherDefaultImpl)}
+  defp fetch_secret_fetcher(mod, opts) do
+    case Keyword.get(opts, :secret_fetcher) do
+      nil -> {:ok, mod.config(:secret_fetcher, SecretFetcherDefaultImpl)}
+      secret_fetcher -> {:ok, secret_fetcher}
+    end
   end
 end
