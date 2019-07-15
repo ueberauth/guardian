@@ -39,6 +39,31 @@ defmodule Guardian.Token.JwtTest do
     end
   end
 
+  defmodule SecretFetcher.SecretFetcherTestImpl do
+    @moduledoc false
+    use Guardian.Token.Jwt.SecretFetcher
+
+    def fetch_signing_secret(mod, _opts) do
+      secret = "test1234"
+      secret = Guardian.Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
+
+    def fetch_verifying_secret(mod, _token_headers, _opts) do
+      secret = "test1234"
+      secret = Guardian.Config.resolve_value(secret) || mod.config(:secret_key)
+
+      case secret do
+        nil -> {:error, :secret_not_found}
+        val -> {:ok, val}
+      end
+    end
+  end
+
   setup do
     claims = %{
       "jti" => Guardian.UUID.generate(),
@@ -154,6 +179,13 @@ defmodule Guardian.Token.JwtTest do
       jwk = JWK.from_oct(the_secret)
       {true, jwt, _} = JOSE.JWT.verify_strict(jwk, ["HS512"], token)
 
+      assert jwt.fields == ctx.claims
+    end
+
+    test "create a token with a custom SecretFetcher", ctx do
+      secret = "test1234" |> JWK.from_oct()
+      {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret_fetcher: Guardian.Token.JwtTest.SecretFetcher.SecretFetcherTestImpl)
+      {true, jwt, _} = JWT.verify_strict(secret, ["HS512"], token)
       assert jwt.fields == ctx.claims
     end
   end
