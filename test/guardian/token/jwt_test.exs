@@ -41,11 +41,14 @@ defmodule Guardian.Token.JwtTest do
 
   defmodule SecretFetcher.SecretFetcherTestImpl do
     @moduledoc false
+    @secret "test1234"
+
     use Guardian.Token.Jwt.SecretFetcher
 
+    def secret(), do: @secret
+
     def fetch_signing_secret(mod, _opts) do
-      secret = "test1234"
-      secret = Guardian.Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
+      secret = Guardian.Config.resolve_value(secret()) || apply(mod, :config, [:secret_key])
 
       case secret do
         nil -> {:error, :secret_not_found}
@@ -54,8 +57,7 @@ defmodule Guardian.Token.JwtTest do
     end
 
     def fetch_verifying_secret(mod, _token_headers, _opts) do
-      secret = "test1234"
-      secret = Guardian.Config.resolve_value(secret) || mod.config(:secret_key)
+      secret = Guardian.Config.resolve_value(secret()) || mod.config(:secret_key)
 
       case secret do
         nil -> {:error, :secret_not_found}
@@ -183,7 +185,7 @@ defmodule Guardian.Token.JwtTest do
     end
 
     test "create a token with a custom SecretFetcher", ctx do
-      secret = "test1234" |> JWK.from_oct()
+      secret = Guardian.Token.JwtTest.SecretFetcher.SecretFetcherTestImpl.secret() |> JWK.from_oct()
       {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret_fetcher: Guardian.Token.JwtTest.SecretFetcher.SecretFetcherTestImpl)
       {true, jwt, _} = JWT.verify_strict(secret, ["HS512"], token)
       assert jwt.fields == ctx.claims
