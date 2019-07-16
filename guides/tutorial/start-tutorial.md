@@ -37,10 +37,45 @@ end
 
 ## Create a user manager
 
-We'll need something to authenticate. How Users are created and what they can do is outside the scope of this tutorial. If you already have a user model you can skip this part.
+We'll need something to authenticate. How Users are created and what they can do is outside the scope of this tutorial. If you already have a User model you can skip this part (but see the note after the command).
 
 ```sh
 $ mix phx.gen.context UserManager User users username:string password:string
+```
+
+Note: if you already have a User model, you need to implement some of the
+functions that mix generates for the UserManager context. mix generates the
+following functions:
+
+```elixir
+
+  def list_users do
+    Repo.all(User)
+  end
+
+  def get_user!(id), do: Repo.get!(User, id)
+
+  #The tutorial calls this one:
+  def create_user(attrs \\ %{}) do
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def update_user(%User{} = user, attrs) do
+    user
+    |> User.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_user(%User{} = user) do
+    Repo.delete(user)
+  end
+
+  #The tutorial calls this one:
+  def change_user(%User{} = user) do
+    User.changeset(user, %{})
+  end
 ```
 
 ## Create implementation module
@@ -139,6 +174,8 @@ Now we need a way to verify the username/password credentials.
 ## lib/auth_me/user_manager/user_manager.ex
 
 alias Argon2
+import Ecto.Query, only: [from: 2]
+
 
 def authenticate_user(username, plain_text_password) do
   query = from u in User, where: u.username == ^username
@@ -249,7 +286,7 @@ defmodule AuthMeWeb.SessionController do
     changeset = UserManager.change_user(%User{})
     maybe_user = Guardian.Plug.current_resource(conn)
     if maybe_user do
-      redirect(conn, to: "/secret")
+      redirect(conn, to: "/protected")
     else
       render(conn, "new.html", changeset: changeset, action: Routes.session_path(conn, :login))
     end
@@ -262,17 +299,17 @@ defmodule AuthMeWeb.SessionController do
 
   def logout(conn, _) do
     conn
-    |> Guardian.Plug.sign_out(Guardian, _opts = [])
-    |> redirect(to: "/login")
-  end
+    |> Guardian.Plug.sign_out() #This module's full name is Auth.UserManager.Guardian.Plug, 
+    |> redirect(to: "/login")   #and the arguments specfied in the Guardian.Plug.sign_out()
+  end                           #docs are not applicable here               
 
   defp login_reply({:ok, user}, conn) do
     conn
     |> put_flash(:info, "Welcome back!")
-    |> Guardian.Plug.sign_in(Guardian, user)
-    |> redirect(to: "/secret")
-  end
-
+    |> Guardian.Plug.sign_in(user)   #This module's full name is Auth.UserManager.Guardian.Plug,
+    |> redirect(to: "/protected")    #and the arguments specified in the Guardian.Plug.sign_in() 
+  end                                #docs are not applicable here.                 
+                                               
   defp login_reply({:error, reason}, conn) do
     conn
     |> put_flash(:error, to_string(reason))
@@ -344,7 +381,7 @@ We use the `Guardian.Plug.current_resource(conn)` function here to fetch the res
 
 ## Routes
 
-Ok. So the controller and views are not strictly part of Guardian but we need some way to interact with it. From here the only thing left for us to do is to wire up our router.
+Okay. So the controller and views are not strictly part of Guardian but we need some way to interact with it. From here the only thing left for us to do is to wire up our router.
 
 ```elixir
 # Our pipeline implements "maybe" authenticated. We'll use the `:ensure_auth` below for when we need to make sure someone is logged in.
@@ -388,25 +425,26 @@ Note that you must use the `:auth` pipeline before the `:ensure_auth` one to mak
 Migrate your users table.
 
 ```sh
-mix ecto.migrate
+$ mix ecto.migrate
 ```
 
 Since we didn't implement a form for creating a user we'll need to do that from the command line. Open up iex
 
 ```sh
-iex -S mix
+$ iex -S mix
 ```
 
 Create the user:
 
 ```sh
-AuthMe.UserManager.create_user(%{username: "me", password: "secret"})
+iex(1)> AuthMe.UserManager.create_user(%{username: "me", password: "secret"})
 ```
 
-Now exit and start up your server:
+Now exit iex and start up your server:
 
 ```sh
-mix phx.server
+$ mix phx.server
 ```
 
-Open up `localhost:4000/login` and you should be able to login with your `me` `secret` credentials!
+Enter `localhost:4000/protected` in your browser's address bar, and you should see "unathenticated".  Now, enter `localhost:4000/login` in your browser's address bar, and login with your `me` username and `secret` password.  You should automatically be redirected to the protected page, which you can now see!  To logout, enter `localhost:4000/logout` in your browser's address bar, and you will be redirected to the login page.  Instead of logging in, enter `localhost:4000/protected` in your browser's address bar, and you will see "unathenticated" again!
+
