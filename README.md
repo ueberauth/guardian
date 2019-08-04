@@ -46,7 +46,7 @@ mix.exs
 
 ```elixir
 defp deps do
-  [{:guardian, "~> 1.0"}]
+  [{:guardian, "~> 1.2"}]
 end
 ```
 
