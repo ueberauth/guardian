@@ -24,6 +24,7 @@ defmodule Guardian.Token.Jwt do
   * `allowed_algos` - The allowed algos to use for encoding and decoding.
                       See JOSE for available. Default ["HS512"]
   * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
+            The default by `Guardian.Token.JWT` is `{4, :weeks}`
   * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
   * `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
   * `verify_issuer` Verify that the token was issued by the configured issuer. Default false
@@ -37,6 +38,7 @@ defmodule Guardian.Token.Jwt do
   * `headers` The Jose headers that should be used
   * `allowed_algos`
   * `token_type` - Override the default token type
+                   The default is "access"
   * `ttl` - The time to live. See `Guardian.Token.ttl` type
 
   #### Example
@@ -111,6 +113,7 @@ defmodule Guardian.Token.Jwt do
                   token_verify_module: MyVerifyModule
     # ... snip
   end
+  ```
 
   ### SecretFetcher
 
@@ -119,7 +122,7 @@ defmodule Guardian.Token.Jwt do
   This will allow you to use the header values to determine dynamically the
   key that should be used.
 
-  ```
+  ```elixir
   defmodule MyCustomSecretFetcher do
     use Guardian.Token.Jwt.SecretFetcher
 
