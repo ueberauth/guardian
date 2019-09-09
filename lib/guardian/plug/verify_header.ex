@@ -6,8 +6,8 @@ if Code.ensure_loaded?(Plug) do
 
     In the case where:
 
-    a. The session is not loaded
-    b. A token is already found for `:key`
+    1. The session is not loaded
+    2. A token is already found for `:key`
 
     This plug will not do anything.
 
@@ -30,7 +30,7 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
-    * `header_name` - The name of the header to search for a token. Defaults to `authorization`. 
+    * `header_name` - The name of the header to search for a token. Defaults to `authorization`.
     * `realm` - The prefix for the token in the header. Defaults to `Bearer`. `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
 
