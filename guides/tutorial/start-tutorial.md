@@ -249,7 +249,7 @@ defmodule AuthMeWeb.SessionController do
     changeset = UserManager.change_user(%User{})
     maybe_user = Guardian.Plug.current_resource(conn)
     if maybe_user do
-      redirect(conn, to: "/secret")
+      redirect(conn, to: "/protected")
     else
       render(conn, "new.html", changeset: changeset, action: Routes.session_path(conn, :login))
     end
@@ -262,15 +262,15 @@ defmodule AuthMeWeb.SessionController do
 
   def logout(conn, _) do
     conn
-    |> Guardian.Plug.sign_out(Guardian, _opts = [])
+    |> Guardian.Plug.sign_out(_opts = [])
     |> redirect(to: "/login")
   end
 
   defp login_reply({:ok, user}, conn) do
     conn
     |> put_flash(:info, "Welcome back!")
-    |> Guardian.Plug.sign_in(Guardian, user)
-    |> redirect(to: "/secret")
+    |> Guardian.Plug.sign_in(user)
+    |> redirect(to: "/protected")
   end
 
   defp login_reply({:error, reason}, conn) do
