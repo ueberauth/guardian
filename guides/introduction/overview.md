@@ -51,7 +51,7 @@ Token implementations are provided via an adapter pattern. By implementing the [
 ```elixir
 defmodule MyApp.TokenModuleCustom do
   use Guardian, otp_app: :my_app,
-      token_module: MyApp.CusomTokenBackend
+      token_module: MyApp.CustomTokenBackend
 
   # ...
 end
