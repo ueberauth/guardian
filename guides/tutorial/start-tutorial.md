@@ -444,5 +444,8 @@ Now exit iex and start up your server:
 $ mix phx.server
 ```
 
-Enter `localhost:4000/protected` in your browser's address bar, and you should see "unauthenticated".  Now, enter `localhost:4000/login` in your browser's address bar, and login with your `me` username and `secret` password.  You should automatically be redirected to the protected page, which you can now see!  To logout, enter `localhost:4000/logout` in your browser's address bar, and you will be redirected to the login page.  Instead of logging in, enter `localhost:4000/protected` in your browser's address bar, and you will see "unauthenticated" again!
-
+Enter `localhost:4000/protected` in your browser's address bar, and you should see "unauthenticated".  
+Now, enter `localhost:4000/login` in your browser's address bar, and login with your `me` username and `secret` password.  
+You should automatically be redirected to the protected page, which you can now see!
+To logout, enter `localhost:4000/logout` in your browser's address bar, and you will be redirected to the login page.  
+Instead of logging in, enter `localhost:4000/protected` in your browser's address bar, and you will see "unauthenticated" again!
