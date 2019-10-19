@@ -165,6 +165,18 @@ defmodule Guardian.Plug.VerifySessionTest do
       |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler)
 
     assert conn.status == 401
+    assert conn.halted
+  end
+
+  test "does not halt conn when option is set to false", ctx do
+    conn =
+      :get
+      |> conn("/")
+      |> init_test_session(%{guardian_default_token: "not a good one"})
+      |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler, halt: false)
+
+    assert conn.status == 401
+    refute conn.halted
   end
 
   test "with multiple calls to different locations", ctx do
