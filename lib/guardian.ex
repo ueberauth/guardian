@@ -473,6 +473,20 @@ defmodule Guardian do
       def exchange(token, from_type, to_type, opts \\ []),
         do: Guardian.exchange(__MODULE__, token, from_type, to_type, opts)
 
+      @doc """
+      If Guardian.Plug.SlidingCookie is used, this callback will be invoked to
+      return the new claims, or an error (which will mean the cookie will not
+      be refreshed).
+      """
+
+      @spec sliding_cookie(
+              current_claims :: Guardian.Token.claims(),
+              current_resource :: Guardian.Token.resource(),
+              options :: Guardian.options()
+            ) :: {:ok, new_claims :: Guardian.Token.claims()} | {:error, any}
+      def sliding_cookie(_current_claims, _current_resource, opts \\ []),
+        do: {:error, :not_implemented}
+
       def after_encode_and_sign(_r, _claims, token, _), do: {:ok, token}
       def after_sign_in(conn, _r, _t, _c, _o), do: {:ok, conn}
       def before_sign_out(conn, _location, _opts), do: {:ok, conn}
@@ -494,7 +508,8 @@ defmodule Guardian do
                      on_refresh: 3,
                      on_verify: 3,
                      peek: 1,
-                     verify_claims: 2
+                     verify_claims: 2,
+                     sliding_cookie: 3
     end
   end
 
@@ -766,6 +781,25 @@ defmodule Guardian do
   def token_module(mod) do
     apply(mod, :config, [:token_module, @default_token_module])
   end
+
+  @doc false
+  def ttl_to_seconds({seconds, unit}) when unit in [:second, :seconds],
+    do: seconds
+
+  def ttl_to_seconds({minutes, unit}) when unit in [:minute, :minutes],
+    do: minutes * 60
+
+  def ttl_to_seconds({hours, unit}) when unit in [:hour, :hours],
+    do: hours * 60 * 60
+
+  def ttl_to_seconds({days, unit}) when unit in [:day, :days],
+    do: days * 24 * 60 * 60
+
+  def ttl_to_seconds({weeks, unit}) when unit in [:week, :weeks],
+    do: weeks * 7 * 24 * 60 * 60
+
+  def ttl_to_seconds({_, units}),
+    do: raise("Unknown Units: #{units}")
 
   defp validate_exchange_type(claims, from_type) when is_binary(from_type),
     do: validate_exchange_type(claims, [from_type])
