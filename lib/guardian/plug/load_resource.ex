@@ -23,6 +23,7 @@ if Code.ensure_loaded?(Plug) do
 
     * `allow_blank` - boolean. If set to true, will try to load a resource but will not fail if no resource is found.
     * `key` - The location to find the information in the connection. Defaults to: `default`
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     ## Example
 
@@ -33,8 +34,6 @@ if Code.ensure_loaded?(Plug) do
       plug Guardian.Plug.LoadResource, key: :secret
       ```
     """
-
-    import Plug.Conn
 
     alias Guardian.Plug.Pipeline
 
@@ -76,7 +75,7 @@ if Code.ensure_loaded?(Plug) do
     defp return_error(conn, reason, opts) do
       handler = Pipeline.fetch_error_handler!(conn, opts)
       conn = apply(handler, :auth_error, [conn, {:no_resource_found, reason}, opts])
-      halt(conn)
+      Guardian.Plug.maybe_halt(conn, opts)
     end
   end
 end
