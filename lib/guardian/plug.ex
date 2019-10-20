@@ -288,6 +288,15 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
+    @spec maybe_halt(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+    def maybe_halt(conn, opts) do
+      if Keyword.get(opts, :halt, true) do
+        Plug.Conn.halt(conn)
+      else
+        conn
+      end
+    end
+
     defp fetch_token_key(conn, opts) do
       conn
       |> Pipeline.fetch_key(opts)

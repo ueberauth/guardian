@@ -96,6 +96,12 @@ defmodule Guardian.Plug.VerifyCookieTest do
       assert {401, _, "{:invalid_token, :invalid_token_type}"} = sent_resp(conn)
     end
 
+    test "does not halt conn when option is set to false", ctx do
+      conn = VerifyCookie.call(ctx.conn, exchange_from: "access", halt: false)
+      refute conn.halted
+      assert {401, _, "{:invalid_token, :invalid_token_type}"} = sent_resp(conn)
+    end
+
     test "with no existing token found", ctx do
       conn = VerifyCookie.call(ctx.conn, [])
 

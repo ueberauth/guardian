@@ -33,6 +33,7 @@ if Code.ensure_loaded?(Plug) do
     * `header_name` - The name of the header to search for a token. Defaults to `authorization`.
     * `realm` - The prefix for the token in the header. Defaults to `Bearer`. `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     ### Example
 
@@ -100,7 +101,7 @@ if Code.ensure_loaded?(Plug) do
           conn
           |> Pipeline.fetch_error_handler!(opts)
           |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
-          |> halt()
+          |> Guardian.Plug.maybe_halt(opts)
 
         _ ->
           conn
