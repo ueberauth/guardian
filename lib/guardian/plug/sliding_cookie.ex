@@ -45,6 +45,7 @@ if Code.ensure_loaded?(Plug) do
 
     * `:key` - The location of the token (default `:default`)
     * `:sliding_cookie` - The time (after issue) after which a replacement will be issued. Defaults to configured values.
+    * `:halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     The `:sliding_cookie` config (or plug option) should be the same format as `:ttl`, for example
     `{1, :hour}`, and obviously it should be less than the prevailing `:ttl`.
@@ -86,7 +87,7 @@ if Code.ensure_loaded?(Plug) do
           conn
           |> Pipeline.fetch_error_handler!(opts)
           |> apply(:auth_error, [conn, {:implementation_fault, :no_sliding_cookie_fn}, opts])
-          |> halt()
+          |> Guardian.Plug.maybe_halt(opts)
 
         _ ->
           conn

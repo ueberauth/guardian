@@ -65,14 +65,31 @@ defmodule Guardian.Plug.SlidingCookieTest do
     assert conn === fetch_cookies(ctx.conn)
   end
 
-  test "with no sliding_window callback implementation conn is halted", ctx do
-    conn =
-      ctx.conn
-      |> put_req_cookie("guardian_default_token", ctx.token)
-      |> fetch_cookies()
-      |> SlidingCookie.call(sliding_cookie: {30, :seconds}, fail_sliding_cookie: :not_implemented)
+  describe "with no sliding_window callback implementation" do
+    setup ctx do
+      conn =
+        ctx.conn
+        |> put_req_cookie("guardian_default_token", ctx.token)
+        |> fetch_cookies()
 
-    assert conn.halted
+      {:ok, %{ctx | conn: conn}}
+    end
+
+    test "conn is halted", ctx do
+      conn =
+        ctx.conn
+        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, fail_sliding_cookie: :not_implemented)
+
+      assert conn.halted
+    end
+
+    test "conn is not halted when halt option is set to false", ctx do
+      conn =
+        ctx.conn
+        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, fail_sliding_cookie: :not_implemented, halt: false)
+
+      refute conn.halted
+    end
   end
 
   describe "with fetched cookies" do
