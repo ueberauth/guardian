@@ -54,7 +54,7 @@ defmodule Guardian.Plug.SlidingCookieTest do
       |> Pipeline.put_error_handler(handler)
 
     {:ok, token, claims} =
-      __MODULE__.Impl.encode_and_sign(@resource, %{"iat" => Guardian.timestamp() - 60}, token_type: "refresh")
+      __MODULE__.Impl.encode_and_sign(@resource, %{"exp" => Guardian.timestamp() + 60}, token_type: "refresh")
 
     {:ok, %{claims: claims, conn: conn, token: token, impl: impl, handler: handler}}
   end
@@ -78,7 +78,7 @@ defmodule Guardian.Plug.SlidingCookieTest do
     test "conn is halted", ctx do
       conn =
         ctx.conn
-        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, fail_sliding_cookie: :not_implemented)
+        |> SlidingCookie.call(sliding_cookie: {60, :seconds}, fail_sliding_cookie: :not_implemented)
 
       assert conn.halted
     end
@@ -129,8 +129,8 @@ defmodule Guardian.Plug.SlidingCookieTest do
 
   describe "with cookie and token after refresh threshold" do
     setup ctx do
-      iat = Guardian.timestamp() - 60
-      exp = Guardian.timestamp() + 60
+      iat = Guardian.timestamp() - 110
+      exp = Guardian.timestamp() + 10
       claims = %{"iat" => iat, "exp" => exp}
       {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource, claims, token_type: "refresh")
 
@@ -176,8 +176,8 @@ defmodule Guardian.Plug.SlidingCookieTest do
 
   describe "with cookie and token before refresh threshold" do
     setup ctx do
-      iat = Guardian.timestamp() - 10
-      exp = Guardian.timestamp() + 110
+      iat = Guardian.timestamp() - 60
+      exp = Guardian.timestamp() + 60
       claims = %{"iat" => iat, "exp" => exp}
       {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource, claims, token_type: "refresh")
 

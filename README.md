@@ -297,8 +297,8 @@ Look for a token in cookies and exchange it for an access token
 
 #### `Guardian.Plug.SlidingCookie`
 
-Replace a token in cookies with a new one if it is older than a configured
-threshold.
+Replace the token in cookies with a new one when a configured minimum TTL
+is remaining.
 
 #### `Guardian.Plug.EnsureAuthenticated`
 

@@ -44,7 +44,7 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `:key` - The location of the token (default `:default`)
-    * `:sliding_cookie` - The time (after issue) after which a replacement will be issued. Defaults to configured values.
+    * `:sliding_cookie` - The minimum TTL remaining after which a replacement will be issued. Defaults to configured values.
     * `:halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     The `:sliding_cookie` config (or plug option) should be the same format as `:ttl`, for example
@@ -75,10 +75,10 @@ if Code.ensure_loaded?(Plug) do
     def call(conn, opts) do
       with {:ok, token} <- find_token_from_cookies(conn, opts),
            module <- Pipeline.fetch_module!(conn, opts),
-           {:ok, refresh_after} <- sliding_window(module, opts),
-           {:ok, %{"iat" => iat} = claims} <- decode_and_verify(module, token, %{}, opts),
+           {:ok, ttl_softlimit} <- sliding_window(module, opts),
+           {:ok, %{"exp" => exp} = claims} <- decode_and_verify(module, token, %{}, opts),
            {:ok, resource} <- module.resource_from_claims(claims),
-           true <- timestamp() > iat + refresh_after,
+           true <- timestamp() >= exp - ttl_softlimit,
            {:ok, new_c} <- module.sliding_cookie(claims, resource, opts) do
         conn
         |> Guardian.Plug.remember_me(module, resource, new_c)
