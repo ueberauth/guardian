@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.0 (unreleased)
+
+### Enhancement
+
+* Add option `halt` to all plugs. This allows to optionally not halt the connection on error so downstream plugs are
+  still called [#617](https://github.com/ueberauth/guardian/pull/617)
+
 ## v2.0.0
 
 ### Enhancement

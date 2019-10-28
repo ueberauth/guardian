@@ -80,6 +80,12 @@ defmodule Guardian.Plug.LoadResourceTest do
       assert {401, _, "{:no_resource_found, :not_found}"} = sent_resp(conn)
       assert conn.halted
     end
+
+    test "does not halt conn when option is set to false", ctx do
+      conn = LoadResource.call(ctx.conn, module: ctx.impl, error_handler: ctx.handler, halt: false)
+      assert {401, _, "{:no_resource_found, :not_found}"} = sent_resp(conn)
+      refute conn.halted
+    end
   end
 
   describe "with a token and found resource" do

@@ -159,5 +159,17 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler)
 
     assert conn.status == 401
+    assert conn.halted
+  end
+
+  test "does not halt conn when option is set to false", ctx do
+    conn =
+      :get
+      |> conn("/")
+      |> put_req_header("authorization", "not a good one")
+      |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, halt: false)
+
+    assert conn.status == 401
+    refute conn.halted
   end
 end
