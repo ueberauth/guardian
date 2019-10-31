@@ -130,7 +130,7 @@ conn = MyApp.Guardian.Plug.sign_in(conn, resource, %{some: "claim"}, ttl: {1, :m
 conn = MyApp.Guardian.Plug.sign_out(conn)
 
 # Set a "refresh" token directly on a cookie.
-# Can be used in conjunction with `Guardian.Plug.VerifyCookie`
+# Can be used in conjunction with `Guardian.Plug.VerifyCookie` and `Guardian.Plug.SlidingCookie`
 conn = MyApp.Guardian.Plug.remember_me(conn, resource)
 
 # Fetch the information from the current connection
@@ -294,6 +294,11 @@ Look for a token in the session and verify it
 #### `Guardian.Plug.VerifyCookie`
 
 Look for a token in cookies and exchange it for an access token
+
+#### `Guardian.Plug.SlidingCookie`
+
+Replace the token in cookies with a new one when a configured minimum TTL
+is remaining.
 
 #### `Guardian.Plug.EnsureAuthenticated`
 

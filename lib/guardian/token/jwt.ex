@@ -147,7 +147,7 @@ defmodule Guardian.Token.Jwt do
   alias JOSE.JWS
   alias JOSE.JWT
 
-  import Guardian, only: [stringify_keys: 1]
+  import Guardian, only: [stringify_keys: 1, ttl_to_seconds: 1]
 
   @default_algos ["HS512"]
   @default_token_type "access"
@@ -446,22 +446,8 @@ defmodule Guardian.Token.Jwt do
   # catch all for when the issued at iat is not yet set
   defp set_ttl(claims, requested_ttl), do: claims |> set_iat() |> set_ttl(requested_ttl)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}}) when unit in [:second, :seconds],
-    do: Map.put(the_claims, "exp", iat_v + seconds)
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {minutes, unit}}) when unit in [:minute, :minutes],
-    do: Map.put(the_claims, "exp", iat_v + minutes * 60)
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {hours, unit}}) when unit in [:hour, :hours],
-    do: Map.put(the_claims, "exp", iat_v + hours * 60 * 60)
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {days, unit}}) when unit in [:day, :days],
-    do: Map.put(the_claims, "exp", iat_v + days * 24 * 60 * 60)
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {weeks, unit}}) when unit in [:week, :weeks],
-    do: Map.put(the_claims, "exp", iat_v + weeks * 7 * 24 * 60 * 60)
-
-  defp assign_exp_from_ttl(_, {_iat_v, {_, units}}), do: raise("Unknown Units: #{units}")
+  defp assign_exp_from_ttl(the_claims, {iat_v, ttl}),
+    do: Map.put(the_claims, "exp", iat_v + ttl_to_seconds(ttl))
 
   defp set_iss(claims, mod, _opts) do
     issuer = mod |> apply(:config, [:issuer]) |> to_string()

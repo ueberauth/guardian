@@ -146,6 +146,7 @@ defmodule Guardian.Mixfile do
         Guardian.Plug.VerifySession,
         Guardian.Plug.VerifyHeader,
         Guardian.Plug.VerifyCookie,
+        Guardian.Plug.SlidingCookie,
         Guardian.Plug.Keys
       ],
       Permissions: [
