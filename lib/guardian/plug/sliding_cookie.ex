@@ -9,6 +9,14 @@ if Code.ensure_loaded?(Plug) do
     in the `sliding_cookie/3` implementation to make sure the resource still
     exists, is valid and permitted.
 
+    Indefinite sessions can be prevented by using a `:max_age` configuration
+    (which will globally affect the validation of all tokens with an `auth_time`
+    claim) or by using the `:max_age` option when validating, and the `:auth_time`
+    option when encoding tokens in response to user login. For many simple
+    integrations with Phoenix simply using the `:max_age` configuration will
+    provide a desirable behaviour. This is subject to using JWT tokens, or
+    another token back end which supports the auth_time and max_age features.
+
     Looks for a valid token in the request cookies, and replaces it, if:
 
     a. A valid unexpired token is found in the request cookies.
@@ -81,7 +89,7 @@ if Code.ensure_loaded?(Plug) do
            true <- timestamp() >= exp - ttl_softlimit,
            {:ok, new_c} <- module.sliding_cookie(claims, resource, opts) do
         conn
-        |> Guardian.Plug.remember_me(module, resource, new_c)
+        |> Guardian.Plug.remember_me(module, resource, proc_new_claims(new_c, claims), opts)
       else
         {:error, :not_implemented} ->
           conn
@@ -103,5 +111,9 @@ if Code.ensure_loaded?(Plug) do
           {:ok, ttl_to_seconds(ttl_descr)}
       end
     end
+
+    defp proc_new_claims(%{"auth_time" => prev_auth_time} = new_c, %{"auth_time" => prev_auth_time}), do: new_c
+    defp proc_new_claims(new_c, %{"auth_time" => prev_auth_time}), do: Map.put(new_c, "auth_time", prev_auth_time)
+    defp proc_new_claims(new_c, _old_c), do: new_c
   end
 end

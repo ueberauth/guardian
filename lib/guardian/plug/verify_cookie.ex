@@ -38,7 +38,7 @@ if Code.ensure_loaded?(Plug) do
     * `:exchange_from` - The type of the cookie (default `"refresh"`)
     * `:exchange_to` - The type of token to provide. Defaults to the implementation modules `default_type`
     * `:ttl` - The time to live of the exchanged token. Defaults to configured values.
-    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `:halt` - Whether to halt the connection in case of error. Defaults to `true`.
     """
 
     import Plug.Conn
