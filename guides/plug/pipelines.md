@@ -32,7 +32,7 @@ The next thing that we're going to want to do is find the token. Guardian provid
 
 * [VerifySession](Guardian.Plug.VerifySession.html) - For when the token is stored in the session
 * [VerifyHeader](Guardian.Plug.VerifyHeader.html) - `Authorization` header token location
-* [VerifyCookie](Guardian.Plug.VerifySession.html) - A cookie has the cookie stored
+* [VerifyCookie](Guardian.Plug.VerifyCookie.html) - A cookie has the cookie stored
 
 ```elixir
 # ...
