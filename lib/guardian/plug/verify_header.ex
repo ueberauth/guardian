@@ -30,6 +30,7 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
+    * `max_age` - If the token has an "auth_time" claim, check it is not older than the maximum age.
     * `header_name` - The name of the header to search for a token. Defaults to `authorization`.
     * `realm` - The prefix for the token in the header. Defaults to `Bearer`. `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`

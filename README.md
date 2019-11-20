@@ -154,6 +154,9 @@ Creating with custom claims and options
 # Customize the secret
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: "custom")
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+
+# Require an "auth_time" claim to be added.
+{:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, auth_time: true)
 ```
 
 Decoding tokens
@@ -165,6 +168,10 @@ Decoding tokens
 # Use a custom secret
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: "custom")
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, secret: {SomeMod, :some_func, ["some", "args"]})
+
+# Specify a maximum age (since end user authentication time). If the token has an
+# `auth_time` claim and it is older than the `max_age` allows, the token will be invalid.
+{:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, max_age: {2, :hours})
 ```
 
 If you need dynamic verification for JWT tokens, please see the documentation for `Guardian.Token.Jwt` and `Guardian.Token.Jwt.SecretFetcher`
@@ -219,7 +226,12 @@ The default token type of `Guardian` is JWT. It accepts many options but you rea
 * `allowed_drift` The drift that is allowed when decoding/verifying a token in milliseconds
 * `verify_issuer` Default false
 * `secret_fetcher` A module used to fetch the secret. Default: `Guardian.Token.Jwt.SecretFetcher`
+* `auth_time` Include an `auth_time` claim to denote the end user authentication time. Default false.
+* `max_age` Specify the maximum time (since the end user authentication) the token will be valid.
+  Format is the same as `ttl`. Implies `auth_time` unless `auth_time` is set explicitly to `false`.
 
+See the [OpenID Connect Core specification](https://openid.net/specs/openid-connect-core-1_0.html)
+for more details about `auth_time` and `max_age` behaviour.
 
 ## Secrets (JWT)
 

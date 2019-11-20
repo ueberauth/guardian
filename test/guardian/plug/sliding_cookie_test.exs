@@ -35,10 +35,17 @@ defmodule Guardian.Plug.SlidingCookieTest do
     def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
 
     def sliding_cookie(_claims, _resource, opts) do
-      case Keyword.get(opts, :fail_sliding_cookie) do
-        nil -> {:ok, %{"new" => "claim"}}
-        reason -> {:error, reason}
-      end
+      Enum.reduce(
+        opts,
+        {:ok, %{"new" => "claim"}},
+        fn
+          _, {:error, _reason} = error -> error
+          {:fail_sliding_cookie, reason}, {:ok, _claims} -> {:error, reason}
+          {:mutate_auth_time, :delete}, {:ok, claims} -> {:ok, Map.delete(claims, "auth_time")}
+          {:mutate_auth_time, new_auth_time}, {:ok, claims} -> {:ok, Map.put(claims, "auth_time", new_auth_time)}
+          _, {:ok, claims} -> {:ok, claims}
+        end
+      )
     end
   end
 
@@ -195,6 +202,56 @@ defmodule Guardian.Plug.SlidingCookieTest do
         |> SlidingCookie.call(sliding_cookie: {30, :seconds})
 
       assert conn === ctx.conn
+    end
+  end
+
+  describe "when auth_time set" do
+    setup ctx do
+      iat = Guardian.timestamp() - 110
+      exp = Guardian.timestamp() + 10
+      auth_time = 100
+
+      claims = %{"iat" => iat, "exp" => exp, "auth_time" => auth_time}
+      {:ok, token, claims} = __MODULE__.Impl.encode_and_sign(@resource, claims, token_type: "refresh")
+
+      conn =
+        ctx.conn
+        |> put_req_cookie("guardian_default_token", token)
+        |> fetch_cookies()
+
+      {:ok, %{ctx | conn: conn, claims: claims}}
+    end
+
+    test "implementation module changes to auth_time are discarded", ctx do
+      conn =
+        ctx.conn
+        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, mutate_auth_time: 200)
+
+      refute conn.halted
+      refute conn === ctx.conn
+
+      assert {:ok, %{"new" => "claim", "auth_time" => 100}} =
+               __MODULE__.Impl.decode_and_verify(conn.resp_cookies["guardian_default_token"].value)
+
+      conn =
+        ctx.conn
+        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, mutate_auth_time: 100)
+
+      refute conn.halted
+      refute conn === ctx.conn
+
+      assert {:ok, %{"new" => "claim", "auth_time" => 100}} =
+               __MODULE__.Impl.decode_and_verify(conn.resp_cookies["guardian_default_token"].value)
+
+      conn =
+        ctx.conn
+        |> SlidingCookie.call(sliding_cookie: {30, :seconds}, mutate_auth_time: :delete)
+
+      refute conn.halted
+      refute conn === ctx.conn
+
+      assert {:ok, %{"new" => "claim", "auth_time" => 100}} =
+               __MODULE__.Impl.decode_and_verify(conn.resp_cookies["guardian_default_token"].value)
     end
   end
 end
