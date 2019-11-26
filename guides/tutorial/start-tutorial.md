@@ -103,10 +103,8 @@ defmodule AuthMe.UserManager.Guardian do
 
   def resource_from_claims(%{"sub" => id}) do
     case UserManager.get_user!(id) do
-          {:error, err} -> {:error, :resource_not_found}
-          {:ok, user} -> {:ok, user}
-      nil -> {:error, :resource_not_found}
-      user -> {:ok, user}
+      {:error, err} -> {:error, :resource_not_found}
+      {:ok, user} -> {:ok, user}
     end
   end
 end
