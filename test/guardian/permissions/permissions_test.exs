@@ -130,6 +130,28 @@ defmodule Guardian.PermissionsTest do
     end
   end
 
+  describe "when used as a plug with no permissions" do
+    setup do
+      claims = Impl.build_claims(%{"sub" => "user:1"}, nil, permissions: %{})
+
+      conn =
+        :get
+        |> conn("/")
+        |> Pipeline.call(module: Impl, error_handler: Handler)
+        |> Guardian.Plug.put_current_claims(claims)
+
+      {:ok, %{conn: conn, claims: claims}}
+    end
+
+    test "it does not allow when permissions are missing from ensure", %{conn: conn} do
+      opts = Guardian.Permissions.init(ensure: %{user: [:write, :read], profile: [:read, :write]})
+      conn = Guardian.Permissions.call(conn, opts)
+
+      assert {403, _headers, "{:unauthorized, :insufficient_permission}"} = sent_resp(conn)
+      assert conn.halted
+    end
+  end
+
   describe "when used as a plug" do
     setup do
       claims = Impl.build_claims(%{"sub" => "user:1"}, nil, permissions: %{user: [:read, :write], profile: [:read]})

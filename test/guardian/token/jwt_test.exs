@@ -287,6 +287,41 @@ defmodule Guardian.Token.JwtTest do
       assert result["typ"] == "other"
       assert diff <= 1
     end
+
+    test "does not set auth_time by default", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, [])
+      refute result["auth_time"]
+    end
+
+    test "sets auth_time when auth_time requested", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, auth_time: true)
+      assert result["auth_time"]
+    end
+
+    test "sets auth_time when max_age specified", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, max_age: {1, :minute})
+      assert result["auth_time"]
+    end
+
+    test "sets a new auth_time to iat", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, auth_time: true)
+      assert result["auth_time"] === result["iat"]
+    end
+
+    test "keeps the auth_time when already specified", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{"auth_time" => 10}, [])
+      assert result["auth_time"] === 10
+    end
+
+    test "does not set auth_time when auth_time is set to false", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, auth_time: false)
+      refute result["auth_time"]
+    end
+
+    test "does not set auth_time when auth_time is set to false even if max_age set", ctx do
+      {:ok, result} = Jwt.build_claims(ctx.impl, @resource, ctx.sub, %{}, auth_time: false, max_age: {1, :minute})
+      refute result["auth_time"]
+    end
   end
 
   describe "verify_claims" do
@@ -294,9 +329,10 @@ defmodule Guardian.Token.JwtTest do
 
     setup do
       claims = %{
-        iat: Guardian.timestamp(),
-        nbf: Guardian.timestamp() - 1,
-        exp: Guardian.timestamp() + 5
+        "iat" => Guardian.timestamp(),
+        "nbf" => Guardian.timestamp() - 1,
+        "exp" => Guardian.timestamp() + 5,
+        "auth_time" => Guardian.timestamp() - 3
       }
 
       {:ok, %{claims: claims}}
@@ -321,9 +357,30 @@ defmodule Guardian.Token.JwtTest do
       assert {:error, :invalid_issuer} = Jwt.verify_claims(ctx.impl, claims, [])
     end
 
+    test "it verifies when the issuer is correct", ctx do
+      claims = Map.put(ctx.claims, "iss", "MyApp")
+      assert {:ok, ^claims} = Jwt.verify_claims(ctx.impl, claims, [])
+    end
+
     test "it is valid when all is good", ctx do
       claims = ctx.claims
       assert {:ok, ^claims} = Jwt.verify_claims(ctx.impl, claims, [])
+    end
+
+    test "it verifies when no max_age is specified", ctx do
+      claims = ctx.claims
+      assert {:ok, ^claims} = Jwt.verify_claims(ctx.impl, claims, [])
+    end
+
+    test "it verifies when max_age is specified and auth_time is not too old", ctx do
+      claims = ctx.claims
+      assert {:ok, ^claims} = Jwt.verify_claims(ctx.impl, claims, max_age: {3, :second})
+      assert {:ok, ^claims} = Jwt.verify_claims(ctx.impl, claims, max_age: {4, :second})
+    end
+
+    test "it is invalid when max_age is specified and auth_time is too old", ctx do
+      assert {:error, :token_expired} = Jwt.verify_claims(ctx.impl, ctx.claims, max_age: {1, :second})
+      assert {:error, :token_expired} = Jwt.verify_claims(ctx.impl, ctx.claims, max_age: {2, :second})
     end
   end
 

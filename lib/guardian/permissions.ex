@@ -239,7 +239,7 @@ defmodule Guardian.Permissions do
         test_perms_bits = decode_permissions(test_perms)
 
         Enum.all?(test_perms_bits, fn {k, needs} ->
-          has = Map.get(has_perms_bits, k, 0)
+          has = Map.get(has_perms_bits, k, [])
           MapSet.subset?(MapSet.new(needs), MapSet.new(has))
         end)
       end

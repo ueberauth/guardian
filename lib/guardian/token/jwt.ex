@@ -289,6 +289,7 @@ defmodule Guardian.Token.Jwt do
       |> set_type(mod, options)
       |> set_sub(mod, sub, options)
       |> set_ttl(mod, options)
+      |> set_auth_time(mod, options)
 
     {:ok, claims}
   end
@@ -445,6 +446,26 @@ defmodule Guardian.Token.Jwt do
 
   # catch all for when the issued at iat is not yet set
   defp set_ttl(claims, requested_ttl), do: claims |> set_iat() |> set_ttl(requested_ttl)
+
+  defp set_auth_time(%{"auth_time" => auth_time} = claims, _mod, _opts) when not is_nil(auth_time), do: claims
+
+  defp set_auth_time(%{"iat" => iat} = claims, mod, opts) do
+    set_auth_time =
+      if opts[:auth_time] !== nil do
+        opts[:auth_time]
+      else
+        case mod.config(:auth_time) do
+          nil -> opts[:max_age] || mod.config(:max_age)
+          auth_time -> auth_time
+        end
+      end
+
+    if set_auth_time do
+      Map.put(claims, "auth_time", iat)
+    else
+      claims
+    end
+  end
 
   defp assign_exp_from_ttl(the_claims, {iat_v, ttl}),
     do: Map.put(the_claims, "exp", iat_v + ttl_to_seconds(ttl))
