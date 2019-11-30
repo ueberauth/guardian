@@ -42,10 +42,10 @@ The next thing that we're going to want to do is find the token. Guardian provid
 # Look for a token in the session.
 # If there is no session or no token nothing happens and control is passed to the next plug
 # If a token is found it's verified and added to the conn struct available with `Guardian.Plug.current_token` and `Guardian.Plug.current_claims`
-plug Guardian.Plug.VerifySession, %{"typ" => "access"}
+plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
 
 # Look for a token in the HTTP Authorization header. (prefixed with `"Bearer "`)
-plug Guardian.Plug.VerifyHeader, %{"typ" => "access"}
+plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
 ```
 
 These two plugs will look for tokens in the given locations and also restrict them to only validate for tokens that have the claim `typ == "access"`. You don't need to restrict to a type or you could add other literal claims to verify.
@@ -67,8 +67,8 @@ pipeline :auth do
   plug Guardian.Plug.Pipeline, module: AuthMe.UserManager.Guardian,
                                error_handler: AuthMe.UserManager.ErrorHandlers.JSON
 
-  plug Guardian.Plug.VerifySession, %{"typ" => "access"}
-  plug Guardian.Plug.VerifyHeader, %{"typ" => "access"}
+  plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
+  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
   plug Guardian.Plug.EnsureAuthenticated
   plug Guardian.Plug.LoadResource
 end
@@ -88,8 +88,8 @@ defmodule AuthMe.UserManager.Pipeline do
                               module: AuthMe.UserManager.Guardian,
                               error_handler: AuthMe.UserManager.ErrorHandlers.JSON
 
-  plug Guardian.Plug.VerifySession, %{"typ" => "access"}
-  plug Guardian.Plug.VerifyHeader, %{"typ" => "access"}
+  plug Guardian.Plug.VerifySession, claims: %{"typ" => "access"}
+  plug Guardian.Plug.VerifyHeader, claims: %{"typ" => "access"}
   plug Guardian.Plug.EnsureAuthenticated
   plug Guardian.Plug.LoadResource
 end
