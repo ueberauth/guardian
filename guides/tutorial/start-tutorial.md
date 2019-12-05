@@ -6,11 +6,11 @@ Getting started with Guardian is easy. This tutorial will cover
 * HTTP integration
 * Login/Logout
 
-We'll use Phoenix for this tutorial since most folks will be using it. There is no requirement to use Phoenix with Guardian but it makes this tutorial easier.
-
 This tutorial was based on [this article](https://medium.com/@tylerpachal/session-authentication-example-for-phoenix-1-3-using-guardian-1-0-beta-a228c78478e6) by [Tyler Pachal](https://github.com/TylerPachal).
 
-We'll also use the default token type of JWT. Again with this you don't _have_ to use JWT for your token backend. See the [token documentation](tokens-start.html) for more information.
+We'll use Phoenix for this tutorial since most folks will be using it. There is no requirement to use Phoenix with Guardian but it makes this tutorial easier.
+
+We'll also use the default token type of JWT. You don't _have_ to use JWT for your token backend. See the [token documentation](tokens-start.html) for more information.
 
 Authentication consists of a challenge phase (prove who you are) and then followed by a verification phase (has this actor proven who they are?). Guardian looks after the second part for you. It's up to your application to implement the challenge phase after which Guardian will do the rest. In this tutorial we'll use [comeonin](https://github.com/riverrun/comeonin) with [argon2](https://en.wikipedia.org/wiki/Argon2) for the challenge phase.
 
@@ -103,8 +103,8 @@ defmodule AuthMe.UserManager.Guardian do
 
   def resource_from_claims(%{"sub" => id}) do
     case UserManager.get_user!(id) do
-      nil -> {:error, :resource_not_found}
-      user -> {:ok, user}
+      {:error, err} -> {:error, :resource_not_found}
+      {:ok, user} -> {:ok, user}
     end
   end
 end
@@ -444,5 +444,8 @@ Now exit iex and start up your server:
 $ mix phx.server
 ```
 
-Enter `localhost:4000/protected` in your browser's address bar, and you should see "unauthenticated".  Now, enter `localhost:4000/login` in your browser's address bar, and login with your `me` username and `secret` password.  You should automatically be redirected to the protected page, which you can now see!  To logout, enter `localhost:4000/logout` in your browser's address bar, and you will be redirected to the login page.  Instead of logging in, enter `localhost:4000/protected` in your browser's address bar, and you will see "unauthenticated" again!
-
+Enter `localhost:4000/protected` in your browser's address bar, and you should see "unauthenticated".
+Now, enter `localhost:4000/login` in your browser's address bar, and login with your `me` username and `secret` password.
+You should automatically be redirected to the protected page, which you can now see!
+To logout, enter `localhost:4000/logout` in your browser's address bar, and you will be redirected to the login page.
+Instead of logging in, enter `localhost:4000/protected` in your browser's address bar, and you will see "unauthenticated" again!
