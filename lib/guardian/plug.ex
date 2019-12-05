@@ -288,6 +288,26 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
+    @spec maybe_halt(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+    def maybe_halt(conn, opts) do
+      if Keyword.get(opts, :halt, true) do
+        Plug.Conn.halt(conn)
+      else
+        conn
+      end
+    end
+
+    @spec find_token_from_cookies(conn :: Plug.Conn.t(), Keyword.t()) :: {:ok, String.t()} | :no_token_found
+    def find_token_from_cookies(conn, opts) do
+      key =
+        conn
+        |> Pipeline.fetch_key(opts)
+        |> token_key()
+
+      token = conn.req_cookies[key] || conn.req_cookies[to_string(key)]
+      if token, do: {:ok, token}, else: :no_token_found
+    end
+
     defp fetch_token_key(conn, opts) do
       conn
       |> Pipeline.fetch_key(opts)

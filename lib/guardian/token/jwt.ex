@@ -147,7 +147,7 @@ defmodule Guardian.Token.Jwt do
   alias JOSE.JWS
   alias JOSE.JWT
 
-  import Guardian, only: [stringify_keys: 1]
+  import Guardian, only: [stringify_keys: 1, ttl_to_seconds: 1]
 
   @default_algos ["HS512"]
   @default_token_type "access"
@@ -289,6 +289,7 @@ defmodule Guardian.Token.Jwt do
       |> set_type(mod, options)
       |> set_sub(mod, sub, options)
       |> set_ttl(mod, options)
+      |> set_auth_time(mod, options)
 
     {:ok, claims}
   end
@@ -446,22 +447,28 @@ defmodule Guardian.Token.Jwt do
   # catch all for when the issued at iat is not yet set
   defp set_ttl(claims, requested_ttl), do: claims |> set_iat() |> set_ttl(requested_ttl)
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {seconds, unit}}) when unit in [:second, :seconds],
-    do: Map.put(the_claims, "exp", iat_v + seconds)
+  defp set_auth_time(%{"auth_time" => auth_time} = claims, _mod, _opts) when not is_nil(auth_time), do: claims
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {minutes, unit}}) when unit in [:minute, :minutes],
-    do: Map.put(the_claims, "exp", iat_v + minutes * 60)
+  defp set_auth_time(%{"iat" => iat} = claims, mod, opts) do
+    set_auth_time =
+      if opts[:auth_time] !== nil do
+        opts[:auth_time]
+      else
+        case mod.config(:auth_time) do
+          nil -> opts[:max_age] || mod.config(:max_age)
+          auth_time -> auth_time
+        end
+      end
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {hours, unit}}) when unit in [:hour, :hours],
-    do: Map.put(the_claims, "exp", iat_v + hours * 60 * 60)
+    if set_auth_time do
+      Map.put(claims, "auth_time", iat)
+    else
+      claims
+    end
+  end
 
-  defp assign_exp_from_ttl(the_claims, {iat_v, {days, unit}}) when unit in [:day, :days],
-    do: Map.put(the_claims, "exp", iat_v + days * 24 * 60 * 60)
-
-  defp assign_exp_from_ttl(the_claims, {iat_v, {weeks, unit}}) when unit in [:week, :weeks],
-    do: Map.put(the_claims, "exp", iat_v + weeks * 7 * 24 * 60 * 60)
-
-  defp assign_exp_from_ttl(_, {_iat_v, {_, units}}), do: raise("Unknown Units: #{units}")
+  defp assign_exp_from_ttl(the_claims, {iat_v, ttl}),
+    do: Map.put(the_claims, "exp", iat_v + ttl_to_seconds(ttl))
 
   defp set_iss(claims, mod, _opts) do
     issuer = mod |> apply(:config, [:issuer]) |> to_string()

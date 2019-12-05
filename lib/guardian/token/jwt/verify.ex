@@ -46,5 +46,18 @@ defmodule Guardian.Token.Jwt.Verify do
     end
   end
 
+  def verify_claim(_mod, "auth_time", %{"auth_time" => nil} = claims, _opts), do: {:ok, claims}
+
+  def verify_claim(mod, "auth_time", %{"auth_time" => auth_time} = claims, opts) do
+    max_age = opts[:max_age] || mod.config(:max_age)
+
+    cond do
+      max_age == nil -> {:ok, claims}
+      Verify.time_within_drift?(mod, auth_time) -> {:ok, claims}
+      Guardian.timestamp() <= auth_time + Guardian.ttl_to_seconds(max_age) -> {:ok, claims}
+      true -> {:error, :token_expired}
+    end
+  end
+
   def verify_claim(_mod, _claim_key, claims, _opts), do: {:ok, claims}
 end

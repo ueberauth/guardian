@@ -17,7 +17,9 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `claims` - The literal claims to check to ensure that a token is valid
+    * `max_age` - If the token has an "auth_time" claim, check it is not older than the maximum age.
     * `key` - The location to find the information in the connection. Defaults to: `default`
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     ## Example
 
@@ -63,7 +65,7 @@ if Code.ensure_loaded?(Plug) do
       conn
       |> Guardian.Plug.Pipeline.fetch_error_handler!(opts)
       |> apply(:auth_error, [conn, {:unauthenticated, reason}, opts])
-      |> Plug.Conn.halt()
+      |> Guardian.Plug.maybe_halt(opts)
     end
 
     @spec verify_claims(Guardian.Token.claims(), Keyword.t()) :: {:ok, Guardian.Token.claims()} | {:error, any}
