@@ -68,7 +68,7 @@ defmodule Guardian.Token do
   Revoke a token (if appropriate)
   """
   @callback revoke(mod :: module, claims :: claims, token :: token, options :: Guardian.options()) ::
-              {:ok, claims | {:error, any}}
+              {:ok, claims} | {:error, any}
 
   @doc """
   Refresh a token
