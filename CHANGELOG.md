@@ -1,11 +1,17 @@
 # Changelog
 
-## v2.1.0 (unreleased)
+## v2.1.0
 
 ### Enhancement
 
 * Add option `halt` to all plugs. This allows to optionally not halt the connection on error so downstream plugs are
   still called [#617](https://github.com/ueberauth/guardian/pull/617)
+* Added SlidingCookie plug that allows auto refreshing cookie tokens [616](https://github.com/ueberauth/guardian/pull/616)
+* Documentation updates
+
+### Bug Fix
+
+* Error when permissions was an empty list, was causes by a wrong default value, [625](https://github.com/ueberauth/guardian/pull/625)
 
 ## v2.0.0
 
