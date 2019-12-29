@@ -78,7 +78,7 @@ defmodule Guardian.Permissions do
 
   ### Using with Plug
 
-  To use a plug for ensuring permissions you can use the `Guardian.Permissions.BitwiseEncoding. module as part of a
+  To use a plug for ensuring permissions you can use the `Guardian.Permissions.BitwiseEncoding` module as part of a
   Guardian pipeline.
 
   ```elixir
