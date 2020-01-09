@@ -107,7 +107,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @spec authenticated?(Plug.Conn.t(), Guardian.options()) :: true | false
-    def authenticated?(conn, opts) do
+    def authenticated?(conn, opts \\ []) do
       key =
         conn
         |> fetch_key(opts)
@@ -215,7 +215,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @spec sign_out(Plug.Conn.t(), module, Guardian.options()) :: Plug.Conn.t()
-    def sign_out(conn, impl, opts) do
+    def sign_out(conn, impl, opts \\ []) do
       key = Keyword.get(opts, :key, :all)
       result = do_sign_out(conn, impl, key, opts)
 
@@ -242,7 +242,7 @@ if Code.ensure_loaded?(Plug) do
     makes a compliant client forget it.
     """
     @spec clear_remember_me(Plug.Conn.t(), module, Guardian.options()) :: Plug.Conn.t()
-    def clear_remember_me(conn, mod, opts) do
+    def clear_remember_me(conn, mod, opts \\ []) do
       key = fetch_token_key(conn, opts)
       # Any value could be used here as the cookie is set to expire immediately anyway
       token = ""
@@ -289,7 +289,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @spec maybe_halt(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
-    def maybe_halt(conn, opts) do
+    def maybe_halt(conn, opts \\ []) do
       if Keyword.get(opts, :halt, true) do
         Plug.Conn.halt(conn)
       else
@@ -298,7 +298,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @spec find_token_from_cookies(conn :: Plug.Conn.t(), Keyword.t()) :: {:ok, String.t()} | :no_token_found
-    def find_token_from_cookies(conn, opts) do
+    def find_token_from_cookies(conn, opts \\ []) do
       key =
         conn
         |> Pipeline.fetch_key(opts)
