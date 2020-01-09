@@ -6,13 +6,9 @@
 [![Codecov](https://codecov.io/gh/ueberauth/guardian/branch/master/graph/badge.svg)](https://codecov.io/gh/ueberauth/guardian)
 [![Inline docs](http://inch-ci.org/github/ueberauth/guardian.svg)](http://inch-ci.org/github/ueberauth/guardian)
 
-> Looking for [Guardian pre 1.0](https://github.com/ueberauth/guardian/tree/v0.14.x)?
-
-> Upgrading from pre 1.0? See the [0.14 to 1.0 Upgrade Guide](upgrade_guides/0.14.to.1.0.md)
-
 Guardian is a token based authentication library for use with Elixir applications.
 
-Guardian remains a functional system. It integrates with Plug, but can be used outside of it. If you're implementing a TCP/UDP protocol directly, or want to utilize your authentication via channels in Phoenix, Guardian is your friend.
+Guardian remains a functional system. It integrates with Plug but can be used outside of it. If you're implementing a TCP/UDP protocol directly or want to utilize your authentication via channels in Phoenix, Guardian can work for you.
 
 The core currency of authentication in Guardian is the _token_.
 By default [JSON Web Tokens](https://jwt.io) are supported out of the box but any token that:
@@ -38,7 +34,6 @@ API documentation is available at [https://hexdocs.pm/guardian](https://hexdocs.
 
 ## Installation
 
-Guardian requires that you create an "Implementation Module". This module is your applications implementation for a particular type/configuration of token. You do this by `use`ing Guardian in your module and adding the relevant configuration.
 
 Add Guardian to your application
 
@@ -50,7 +45,8 @@ defp deps do
 end
 ```
 
-Create a module that uses `Guardian`
+In order to leverage Guardian we'll need first create an "implementation module" which includes Guardian's functionality and the code for encoding and decoding our token's values.
+To do this, create a module that uses `Guardian` and implements the `subject_for_token/2` and `resource_from_claims/1` function.
 
 ```elixir
 defmodule MyApp.Guardian do
@@ -83,7 +79,7 @@ defmodule MyApp.Guardian do
 end
 ```
 
-Add your configuration
+Next we need to add our configuration to `config/config.exs`:
 
 ```elixir
 config :my_app, MyApp.Guardian,
@@ -91,7 +87,7 @@ config :my_app, MyApp.Guardian,
        secret_key: "Secret key. You can use `mix guardian.gen.secret` to get one"
 ```
 
-With this level of configuration, you can have a working installation.
+Congrats! We have a working Guardian implementation.
 
 ## Basics
 
@@ -387,10 +383,9 @@ end
 
 ### Phoenix
 
-Guardian provides some integration with Phoenix out of the box.
-Not a lot is really needed but around sockets, some helper functions have been provided to make things easier to work with.
+Guardian and Phoenix are perfect together, but to get the most out of the integration be sure to include the [`guardian_phoenix`](https://github.com/ueberauth/guardian_phoenix) library.
 
-Please see the documentation for `Guardian.Phoenix.Socket` for more information.
+See the Guardian Phoenix documentation for more information.
 
 ## Permissions
 
@@ -452,7 +447,8 @@ end
 
 ## Related projects
 
-* [GuardianDb](https://hex.pm/packages/guardian_db) - Token tracking in the database
+* [GuardianDb](https://github.com/ueberauth/guardian_db) - Token tracking in the database
+* [GuardianPhoenix](https://github.com/ueberauth/guardian_phoenix) - Phoenix integration
 * [sans_password](https://hex.pm/packages/sans_password) - A simple, passwordless authentication system based on Guardian.
 * [protego](https://hex.pm/packages/protego) - Flexible authentication solution for Elixir/Phoenix with Guardian.
 
