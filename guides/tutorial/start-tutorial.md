@@ -29,7 +29,7 @@ You'll need to update the dependencies to whatever is latest.
 
 defp deps do
   [
-    {:guardian, "~> 1.2"},
+    {:guardian, "~> 2.0"},
     {:argon2_elixir, "~> 2.0"},
   ]
 end
@@ -102,10 +102,7 @@ defmodule AuthMe.UserManager.Guardian do
   end
 
   def resource_from_claims(%{"sub" => id}) do
-    case UserManager.get_user(id) do
-      nil -> {:error, :resource_not_found}
-      user -> {:ok, user}
-    end
+    UserManager.get_user!(id)
   end
 end
 ```
@@ -152,7 +149,7 @@ We added `:comeonin` and `:argon2_elixir` to our mix deps at the start. We're go
 
 alias Argon2
 
-def changeset(%User{} = user, attrs) do
+def changeset(user, attrs) do
   user
   |> cast(attrs, [:username, :password])
   |> validate_required([:username, :password])
@@ -169,7 +166,7 @@ defp put_password_hash(changeset), do: changeset
 Now we need a way to verify the username/password credentials.
 
 ```elixir
-## lib/auth_me/user_manager/user_manager.ex
+## lib/auth_me/user_manager.ex
 
 alias Argon2
 import Ecto.Query, only: [from: 2]
@@ -201,7 +198,7 @@ Fixing the broken tests is simple: we want to compare the encrypted passwords in
 ...
 
 test "create_user/1 with valid data creates a user" do
-  assert {:ok, %User{} = user} = Auth.create_user(@valid_attrs)
+  assert {:ok, %User{} = user} = UserManager.create_user(@valid_attrs)
   assert {:ok, user} == Argon2.check_pass(user, "some password", hash_key: :password)
   assert user.username == "some username"
 end
@@ -210,7 +207,7 @@ end
 
 test "update_user/2 with valid data updates the user" do
   user = user_fixture()
-  assert {:ok, %User{} = user} = Auth.update_user(user, @update_attrs)
+  assert {:ok, %User{} = user} = UserManager.update_user(user, @update_attrs)
   assert {:ok, user} == Argon2.check_pass(user, "some updated password", hash_key: :password)
   assert user.username == "some updated username"
 end
