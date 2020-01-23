@@ -105,7 +105,7 @@ defmodule AuthMe.UserManager.Guardian do
     user = UserManager.get_user!(id)
     {:ok, user}
   rescue
-    e in Ecto.NoResultsError => {:error, :resource_not_found}
+    e in Ecto.NoResultsError -> {:error, :resource_not_found}
   end
 end
 ```
