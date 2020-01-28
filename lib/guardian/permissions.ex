@@ -34,7 +34,11 @@ defmodule Guardian.Permissions do
                            }
                          }
 
-    use Guardian.Permissions.Bitwise
+    use Guardian.Permissions, :encoding: Guardian.Permissions.BitwiseEncoding
+    # Per default permissons will be encoded Bitwise, but other encoders also exist
+    #  * Guardian.Permissions.TextEncoding
+    #  * Guardian.Permissions.AtomEncoing
+    # It is even posible to supply your own encoding module
 
     # snip
 
@@ -78,23 +82,23 @@ defmodule Guardian.Permissions do
 
   ### Using with Plug
 
-  To use a plug for ensuring permissions you can use the `Guardian.Permissions.BitwiseEncoding` module as part of a
+  To use a plug for ensuring permissions you can use the `Guardian.Permissions` module as part of a
   Guardian pipeline.
 
   ```elixir
   # After a pipeline has setup the implementation module and error handler
 
   # Ensure that both the `public_profile` and `user_actions.books` permissions are present in the token
-  plug Guardian.Permissions.BitwiseEncoding. ensure: %{default: [:public_profile], user_actions: [:books]}
+  plug Guardian.Permissions, ensure: %{default: [:public_profile], user_actions: [:books]}
 
   # Allow the request to continue when the token contains any of the permission sets specified
-  plug Guardian.Permissions.BitwiseEncoding. one_of: [
+  plug Guardian.Permissions, one_of: [
     %{default: [:public_profile], user_actions: [:books]},
     %{default: [:public_profile], user_actions: [:music]},
   ]
 
   # Look for permissions for a token in a different location
-  plug Guardian.Permissions.BitwiseEncoding. key: :impersonate, ensure: %{default: [:public_profile]}
+  plug Guardian.Permissions, key: :impersonate, ensure: %{default: [:public_profile]}
   ```
 
   If the token satisfies either the permissions listed in `ensure` or one of the sets in the `one_of` key
@@ -173,7 +177,7 @@ defmodule Guardian.Permissions do
 
       @doc """
       Decodes permissions directly from a claims map. This does the same as `decode_permissions` but
-      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions.BitwiseEncoding. places them
+      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions places them
       when it encodes them into claims.
       """
       @spec decode_permissions_from_claims(Guardian.Token.claims()) :: Guardian.Permissions.t()
@@ -266,7 +270,7 @@ defmodule Guardian.Permissions do
       iex> MyTokens.validate_permissions!(%{default: [:user_about_me]})
 
       iex> MyTokens.validate_permissions!(%{not: [:a, :thing]})
-      raise Guardian.Permissions.BitwiseEncoding.PermissionNotFoundError
+      raise Guardian.Permissions.PermissionNotFoundError
       """
       def validate_permissions!(map) when is_map(map) do
         Enum.all?(&do_validate_permissions!/1)
