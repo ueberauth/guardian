@@ -13,6 +13,12 @@
 
 * Error when permissions was an empty list, was causes by a wrong default value, [625](https://github.com/ueberauth/guardian/pull/625)
 
+## v2.0.1
+
+### Enhancement
+
+* Documentation updates
+
 ## v2.0.0
 
 ### Enhancement
