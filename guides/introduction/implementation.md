@@ -36,7 +36,7 @@ When creating tokens, you can add custom claims to your tokens. The resulting to
 For example:
 
 ```elixir
-{:ok, token, full_claims = MyApp.TokenImpl.encode_and_sign(user, %{some: "data to store"})
+{:ok, token, full_claims} = MyApp.TokenImpl.encode_and_sign(user, %{some: "data to store"})
 ```
 
 ## Basic Setup
