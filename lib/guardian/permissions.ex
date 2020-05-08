@@ -37,7 +37,7 @@ defmodule Guardian.Permissions do
     use Guardian.Permissions, :encoding: Guardian.Permissions.BitwiseEncoding
     # Per default permissons will be encoded Bitwise, but other encoders also exist
     #  * Guardian.Permissions.TextEncoding
-    #  * Guardian.Permissions.AtomEncoing
+    #  * Guardian.Permissions.AtomEncoding
     # It is even posible to supply your own encoding module
 
     # snip
