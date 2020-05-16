@@ -94,7 +94,7 @@ defmodule Guardian do
 
   # Provide a token including custom claims and a different token type/ttl
   {:ok, token, full_claims} =
-    MyApp.Guardian.encode_and_sign(user, %{some: "claim"}, token_type: "refresh" ttl: {4, :weeks})
+    MyApp.Guardian.encode_and_sign(user, %{some: "claim"}, token_type: "refresh", ttl: {4, :weeks})
   ```
 
   The `encode_and_sign` function calls a number of callbacks on
