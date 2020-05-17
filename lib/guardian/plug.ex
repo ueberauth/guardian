@@ -42,7 +42,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @default_key "default"
-    @default_cookie_options [max_age: 60 * 60 * 24 * 7 * 4]
+    @default_cookie_max_age [max_age: 60 * 60 * 24 * 7 * 4]
 
     import Guardian, only: [returning_tuple: 1]
     import Guardian.Plug.Keys
@@ -255,6 +255,13 @@ if Code.ensure_loaded?(Plug) do
       put_resp_cookie(conn, key, token, opts)
     end
 
+    @doc """
+    Sets a token of type refresh directly on a cookie
+    The max_age of the cookie till be the expire time of the Token, if available
+    If the token does not have an exp,t the default will be 30 days.
+    The max age can be overridden by setting the cookie option config.
+    """
+
     @spec remember_me(Plug.Conn.t(), module, any, Guardian.Token.claims(), Guardian.options()) :: Plug.Conn.t()
     def remember_me(conn, mod, resource, claims \\ %{}, opts \\ []) do
       opts = Keyword.put_new(opts, :token_type, "refresh")
@@ -317,11 +324,11 @@ if Code.ensure_loaded?(Plug) do
 
     defp cookie_options(mod, %{"exp" => timestamp}) do
       max_age = timestamp - Guardian.timestamp()
-      [max_age: max_age] ++ cookie_options(mod, %{})
+      Keyword.merge([max_age: max_age], mod.config(:cookie_options, []))
     end
 
-    defp cookie_options(mod, _claims) do
-      Keyword.merge(@default_cookie_options, mod.config(:cookie_options, []))
+    defp cookie_options(mod, _) do
+      Keyword.merge(@default_cookie_max_age, mod.config(:cookie_options, []))
     end
 
     defp add_data_to_conn(conn, resource, token, claims, opts) do
