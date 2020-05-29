@@ -253,10 +253,11 @@ defmodule Guardian.Token.Jwt do
   def create_token(mod, claims, options \\ []) do
     with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
          {:ok, secret} <- secret_fetcher.fetch_signing_secret(mod, options) do
+      jose_jwk = jose_jwk(secret)
+
       {_, token} =
-        secret
-        |> jose_jwk()
-        |> JWT.sign(jose_jws(mod, options), claims)
+        jose_jwk
+        |> JWT.sign(jose_jws(mod, jose_jwk, options), claims)
         |> JWS.compact()
 
       {:ok, token}
@@ -386,6 +387,15 @@ defmodule Guardian.Token.Jwt do
     end
   end
 
+  # If the JWK includes a "kid" add this to the signature to provide a hint
+  # about which key was used.
+  # https://tools.ietf.org/html/rfc7515#section-4.1.4
+  defp jose_jws(mod, %JWK{fields: %{"kid" => kid}}, opts) do
+    header = %{"kid" => kid}
+    opts = Keyword.update(opts, :headers, header, &Map.merge(&1, header))
+    jose_jws(mod, opts)
+  end
+  defp jose_jws(mod, _, opts), do: jose_jws(mod, opts)
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
     headers = Keyword.get(opts, :headers, %{})
