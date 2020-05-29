@@ -395,7 +395,9 @@ defmodule Guardian.Token.Jwt do
     opts = Keyword.update(opts, :headers, header, &Map.merge(&1, header))
     jose_jws(mod, opts)
   end
+
   defp jose_jws(mod, _, opts), do: jose_jws(mod, opts)
+
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
     headers = Keyword.get(opts, :headers, %{})
