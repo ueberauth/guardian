@@ -135,6 +135,13 @@ defmodule Guardian.Token.Jwt do
     end
   end
   ```
+
+  If the signing secret contains a "kid" (https://tools.ietf.org/html/rfc7515#section-4.1.4)
+  it will be passed along to the signature to provide a hint about which secret was used.
+  This can be useful for specifying which public key to use during verification if you're using
+  a public/private key rotation strategy.
+  An example implementation of this can be found here: [https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3](https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3)
+
   """
 
   @behaviour Guardian.Token
