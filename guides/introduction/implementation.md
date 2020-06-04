@@ -65,7 +65,7 @@ The functions `subject_for_token` and `resource_from_claims` are the only two fu
 * `subject_for_token` - provide the identifier to be encoded into your token that you will use in `resource_from_claims` to lookup the resource
 * `resource_from_claims` - using the identifier provided by `subject_for_token` find the associated resource
 
-All other [callbacks](introduction-implementation#callbacks) have a default noop and their implementations and are optional.
+All other [callbacks](introduction-implementation.html#callbacks) have a default noop in their implementations and are optional.
 
 `subject_for_token` provides the `sub` field (in JWT parlance) which identifies the subject which is usually the resource to use. The subject field can be anything that helps you identify which resource is logged in. Some examples:
 
