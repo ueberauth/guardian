@@ -63,6 +63,7 @@ defmodule Guardian.Token.JwtTest do
       |> JOSE.JWS.compact()
 
     es512_jose_jwk = JOSE.JWK.generate_key({:ec, :secp521r1})
+    es512_jose_jwk = JOSE.JWK.merge(es512_jose_jwk, %{"kid" => JOSE.JWK.thumbprint(es512_jose_jwk)})
     es512_jose_jws = JOSE.JWS.from_map(%{"alg" => "ES512"})
 
     es512_jose_jwt =
@@ -131,7 +132,8 @@ defmodule Guardian.Token.JwtTest do
 
       {:ok, token} = Jwt.create_token(ctx.impl, ctx.claims, secret: secret, allowed_algos: ["ES512"])
 
-      {true, jwt, _} = JWT.verify_strict(secret, ["ES512"], token)
+      {true, jwt, jws} = JWT.verify_strict(secret, ["ES512"], token)
+      assert jws.fields["kid"] == secret.fields["kid"]
       assert jwt.fields == ctx.claims
 
       {:error, _reason} = JWT.verify_strict(ctx.impl.config(:secret_key), ["HS512"], token)

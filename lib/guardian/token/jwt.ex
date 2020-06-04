@@ -135,6 +135,13 @@ defmodule Guardian.Token.Jwt do
     end
   end
   ```
+
+  If the signing secret contains a "kid" (https://tools.ietf.org/html/rfc7515#section-4.1.4)
+  it will be passed along to the signature to provide a hint about which secret was used.
+  This can be useful for specifying which public key to use during verification if you're using
+  a public/private key rotation strategy.
+  An example implementation of this can be found here: [https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3](https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3)
+
   """
 
   @behaviour Guardian.Token
@@ -253,10 +260,11 @@ defmodule Guardian.Token.Jwt do
   def create_token(mod, claims, options \\ []) do
     with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
          {:ok, secret} <- secret_fetcher.fetch_signing_secret(mod, options) do
+      jose_jwk = jose_jwk(secret)
+
       {_, token} =
-        secret
-        |> jose_jwk()
-        |> JWT.sign(jose_jws(mod, options), claims)
+        jose_jwk
+        |> JWT.sign(jose_jws(mod, jose_jwk, options), claims)
         |> JWS.compact()
 
       {:ok, token}
@@ -385,6 +393,17 @@ defmodule Guardian.Token.Jwt do
       err -> {:error, err}
     end
   end
+
+  # If the JWK includes a "kid" add this to the signature to provide a hint
+  # about which key was used.
+  # https://tools.ietf.org/html/rfc7515#section-4.1.4
+  defp jose_jws(mod, %JWK{fields: %{"kid" => kid}}, opts) do
+    header = %{"kid" => kid}
+    opts = Keyword.update(opts, :headers, header, &Map.merge(&1, header))
+    jose_jws(mod, opts)
+  end
+
+  defp jose_jws(mod, _, opts), do: jose_jws(mod, opts)
 
   defp jose_jws(mod, opts) do
     algos = fetch_allowed_algos(mod, opts) || @default_algos
