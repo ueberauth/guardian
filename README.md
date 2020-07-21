@@ -425,6 +425,8 @@ For more in-depth documentation please see the [GuardianDb README](https://githu
 
 ### How to add the token to a request (the Phoenix way)
 
+Assuming you are using the default realm `Bearer` for the `Authorization` header:
+
 ```elixir
 defmodule HelloWeb.AuthControllerTest do
   use HelloWeb.ConnCase
@@ -436,7 +438,7 @@ defmodule HelloWeb.AuthControllerTest do
     {:ok, token, _} = encode_and_sign(user, %{}, token_type: :access)
 
     conn = conn
-    |> put_req_header("authorization", "bearer: " <> token)
+    |> put_req_header("authorization", "Bearer " <> token)
     |> get(auth_path(conn, :me))
 
     # Assert things here
