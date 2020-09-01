@@ -53,7 +53,7 @@ defmodule Guardian.Token.Verify do
     diff <= allowed_drift
   end
 
-  def time_within_drift?(_), do: true
+  def time_within_drift?(_, _), do: true
 
   @spec verify_literal_claims(
           claims :: Guardian.Token.claims(),
