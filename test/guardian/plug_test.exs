@@ -290,7 +290,7 @@ defmodule Guardian.PlugTest do
       assert gather_function_calls() == expected
     end
 
-    test "is removes all users", ctx do
+    test "it removes all users", ctx do
       %{
         conn: conn,
         bob: %{token: bob_token, claims: bob_claims},
