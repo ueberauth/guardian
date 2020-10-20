@@ -11,7 +11,7 @@ Guardian is a token based authentication library for use with Elixir application
 Guardian remains a functional system. It integrates with Plug but can be used outside of it. If you're implementing a TCP/UDP protocol directly or want to utilize your authentication via channels in Phoenix, Guardian can work for you.
 
 The core currency of authentication in Guardian is the _token_.
-By default [JSON Web Tokens](https://jwt.io) are supported out of the box but any token that:
+By default [JSON Web Tokens](https://jwt.io) are supported out of the box but you can use any token that:
 
 * Has the concept of a key-value payload
 * Is tamper proof
