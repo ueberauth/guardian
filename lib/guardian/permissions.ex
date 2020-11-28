@@ -107,11 +107,13 @@ defmodule Guardian.Permissions do
   """
 
   @type label :: atom
-  @type permission_set :: %{optional(label) => pos_integer}
+  @type permission_label :: String.t() | atom
+  @type permission :: pos_integer
+  @type permission_set :: [permission_label, ...] | %{optional(label) => permission}
   @type t :: %{optional(label) => permission_set}
 
-  @type input_label :: String.t() | atom
-  @type input_set :: [input_label, ...] | pos_integer
+  @type input_label :: permission_label
+  @type input_set :: permission_set | permission
   @type input_permissions :: %{optional(input_label) => input_set}
 
   @type plug_option ::
@@ -281,22 +283,23 @@ defmodule Guardian.Permissions do
       defp do_decode_permissions(value, type) when is_atom(type),
         do: do_decode_permissions(value, to_string(type))
 
-      defp do_decode_permissions(value, type) when is_list(value) do
-        do_validate_permissions!({type, value})
+      defp do_decode_permissions(value, type) when is_integer(value) do
         decode(value, type, @normalized_perms)
       end
 
-      defp do_decode_permissions(value, type) when is_integer(value) do
+      defp do_decode_permissions(value, type) do
+        do_validate_permissions!({type, value})
         decode(value, type, @normalized_perms)
       end
 
       defp do_encode_permissions!(value, type) when is_atom(type),
         do: do_encode_permissions!(value, to_string(type))
 
-      defp do_encode_permissions!(value, type) when is_integer(value),
-        do: encode(value, type, @normalized_perms)
+      defp do_encode_permissions!(value, type) when is_integer(value) do
+        encode(value, type, @normalized_perms)
+      end
 
-      defp do_encode_permissions!(value, type) when is_list(value) do
+      defp do_encode_permissions!(value, type) do
         do_validate_permissions!({type, value})
         encode(value, type, @normalized_perms)
       end
@@ -309,7 +312,7 @@ defmodule Guardian.Permissions do
         do_validate_permissions!({type, list})
       end
 
-      defp do_validate_permissions!({type, list}) do
+      defp do_validate_permissions!({type, list}) when is_list(list) do
         perm_set = Map.get(@normalized_perms, type)
 
         if perm_set do
@@ -327,6 +330,10 @@ defmodule Guardian.Permissions do
         else
           raise PermissionNotFoundError, message: "#{to_string(__MODULE__)} - Type: #{type}"
         end
+      end
+
+      defp do_validate_permissions!({type, value}) do
+        do_validate_permissions!({type, [value]})
       end
     end
   end
