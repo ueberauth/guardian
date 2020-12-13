@@ -28,4 +28,8 @@ defmodule Guardian.Permissions.TextEncoding do
   def decode(value, _type, _perm_set) when is_list(value) do
     Enum.map(value, &String.to_atom/1)
   end
+
+  def decode(value, _type, _perm_set) do
+    value
+  end
 end
