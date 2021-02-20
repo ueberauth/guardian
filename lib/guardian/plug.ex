@@ -2,7 +2,7 @@ if Code.ensure_loaded?(Plug) do
   defmodule Guardian.Plug do
     @moduledoc ~S"""
     Provides functions for the implementation module for dealing with
-    Guardian in a Plug environment
+    Guardian in a Plug environment.
 
     ```elixir
     defmodule MyApp.Tokens do
@@ -117,7 +117,8 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @doc """
-    Provides the default key for the location of a token in the session and connection
+    Provides the default key for the location of a token in the session and
+    connection.
     """
 
     @spec default_key() :: String.t()
@@ -238,6 +239,7 @@ if Code.ensure_loaded?(Plug) do
 
     Note that while this can be used as a cheap way to sign out, a malicious client
     could still access your server using the old JWT from the old cookie.
+
     In other words, this does not in any way invalidate the token you issued, it just
     makes a compliant client forget it.
     """
@@ -256,9 +258,11 @@ if Code.ensure_loaded?(Plug) do
     end
 
     @doc """
-    Sets a token of type refresh directly on a cookie
+    Sets a token of type refresh directly on a cookie.
+
     The max_age of the cookie till be the expire time of the Token, if available
     If the token does not have an exp,t the default will be 30 days.
+
     The max age can be overridden by setting the cookie option config.
     """
 

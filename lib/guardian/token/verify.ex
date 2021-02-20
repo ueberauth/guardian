@@ -2,19 +2,20 @@ defmodule Guardian.Token.Verify do
   @moduledoc """
   Interface for verifying tokens.
 
-  This is intended to be used primarily by token modules
-  but allows for a custom verification module to be created
-  if the one that ships with your TokenModule is not quite what you want.
+  This is intended to be used primarily by token modules but allows for a
+  custom verification module to be created if the one that ships with your
+  TokenModule is not quite what you want.
   """
 
   @doc """
-  Verify a single claim
+  Verify a single claim.
 
-  You should also include a fallback for claims that you are not validating
+  You should also include a fallback for claims that you are not validating.
 
   ```elixir
   def verify_claim(_mod, _key, claims, _opts), do: {:ok, claims}
   ```
+
   """
   @callback verify_claim(
               mod :: module,
@@ -41,10 +42,11 @@ defmodule Guardian.Token.Verify do
   @spec time_within_drift?(mod :: module, time :: pos_integer) :: true | false
   @doc """
   Checks that a time value is within the `allowed_drift` as
-  configured for the provided module
+  configured for the provided module.
 
-  Allowed drift is measured in seconds and represents the maximum amount
-  of time a token may be expired for an still be considered valid.
+  Allowed drift is measured in seconds and represents the maximum amount of
+  time a token may be expired for an still be considered valid.
+
   This is to deal with clock skew.
   """
   def time_within_drift?(mod, time) when is_integer(time) do

@@ -1,7 +1,6 @@
 if Code.ensure_loaded?(Plug) do
   defmodule Guardian.Plug.VerifyHeader do
     @moduledoc """
-
     Looks for and validates a token found in the `Authorization` header.
 
     In the case where:
@@ -23,7 +22,8 @@ if Code.ensure_loaded?(Plug) do
     If a token is found but is invalid, the error handler will be called with
     `auth_error(conn, {:invalid_token, reason}, opts)`
 
-    Once a token has been found it will be decoded, the token and claims will be put onto the connection.
+    Once a token has been found it will be decoded, the token and claims will
+    be put onto the connection.
 
     They will be available using `Guardian.Plug.current_claims/2` and `Guardian.Plug.current_token/2`
 
@@ -32,18 +32,17 @@ if Code.ensure_loaded?(Plug) do
     * `claims` - The literal claims to check to ensure that a token is valid
     * `max_age` - If the token has an "auth_time" claim, check it is not older than the maximum age.
     * `header_name` - The name of the header to search for a token. Defaults to `authorization`.
-    * `realm` - The prefix for the token in the header. Defaults to `Bearer`. `:none` will not use a prefix.
+    * `realm` - The prefix for the token in the header. Defaults to `Bearer`.
+      `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
     * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     ### Example
 
     ```elixir
-
     # setup the upstream pipeline
 
     plug Guardian.Plug.VerifyHeader, claims: %{typ: "access"}
-
     ```
 
     This will check the authorization header for a token
@@ -51,11 +50,11 @@ if Code.ensure_loaded?(Plug) do
     `Authorization: Bearer <token>`
 
     This token will be placed into the connection depending on the key and can be accessed with
-    `Guardian.Plug.current_token` and `Guardian.Plug.current_claims`
+    `Guardian.Plug.current_token` and `Guardian.Plug.current_claims`.
 
     OR
 
-    `MyApp.ImplementationModule.current_token` and `MyApp.ImplementationModule.current_claims`
+    `MyApp.ImplementationModule.current_token` and `MyApp.ImplementationModule.current_claims`.
     """
 
     alias Guardian.Plug.Pipeline

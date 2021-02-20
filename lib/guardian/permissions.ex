@@ -1,6 +1,6 @@
 defmodule Guardian.Permissions do
   @moduledoc """
-  An optional plugin to Guardian to provide permissions for your tokens
+  An optional plugin to Guardian to provide permissions for your tokens.
 
   These can be used for any token types since they only work on the `claims`.
 
@@ -52,8 +52,7 @@ defmodule Guardian.Permissions do
   ```
 
   This will take the permission set in the `opts` at `:permissions` and
-  put it into the `"pems"` key of the claims as a map of:
-  `%{set_name => integer}`
+  put it into the `"pems"` key of the claims as a map of `%{set_name => integer}`.
 
   The permissions can be defined as a list (positional value based on index)
   or a map where the value for each permission is manually provided.
@@ -88,7 +87,8 @@ defmodule Guardian.Permissions do
   ```elixir
   # After a pipeline has setup the implementation module and error handler
 
-  # Ensure that both the `public_profile` and `user_actions.books` permissions are present in the token
+  # Ensure that both the `public_profile` and `user_actions.books` permissions
+  # are present in the token
   plug Guardian.Permissions, ensure: %{default: [:public_profile], user_actions: [:books]}
 
   # Allow the request to continue when the token contains any of the permission sets specified
@@ -101,9 +101,10 @@ defmodule Guardian.Permissions do
   plug Guardian.Permissions, key: :impersonate, ensure: %{default: [:public_profile]}
   ```
 
-  If the token satisfies either the permissions listed in `ensure` or one of the sets in the `one_of` key
-  the request will continue. If not, then `auth_error` callback will be called on the error handler with
-  `auth_error(conn, {:unauthorized, reason}, options)`
+  If the token satisfies either the permissions listed in `ensure` or one of
+  the sets in the `one_of` key the request will continue. If not, then
+  `auth_error` callback will be called on the error handler with
+  `auth_error(conn, {:unauthorized, reason}, options)`.
   """
 
   @type label :: atom
@@ -146,7 +147,8 @@ defmodule Guardian.Permissions do
       @available_permissions Guardian.Permissions.available_from_normalized(@normalized_perms)
 
       @doc """
-      Lists all permissions in a normalized way using %{permission_set_name => [permission_name, ...]}
+      Lists all permissions in a normalized way using
+      `%{permission_set_name => [permission_name, ...]}`.
       """
 
       @spec available_permissions() :: Guardian.Permissions.t()
@@ -204,10 +206,10 @@ defmodule Guardian.Permissions do
 
       @doc """
       Checks to see if any of the permissions provided are present
-      in the permissions (previously extracted from claims)
+      in the permissions (previously extracted from claims).
 
-      iex> claims |> MyTokens.decode_permissions() |> any_permissions?(%{user_actions: [:books, :music]})
-      true
+          iex> claims |> MyTokens.decode_permissions() |> any_permissions?(%{user_actions: [:books, :music]})
+          true
       """
       @spec any_permissions?(
               Guardian.Permissions.input_permissions(),
@@ -231,10 +233,11 @@ defmodule Guardian.Permissions do
 
       @doc """
       Checks to see if all of the permissions provided are present
-      in the permissions (previously extracted from claims)
+      in the permissions (previously extracted from claims).
 
-      iex> claims |> MyTokens.decode_permissions() |> all_permissions?(%{user_actions: [:books, :music]})
-      true
+          iex> claims |> MyTokens.decode_permissions() |> all_permissions?(%{user_actions: [:books, :music]})
+          true
+
       """
       @spec all_permissions?(
               Guardian.Permissions.input_permissions(),
@@ -251,10 +254,11 @@ defmodule Guardian.Permissions do
       end
 
       @doc """
-      Encodes the permissions provided into numeric form
+      Encodes the permissions provided into numeric form.
 
-      iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
-      %{user_actions: 9}
+          iex> MyTokens.encode_permissions!(%{user_actions: [:books, :music]})
+          %{user_actions: 9}
+
       """
       @spec encode_permissions!(Guardian.Permissions.input_permissions() | nil) :: Guardian.Permissions.t()
       def encode_permissions!(nil), do: %{}
@@ -269,10 +273,11 @@ defmodule Guardian.Permissions do
       @doc """
       Validates that all permissions provided exist in the configuration.
 
-      iex> MyTokens.validate_permissions!(%{default: [:user_about_me]})
+          iex> MyTokens.validate_permissions!(%{default: [:user_about_me]})
 
-      iex> MyTokens.validate_permissions!(%{not: [:a, :thing]})
-      raise Guardian.Permissions.PermissionNotFoundError
+          iex> MyTokens.validate_permissions!(%{not: [:a, :thing]})
+          raise Guardian.Permissions.PermissionNotFoundError
+
       """
       def validate_permissions!(map) when is_map(map) do
         Enum.all?(&do_validate_permissions!/1)
@@ -343,7 +348,7 @@ defmodule Guardian.Permissions do
 
   @doc """
   Provides an encoded version of all permissions, and all possible future permissions
-  for a permission set
+  for a permission set.
   """
   def max, do: -1
 

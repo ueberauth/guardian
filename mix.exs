@@ -31,6 +31,7 @@ defmodule Guardian.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
+        docs: :docs,
         "coveralls.html": :test
       ]
     ]
@@ -46,7 +47,7 @@ defmodule Guardian.Mixfile do
   def docs do
     [
       source_ref: "v#{@version}",
-      main: "introduction-overview",
+      main: "readme",
       extra_section: "guides",
       assets: "guides/assets",
       formatters: ["html", "epub"],
@@ -66,6 +67,9 @@ defmodule Guardian.Mixfile do
 
   defp extras do
     [
+      "README.md": [
+        title: "Readme"
+      ],
       "guides/introduction/overview.md": [
         filename: "introduction-overview"
       ],
@@ -169,7 +173,7 @@ defmodule Guardian.Mixfile do
       # Tools
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
-      {:ex_doc, ">= 0.19.1", only: [:dev], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: [:docs], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
       {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false},
       {:jason, "~> 1.1", only: [:dev, :test], runtime: false}
@@ -180,7 +184,10 @@ defmodule Guardian.Mixfile do
     [
       maintainers: @maintainers,
       licenses: ["MIT"],
-      links: %{Github: @url},
+      links: %{
+        Changelog: "https://hexdocs.pm/guardian/changelog.html",
+        GitHub: @url
+      },
       files: ~w(lib CHANGELOG.md LICENSE mix.exs README.md)
     ]
   end

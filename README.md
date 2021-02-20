@@ -5,6 +5,11 @@
 [![Build Status](https://travis-ci.org/ueberauth/guardian.svg?branch=master)](https://travis-ci.org/ueberauth/guardian)
 [![Codecov](https://codecov.io/gh/ueberauth/guardian/branch/master/graph/badge.svg)](https://codecov.io/gh/ueberauth/guardian)
 [![Inline docs](http://inch-ci.org/github/ueberauth/guardian.svg)](http://inch-ci.org/github/ueberauth/guardian)
+[![Module Version](https://img.shields.io/hexpm/v/guardian.svg)](https://hex.pm/packages/guardian)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/guardian/)
+[![Total Download](https://img.shields.io/hexpm/dt/guardian.svg)](https://hex.pm/packages/guardian)
+[![License](https://img.shields.io/hexpm/l/guardian.svg)](https://github.com/ueberauth/guardian/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/ueberauth/guardian.svg)](https://github.com/ueberauth/guardian/commits/master)
 
 Guardian is a token based authentication library for use with Elixir applications.
 
@@ -35,13 +40,13 @@ API documentation is available at [https://hexdocs.pm/guardian](https://hexdocs.
 ## Installation
 
 
-Add Guardian to your application
-
-mix.exs
+Add Guardian to your application to your list of dependencies in `mix.exs`:
 
 ```elixir
 defp deps do
-  [{:guardian, "~> 2.0"}]
+  [
+    {:guardian, "~> 2.0"}
+  ]
 end
 ```
 
@@ -111,7 +116,7 @@ Congrats! We have a working Guardian implementation.
 {:ok, resource, claims} = MyApp.Guardian.resource_from_token(token)
 ```
 
-With Plug
+With Plug:
 
 ```elixir
 # If a session is loaded the token/resource/claims will be put into the session and connection
@@ -135,7 +140,7 @@ claims = MyApp.Guardian.Plug.current_claims(conn)
 resource = MyApp.Guardian.Plug.current_resource(conn)
 ```
 
-Creating with custom claims and options
+Creating with custom claims and options:
 
 ```elixir
 # Add custom claims to a token
@@ -155,7 +160,7 @@ Creating with custom claims and options
 {:ok, token, claims} = MyApp.Guardian.encode_and_sign(resource, %{}, auth_time: true)
 ```
 
-Decoding tokens
+Decoding tokens:
 
 ```elixir
 # Check some literal claims. (i.e. this is an access token)
@@ -170,13 +175,13 @@ Decoding tokens
 {:ok, claims} = MyApp.Guardian.decode_and_verify(token, %{}, max_age: {2, :hours})
 ```
 
-If you need dynamic verification for JWT tokens, please see the documentation for `Guardian.Token.Jwt` and `Guardian.Token.Jwt.SecretFetcher`
+If you need dynamic verification for JWT tokens, please see the documentation for `Guardian.Token.Jwt` and `Guardian.Token.Jwt.SecretFetcher`.
 
 ## Configuration
 
 The following configuration is available to all implementation modules.
 
-* `token_module` - The module that implements the functions for dealing with tokens. Default `Guardian.Token.Jwt`
+* `token_module` - The module that implements the functions for dealing with tokens. Default `Guardian.Token.Jwt`.
 
 Guardian can handle tokens of any type that implements the `Guardian.Token` behaviour.
 Each token module will have its own configuration requirements. Please see below for the JWT configuration.
@@ -188,7 +193,7 @@ All configuration values may be provided in two ways.
 
 Any options given to `use Guardian` have precedence over config values found in the config files.
 
-Some configuration may be required by your `token_module`
+Some configuration may be required by your `token_module`.
 
 ### Configuration values
 
@@ -204,13 +209,13 @@ See `Guardian.Config.resolve_value/1` for more information.
 
 ### JWT (Configuration)
 
-The default token type of `Guardian` is JWT. It accepts many options but you really only _need_ to specify the `issuer` and `secret_key`
+The default token type of `Guardian` is JWT. It accepts many options but you really only _need_ to specify the `issuer` and `secret_key`.
 
 #### Required configuration (JWT)
 
 * `issuer` - The issuer of the token. Your application name/id
 * `secret_key` - The secret key to use for the implementation module.
-  This may be any resolvable value for `Guardian.Config`
+  This may be any resolvable value for `Guardian.Config`.
 
 #### Optional configuration (JWT)
 
@@ -365,7 +370,7 @@ plug Guardian.Plug.VerifySession
 
 ### Plug Error Handlers
 
-The error handler is a module that implements an `auth_error` function.
+The error handler is a module that implements an `auth_error` function:
 
 ```elixir
 defmodule MyApp.AuthErrorHandler do
@@ -415,11 +420,11 @@ When using tokens, depending on the type of token you use, nothing may happen by
 For example, JWT tokens by default are not tracked by the application.
 The fact that they are signed with the correct secret and are not expired is usually how validation of if a token is active or not. Depending on your use-case this may not be enough for your application needs.
 If you need to track and revoke individual tokens, you may need to use something like
-[GuardianDb](https://github.com/ueberauth/guardian_db)
+[GuardianDb](https://github.com/ueberauth/guardian_db).
 
 This will record each token issued in your database, confirm it is still valid on each access and then finally when you `revoke` (called on sign_out or manually) invalidate the token.
 
-For more in-depth documentation please see the [GuardianDb README](https://github.com/ueberauth/guardian_db/blob/master/README.md)
+For more in-depth documentation please see the [GuardianDb README](https://github.com/ueberauth/guardian_db/blob/master/README.md).
 
 ## Best testing practices
 
@@ -464,19 +469,23 @@ Alternatively, a configuration value that resolves to:
 * `Function`
 * `%JOSE.JWK{} Struct`
 
-may be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
+May be specified for other key types. A full list of example key types is available [here](https://gist.github.com/potatosalad/925a8b74d85835e285b9).
 
 See the [key generation docs](https://hexdocs.pm/jose/key-generation.html) from Jose for how to generate your own keys.
 
 To get off the ground quickly, set your `secret_key` in your Guardian config with the output of either:
 
-`$ mix guardian.gen.secret`
+```bash
+$ mix guardian.gen.secret`
+```
 
 or
 
-`iex(1)> JOSE.JWS.generate_key(%{"alg" => "HS512"}) |> JOSE.JWK.to_map |> elem(1) |> Map.take(["k", "kty"])`
+```elixir
+iex> JOSE.JWS.generate_key(%{"alg" => "HS512"}) |> JOSE.JWK.to_map |> elem(1) |> Map.take(["k", "kty"])
+```
 
-After running `$ mix deps.get` because JOSE is one of Guardian's dependencies.
+After running `$ mix deps.get` because JOSE is one of Guardian's dependencies:
 
 ```elixir
 ## Map ##
@@ -527,17 +536,16 @@ config :my_app, MyApp.Guardian,
   secret_key: {MySecretKey, :fetch, []}
 ```
 ### Private/Public Keypairs
-A full example of how to configure guardian to use private/public key files as secrets, can be found [here](https://github.com/ueberauth/guardian_pemfile_config_example)
+
+A full example of how to configure guardian to use private/public key files as secrets, can be found [here](https://github.com/ueberauth/guardian_pemfile_config_example).
 
 ### Key Rotation
 
-Guardian provides a `Guardian.Token.Jwt.SecretFetcher` behaviour that allows custom keys to be used for signing and
-verifying requests. 
-This makes it possible to rotate private keys while maintaining a list of valid public keys that can be used both for
-validating signatures as well as serving public keys to external services.  
+Guardian provides a `Guardian.Token.Jwt.SecretFetcher` behaviour that allows custom keys to be used for signing and verifying requests.
+This makes it possible to rotate private keys while maintaining a list of valid public keys that can be used both for validating signatures as well as serving public keys to external services.
 
 Below is a simple example of how this can be implemented using a `GenServer`.
- 
+
 
 ```elixir
 defmodule MyApp.Guardian.KeyServer do
@@ -641,10 +649,10 @@ defmodule MyApp.Guardian.KeyServer do
 end
 ```
 
-Update Guardian's configuration to use the custom KeyServer.
+Update Guardian's configuration to use the custom KeyServer:
 
 ```elixir
-## config/config.exs 
+## config/config.exs
 
 config :my_app, MyApp.Guardian,
   issuer: "myapp",
@@ -652,7 +660,8 @@ config :my_app, MyApp.Guardian,
   secret_fetcher: MyApp.Guardian.KeyServer
 ```
 
-Start the KeyServer in the supervision tree so it can serve requests.
+Start the KeyServer in the supervision tree so it can serve requests:
+
 ```elixir
 ## lib/my_app/application.ex
 
@@ -670,3 +679,9 @@ def start(_type, _args) do
   Supervisor.start_link(children, opts)
 end
 ```
+
+## Copyright and License
+
+Copyright (c) 2015 Daniel Neighman
+
+This library is MIT licensed. See the [LICENSE](https://github.com/ueberauth/guardian/blob/master/LICENSE) for details.

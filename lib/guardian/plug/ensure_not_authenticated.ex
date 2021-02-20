@@ -17,16 +17,17 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `key` - The location to find the information in the connection. Defaults to: `default`
-    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`
 
     ## Example
 
     ```elixir
 
-      # setup the upstream pipeline
-      plug Guardian.Plug.EnsureNotAuthenticated
-      plug Guardian.Plug.EnsureNotAuthenticated, key: :secret
-      ```
+    # setup the upstream pipeline
+    plug Guardian.Plug.EnsureNotAuthenticated
+    plug Guardian.Plug.EnsureNotAuthenticated, key: :secret
+    ```
+
     """
 
     @behaviour Plug

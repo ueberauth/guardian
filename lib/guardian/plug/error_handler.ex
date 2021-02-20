@@ -5,10 +5,10 @@ if Code.ensure_loaded?(Plug) do
 
     ### Error handler
 
-    When using plugs, you'll need to specify an error handler module
+    When using plugs, you'll need to specify an error handler module.
 
     The error_handler module requires an `auth_error` function that receives the conn,
-    the reason tuple and the options
+    the reason tuple and the options.
 
     ```elixir
     defmodule MyApp.AuthErrorHandler do
@@ -23,12 +23,10 @@ if Code.ensure_loaded?(Plug) do
 
     By default, Guardian will emit types of:
 
-    ```
-    * :unauthorized
-    * :invalid_token
-    * :already_authenticated
-    * :no_resource_found
-    ```
+    * `:unauthorized`
+    * `:invalid_token`
+    * `:already_authenticated`
+    * `:no_resource_found`
     """
 
     @callback auth_error(

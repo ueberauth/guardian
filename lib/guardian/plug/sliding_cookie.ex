@@ -4,7 +4,7 @@ if Code.ensure_loaded?(Plug) do
     WARNING! Use of this plug MAY allow a session to be maintained
     indefinitely without primary authentication by issuing new refresh
     tokens off the back of previous (still valid) tokens. Especially if your
-    `resource_from_claims` implemention does not check resource validity (in
+    `resource_from_claims` implementation does not check resource validity (in
     a user database or whatever), you SHOULD then at least make such checks
     in the `sliding_cookie/3` implementation to make sure the resource still
     exists, is valid and permitted.
@@ -52,7 +52,8 @@ if Code.ensure_loaded?(Plug) do
     Options:
 
     * `:key` - The location of the token (default `:default`)
-    * `:sliding_cookie` - The minimum TTL remaining after which a replacement will be issued. Defaults to configured values.
+    * `:sliding_cookie` - The minimum TTL remaining after which a replacement
+      will be issued. Defaults to configured values.
     * `:halt` - Whether to halt the connection in case of error. Defaults to `true`.
 
     The `:sliding_cookie` config (or plug option) should be the same format as `:ttl`, for example

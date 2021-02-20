@@ -19,7 +19,7 @@ if Code.ensure_loaded?(Plug) do
     * `claims` - The literal claims to check to ensure that a token is valid
     * `max_age` - If the token has an "auth_time" claim, check it is not older than the maximum age.
     * `key` - The location to find the information in the connection. Defaults to: `default`
-    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`
 
     ## Example
 
@@ -28,6 +28,7 @@ if Code.ensure_loaded?(Plug) do
     plug Guardian.Plug.EnsureAuthenticated, claims: %{"typ" => "access"}
     plug Guardian.Plug.EnsureAuthenticated, key: :secret
     ```
+
     """
 
     @behaviour Plug

@@ -1,6 +1,6 @@
 defmodule Guardian.Permissions.BitwiseEncoding do
   @moduledoc """
-  Bitwise encoding for permissions
+  Bitwise encoding for permissions.
   """
 
   @behaviour Guardian.Permissions.PermissionEncoding

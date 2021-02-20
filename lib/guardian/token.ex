@@ -26,17 +26,17 @@ defmodule Guardian.Token do
   @type decoding_error :: {:error, atom}
 
   @doc """
-  Inspect the contents of the token without validation or signature checking
+  Inspect the contents of the token without validation or signature checking.
   """
   @callback peek(module :: module, token :: token) :: map
 
   @doc """
-  Generate a unique id for a token
+  Generate a unique id for a token.
   """
   @callback token_id() :: String.t()
 
   @doc """
-  Build the default claims for the token
+  Build the default claims for the token.
   """
   @callback build_claims(
               mod :: module,
@@ -47,7 +47,7 @@ defmodule Guardian.Token do
             ) :: {:ok, claims} | {:error, atom}
 
   @doc """
-  Create the token including serializing and signing
+  Create the token including serializing and signing.
   """
   @callback create_token(mod :: module, claims :: claims, options :: Guardian.options()) ::
               {:ok, token} | signing_error | secret_error | encoding_error
@@ -59,25 +59,25 @@ defmodule Guardian.Token do
               {:ok, token} | secret_error | decoding_error
 
   @doc """
-  Verify the claims of a token
+  Verify the claims of a token.
   """
   @callback verify_claims(mod :: module, claims :: claims, options :: Guardian.options()) ::
               {:ok, claims} | {:error, any}
 
   @doc """
-  Revoke a token (if appropriate)
+  Revoke a token (if appropriate).
   """
   @callback revoke(mod :: module, claims :: claims, token :: token, options :: Guardian.options()) ::
               {:ok, claims} | {:error, any}
 
   @doc """
-  Refresh a token
+  Refresh a token.
   """
   @callback refresh(mod :: module, old_token :: token, options :: Guardian.options()) ::
               {:ok, {token, claims}, {token, claims}} | {:error, any}
 
   @doc """
-  Exchange a token from one type to another
+  Exchange a token from one type to another.
   """
   @callback exchange(
               mod :: module,

@@ -1,6 +1,6 @@
 defmodule Guardian.Permissions.AtomEncoding do
   @moduledoc """
-  Atom encoding for permissions
+  Atom encoding for permissions.
   """
 
   @behaviour Guardian.Permissions.PermissionEncoding

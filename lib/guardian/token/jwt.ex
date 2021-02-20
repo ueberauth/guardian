@@ -1,7 +1,7 @@
 defmodule Guardian.Token.Jwt do
   @moduledoc """
-  Deals with things JWT
-  This module should not be used directly.
+  Deals with things JWT. This module should not be used directly.
+
   It is intended to be used by Guardian on behalf of your implementation
   as it's token module.
 
@@ -15,16 +15,16 @@ defmodule Guardian.Token.Jwt do
   #### Required
 
   * `issuer` - The issuer of the token. Your application name/id
-  * `secret_key` - The secret key to use for the implementation module.
-                   This may be any resolvable value for `Guardian.Config`
+  * `secret_key` - The secret key to use for the implementation module. This
+    may be any resolvable value for `Guardian.Config`
 
   #### Optional
 
   * `token_verify_module` - default `Guardian.Token.Jwt.Verify`. The module that verifies the claims
-  * `allowed_algos` - The allowed algos to use for encoding and decoding.
-                      See JOSE for available. Default ["HS512"]
-  * `ttl` - The default time to live for all tokens. See the type in Guardian.ttl
-            The default by `Guardian.Token.JWT` is `{4, :weeks}`
+  * `allowed_algos` - The allowed algos to use for encoding and decoding. See
+    JOSE for available. Default ["HS512"]
+  * `ttl` - The default time to live for all tokens. See the type in
+    Guardian.ttl. The default by `Guardian.Token.JWT` is `{4, :weeks}`
   * `token_ttl` a map of `token_type` to `ttl`. Set specific ttls for specific types of tokens
   * `allowed_drift` The drift that is allowed when decoding/verifying a token in milli seconds
   * `verify_issuer` Verify that the token was issued by the configured issuer. Default false
@@ -36,9 +36,8 @@ defmodule Guardian.Token.Jwt do
 
   * `secret` The secret key to use for signing
   * `headers` The Jose headers that should be used
-  * `allowed_algos`
-  * `token_type` - Override the default token type
-                   The default is "access"
+  * `allowed_algos` - A list of allowable algos
+  * `token_type` - Override the default token type. The default is "access"
   * `ttl` - The time to live. See `Guardian.Token.ttl` type
 
   #### Example
@@ -76,7 +75,8 @@ defmodule Guardian.Token.Jwt do
 
   # decode a token and check literal claims with options
   {:ok, claims} =
-    MyApp.Tokens.decode_and_verify(token, %{"typ" => "refresh"}, secret: {MyModule, :get_my_secret, ["some", "args"]})
+    MyApp.Tokens.decode_and_verify(token,
+      %{"typ" => "refresh"}, secret: {MyModule, :get_my_secret, ["some", "args"]})
 
   # exchange a token
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
@@ -84,7 +84,9 @@ defmodule Guardian.Token.Jwt do
 
   # exchange a token with options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
-    MyApp.Tokens.exchange(old_token, ["access", "refresh"], "access" secret: {MyModule, :get_my_secret, ["some", "args"]}, ttl: {1, :hour})
+    MyApp.Tokens.exchange(old_token,
+      ["access", "refresh"],
+      "access" secret: {MyModule, :get_my_secret, ["some", "args"]}, ttl: {1, :hour})
 
   # refresh a token using defaults
   {:ok, {old_token, old_claims}, {new_token, new_claims}} = MyApp.Tokens.refresh(old_token)
@@ -92,6 +94,7 @@ defmodule Guardian.Token.Jwt do
   # refresh a token using options
   {:ok, {old_token, old_claims}, {new_token, new_claims}} =
     MyApp.Tokens.refresh(old_token, ttl: {1, :week}, secret: {MyMod, :get_secret, ["some", "args"})
+
   ```
 
   ### Token verify module
@@ -105,7 +108,8 @@ defmodule Guardian.Token.Jwt do
   2. `use Guardian.Token.Verify` in your own module and use that.
 
   To create your own verify module use `Guardian.Token.Verify` and configure
-  your implementation to use it either through config files or when you setup your implementation.
+  your implementation to use it either through config files or when you setup
+  your implementation.
 
   ```elixir
   defmodule MyApp.Tokens do
@@ -119,6 +123,7 @@ defmodule Guardian.Token.Jwt do
 
   When you need dynamic secret verification, you should use a custom
   `Guardian.Token.Jwt.SecretFetcher` module.
+
   This will allow you to use the header values to determine dynamically the
   key that should be used.
 
@@ -138,8 +143,10 @@ defmodule Guardian.Token.Jwt do
 
   If the signing secret contains a "kid" (https://tools.ietf.org/html/rfc7515#section-4.1.4)
   it will be passed along to the signature to provide a hint about which secret was used.
+
   This can be useful for specifying which public key to use during verification if you're using
   a public/private key rotation strategy.
+
   An example implementation of this can be found here: [https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3](https://gist.github.com/mpinkston/469009001b694d3ca162894d74c9bfe3)
 
   """
@@ -163,9 +170,9 @@ defmodule Guardian.Token.Jwt do
 
   defmodule SecretFetcher do
     @moduledoc """
-    Provides a behaviour that specifies how to fetch the secret for the token
+    Provides a behaviour that specifies how to fetch the secret for the token.
 
-    `use Guardian.Token.JWT.SecretFetcher` to provide default implementations of each function
+    `use Guardian.Token.JWT.SecretFetcher` to provide default implementations of each function.
     """
 
     @doc """
@@ -174,7 +181,8 @@ defmodule Guardian.Token.Jwt do
     @callback fetch_signing_secret(module, opts :: Guardian.options()) :: {:ok, term} | {:error, :secret_not_found}
 
     @doc """
-    fetch_verifying_secret fetches the secret to verify a token.
+    Fetches the secret to verify a token.
+
     It is provided with the tokens headers in order to lookup the secret.
     """
     @callback fetch_verifying_secret(module, token_headers :: map, opts :: Guardian.options()) ::
@@ -225,7 +233,7 @@ defmodule Guardian.Token.Jwt do
   @doc """
   Inspect the JWT without any validation or signature checking.
 
-  Return an map with keys: `headers` and `claims`
+  Return an map with keys: `headers` and `claims`.
   """
   def peek(_mod, nil), do: nil
 
@@ -234,7 +242,7 @@ defmodule Guardian.Token.Jwt do
   end
 
   @doc """
-  Generate unique token id
+  Generate unique token id.
   """
   def token_id, do: Guardian.UUID.generate()
 
@@ -254,8 +262,7 @@ defmodule Guardian.Token.Jwt do
   * `headers` The Jose headers that should be used
   * `allowed_algos`
 
-  The secret may be in the form of any resolved value from `Guardian.Config`
-
+  The secret may be in the form of any resolved value from `Guardian.Config`.
   """
   def create_token(mod, claims, options \\ []) do
     with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
@@ -308,7 +315,7 @@ defmodule Guardian.Token.Jwt do
   Options:
 
   * `secret` - Override the configured secret. `Guardian.Config.config_value` is valid
-  * `allowed_algos` - a list of allowable algos
+  * `allowed_algos` - A list of allowable algos
   """
   def decode_token(mod, token, options \\ []) do
     with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
@@ -328,9 +335,10 @@ defmodule Guardian.Token.Jwt do
   @doc """
   Verifies the claims.
 
-  Configuration:
+  Options:
 
-  * `token_verify_module` Default `Guardian.Token.Jwt.Verify` the module to use to verify the claims
+  * `token_verify_module` - the module to use to verify the claims. Default
+    `Guardian.Token.Jwt.Verify`
   """
   def verify_claims(mod, claims, options) do
     result =
@@ -346,8 +354,10 @@ defmodule Guardian.Token.Jwt do
 
   @doc """
   Revoking a JWT by default does not do anything.
+
   You'll need to track the token in storage in some way
   and revoke in your implementation callbacks.
+
   See `GuardianDb` for an example.
   """
   def revoke(_mod, claims, _token, _options), do: {:ok, claims}
@@ -358,7 +368,7 @@ defmodule Guardian.Token.Jwt do
   Options:
 
   * `secret` - Override the configured secret. `Guardian.Config.config_value` is valid
-  * `allowed_algos` - a list of allowable algos
+  * `allowed_algos` - A list of allowable algos
   * `ttl` - The time to live. See `Guardian.Token.ttl` type
   """
   def refresh(mod, old_token, options) do
@@ -380,7 +390,7 @@ defmodule Guardian.Token.Jwt do
   Options:
 
   * `secret` - Override the configured secret. `Guardian.Config.config_value` is valid
-  * `allowed_algos` - a list of allowable algos
+  * `allowed_algos` - A list of allowable algos
   * `ttl` - The time to live. See `Guardian.Token.ttl` type
   """
   def exchange(mod, old_token, from_type, to_type, options) do
@@ -396,7 +406,7 @@ defmodule Guardian.Token.Jwt do
 
   # If the JWK includes a "kid" add this to the signature to provide a hint
   # about which key was used.
-  # https://tools.ietf.org/html/rfc7515#section-4.1.4
+  # See https://tools.ietf.org/html/rfc7515#section-4.1.4
   defp jose_jws(mod, %JWK{fields: %{"kid" => kid}}, opts) do
     header = %{"kid" => kid}
     opts = Keyword.update(opts, :headers, header, &Map.merge(&1, header))
