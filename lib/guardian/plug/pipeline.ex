@@ -84,6 +84,7 @@ if Code.ensure_loaded?(Plug) do
 
     If you want to define your pipeline inline, you can do so by using
     `Guardian.Plug.Pipeline` as a plug itself.
+
     You _must_ supply the module and error handler inline if you do this.
 
     ```elixir
@@ -105,12 +106,14 @@ if Code.ensure_loaded?(Plug) do
     # Now change out the error handler for plugs downstream of this one.
     plug Guardian.Plug.Pipeline, error_handler: MyApp.SpecialAuthErrorHandler
     ```
+
     """
 
     @doc """
     Create your very own `Guardian.Plug.Pipeline`
 
     Using this macro will make your module into a plug builder.
+
     It will provide your pipeline with the Guardian implementation module and error
     handler so that it can be used within your pipeline and downstream.
     """

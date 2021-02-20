@@ -22,23 +22,25 @@ if Code.ensure_loaded?(Plug) do
     If a token is found but is invalid, the error handler will be called with
     `auth_error(conn, {:invalid_token, reason}, opts)`
 
-    If a token is expired, the error handler WONT be called, the error can be handled with the ensure_authenticated plug
+    If a token is expired, the error handler WONT be called, the error can be
+    handled with the ensure_authenticated plug
 
     Once a token has been found it will be exchanged for an access (default) token.
     This access token will be placed into the session and connection.
 
-    They will be available using `Guardian.Plug.current_claims/2` and `Guardian.Plug.current_token/2`
+    They will be available using `Guardian.Plug.current_claims/2` and `Guardian.Plug.current_token/2`.
 
     Tokens from cookies should be of type `refresh` and have a relatively long life.
-    They will be exchanged for `access` tokens (default)
+    They will be exchanged for `access` tokens (default).
 
     Options:
 
     * `:key` - The location of the token (default `:default`)
     * `:exchange_from` - The type of the cookie (default `"refresh"`)
-    * `:exchange_to` - The type of token to provide. Defaults to the implementation modules `default_type`
+    * `:exchange_to` - The type of token to provide. Defaults to the
+      implementation modules `default_type`
     * `:ttl` - The time to live of the exchanged token. Defaults to configured values.
-    * `:halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `:halt` - Whether to halt the connection in case of error. Defaults to `true`
     """
 
     import Plug.Conn

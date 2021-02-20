@@ -1,6 +1,6 @@
 defmodule Guardian.Permissions.TextEncoding do
   @moduledoc """
-  Text encoding for permissions
+  Text encoding for permissions.
   """
 
   @behaviour Guardian.Permissions.PermissionEncoding

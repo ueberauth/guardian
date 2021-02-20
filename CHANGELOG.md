@@ -128,7 +128,7 @@ Update the poison and phoenix deps to allow a broader version setting
 * Tighten up log calls
 * Fix moar typos
 * General code cleanup
-* Losen poison requirement to >= 1.3.0
+* Loosen poison requirement to >= 1.3.0
 * Use existing resource on conn if already present
 * Fix refresh to correctly use revoke
 
@@ -144,7 +144,7 @@ Update the poison and phoenix deps to allow a broader version setting
 * Update JOSE to Version 1.6.0. Version 1.6.0 of erlang-jose
 adds the ability of using libsodium and SHA-3 (keccack) algorithms.
 This improves speed a lot.
-* Adds travis
+* Adds Travis
 * Adds ability to use custom secrets
 * Allows peeking at the contents of the token
 

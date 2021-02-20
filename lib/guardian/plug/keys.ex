@@ -6,8 +6,8 @@ defmodule Guardian.Plug.Keys do
   the data that Guardian deals in will be stored.
 
   `token`, `claims`, `resource` are all keyed.
-  `token`, `claims`, `resource` are all stored on the conn
-  `token` is stored in the session if a session is found
+  `token`, `claims`, `resource` are all stored on the conn.
+  `token` is stored in the session if a session is found.
   """
 
   @doc false

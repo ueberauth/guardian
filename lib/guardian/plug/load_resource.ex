@@ -21,18 +21,19 @@ if Code.ensure_loaded?(Plug) do
 
     Options:
 
-    * `allow_blank` - boolean. If set to true, will try to load a resource but will not fail if no resource is found.
+    * `allow_blank` - boolean. If set to true, will try to load a resource but
+      will not fail if no resource is found.
     * `key` - The location to find the information in the connection. Defaults to: `default`
-    * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `halt` - Whether to halt the connection in case of error. Defaults to `true`
 
     ## Example
 
     ```elixir
+    # setup the upstream pipeline
+    plug Guardian.Plug.LoadResource, allow_blank: true
+    plug Guardian.Plug.LoadResource, key: :secret
+    ```
 
-      # setup the upstream pipeline
-      plug Guardian.Plug.LoadResource, allow_blank: true
-      plug Guardian.Plug.LoadResource, key: :secret
-      ```
     """
 
     alias Guardian.Plug.Pipeline

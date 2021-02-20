@@ -111,7 +111,7 @@ end
 
 ## Changing the error handler
 
-Sometimes we need to change out the error handler. For example maybe in one area there's a module that redirects for customers, one for admins, maybe there's one that renders a page and maybe one that does JSON responses. That's a lot of behaviour to try to wrap into a single pipeline module. It's for this reason that you can change your error handler (and even your module) anytime by using the `Guardian.Plug.Pipeline` plug. Just specify which error handler to use downstream and you're good to go. As an example using a Phoneix router:
+Sometimes we need to change out the error handler. For example maybe in one area there's a module that redirects for customers, one for admins, maybe there's one that renders a page and maybe one that does JSON responses. That's a lot of behaviour to try to wrap into a single pipeline module. It's for this reason that you can change your error handler (and even your module) anytime by using the `Guardian.Plug.Pipeline` plug. Just specify which error handler to use downstream and you're good to go. As an example using a Phoenix router:
 
 ```elixir
   pipeline :auth do
@@ -160,7 +160,7 @@ end
 
 The plugs for Guardian are very composable, as is Plug itself and Phoenix routes.
 
-It's a good idea to have at least two Phoneix pipelines for authentication.
+It's a good idea to have at least two Phoenix pipelines for authentication.
 
 1. Find and verify the token if it's provided
 2. Ensure authenticated where appropriate
