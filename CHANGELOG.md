@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.1.2
+### Enhancement
+* Documentation improvements
+* Parse the kid from the signing secret to the signature [#654](https://github.com/ueberauth/guardian/pull/654)
+
+### Bugfix
+* Fixed issue with remember_me plug not using the correct ttl [#649](https://github.com/ueberauth/guardian/pull/649)
+* Fixed failing compilation if plug was not included as a dep [#633](https://github.com/ueberauth/guardian/pull/663)
+
+*Thanks goes to all contributors*
+
+
+## v2.1.1
+### Enhancement
+* Documentation improvements
+
 ## v2.1.0
 
 ### Enhancement
