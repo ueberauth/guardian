@@ -57,10 +57,16 @@ defmodule Guardian.Token.JwtTest do
     jose_jws = %{"alg" => algo}
     jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
 
-    {_, jwt} =
-      jose_jwk
-      |> JOSE.JWT.sign(jose_jws, claims)
-      |> JOSE.JWS.compact()
+    sign_claims = fn claims ->
+      {_, jwt} =
+        jose_jwk
+        |> JOSE.JWT.sign(jose_jws, claims)
+        |> JOSE.JWS.compact()
+
+      jwt
+    end
+
+    jwt = sign_claims.(claims)
 
     es512_jose_jwk = JOSE.JWK.generate_key({:ec, :secp521r1})
     es512_jose_jwk = JOSE.JWK.merge(es512_jose_jwk, %{"kid" => JOSE.JWK.thumbprint(es512_jose_jwk)})
@@ -79,6 +85,7 @@ defmodule Guardian.Token.JwtTest do
         jwt: jwt,
         jose_jws: jose_jws,
         jose_jwk: jose_jwk,
+        sign_claims: sign_claims,
         es512: %{
           jwk: es512_jose_jwk,
           jws: es512_jose_jws,
@@ -425,6 +432,16 @@ defmodule Guardian.Token.JwtTest do
 
       refute new_t == very_new_t
       assert very_new_c["exp"] == very_new_c["iat"] + 78
+    end
+
+    test "it allows tokens without typ field when custom ttl", ctx do
+      old_claims = Map.delete(ctx.claims, "typ")
+      old_token = ctx.sign_claims.(old_claims)
+
+      {:ok, {^old_token = old_t, ^old_claims}, {new_t, new_c}} = Jwt.refresh(ctx.impl, old_token, ttl: {30, :seconds})
+
+      refute old_t == new_t
+      assert new_c["exp"] == new_c["iat"] + 30
     end
   end
 
