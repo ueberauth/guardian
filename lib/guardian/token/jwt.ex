@@ -449,13 +449,13 @@ defmodule Guardian.Token.Jwt do
 
   defp set_ttl(%{"exp" => exp} = claims, _mod, _opts) when not is_nil(exp), do: claims
 
-  defp set_ttl(%{"typ" => token_typ} = claims, mod, opts) do
+  defp set_ttl(claims, mod, opts) do
     ttl = Keyword.get(opts, :ttl)
 
     if ttl do
       set_ttl(claims, ttl)
     else
-      token_typ = to_string(token_typ)
+      token_typ = claims |> Map.fetch!("typ") |> to_string()
       token_ttl = apply(mod, :config, [:token_ttl, %{}])
       fallback_ttl = apply(mod, :config, [:ttl, @default_ttl])
 
