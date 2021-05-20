@@ -172,4 +172,96 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     assert conn.status == 401
     refute conn.halted
   end
+
+  describe "with verify_cookie option" do
+    defmodule ImplJwt do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        issuer: "MyApp",
+        verify_issuer: true,
+        secret_key: "foo-de-fafa",
+        allowed_algos: ["HS512", "ES512"],
+        ttl: {4, :weeks},
+        secret_fetcher: Guardian.Support.TokenModule.SecretFetcher,
+        token_ttl: %{
+          "access" => {1, :day},
+          "refresh" => {2, :weeks}
+        },
+        handler: __MODULE__.Handler
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, "User:#{id}"}
+      def resource_from_claims(%{"sub" => "User:" <> sub}), do: {:ok, %{id: sub}}
+
+      def the_secret_yo, do: config(:secret_key)
+      def the_secret_yo(val), do: val
+
+      def verify_claims(claims, opts) do
+        if Keyword.get(opts, :fail_owner_verify_claims) do
+          {:error, Keyword.get(opts, :fail_owner_verify_claims)}
+        else
+          {:ok, claims}
+        end
+      end
+
+      def build_claims(claims, _opts) do
+        Map.put(claims, "from_owner", "here")
+      end
+    end
+
+    setup do
+      impl = __MODULE__.ImplJwt
+      handler = __MODULE__.Handler
+      {:ok, token, claims} = __MODULE__.ImplJwt.encode_and_sign(@resource)
+      {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, impl: impl, handler: handler}}
+    end
+
+    test "when session is valid", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", ctx.token)
+        |> VerifyHeader.call(module: ctx.impl, verify_cookie: [module: ctx.impl])
+
+      assert Guardian.Plug.current_token(conn, []) == ctx.token
+      assert Guardian.Plug.current_claims(conn, []) == ctx.claims
+    end
+
+    test "when session is expired", ctx do
+      {:ok, expired_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [ttl: {0, :second}]])
+      {:ok, refresh_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [token_type: "refresh"]])
+      :timer.sleep(1000)
+      assert {:error, :token_expired} = apply(ctx.impl, :decode_and_verify, [expired_token])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> put_req_header("authorization", expired_token)
+        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
+    end
+
+    test "when session is invalid", ctx do
+      {:ok, token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}])
+      invalid_token = "#{token}whatever"
+      {:ok, refresh_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [token_type: "refresh"]])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> put_req_header("authorization", invalid_token)
+        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+
+      assert conn.status == 401
+      assert conn.halted
+    end
+  end
 end

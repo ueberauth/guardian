@@ -98,13 +98,37 @@ if Code.ensure_loaded?(Plug) do
           conn
 
         {:error, reason} ->
-          conn
-          |> Pipeline.fetch_error_handler!(opts)
-          |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
-          |> Guardian.Plug.maybe_halt(opts)
+          handle_error(conn, reason, opts)
 
         _ ->
           conn
+      end
+    end
+
+    defp handle_error(conn, :token_expired = reason, opts) do
+      if verify_cookie_opts = fetch_verify_cookie_options(opts) do
+        Guardian.Plug.VerifyCookie.verify_cookie(conn, verify_cookie_opts)
+      else
+        apply_error(conn, reason, opts)
+      end
+    end
+
+    defp handle_error(conn, reason, opts) do
+      apply_error(conn, reason, opts)
+    end
+
+    defp apply_error(conn, reason, opts) do
+      conn
+      |> Pipeline.fetch_error_handler!(opts)
+      |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
+      |> Guardian.Plug.maybe_halt(opts)
+    end
+
+    defp fetch_verify_cookie_options(opts) do
+      case Keyword.get(opts, :verify_cookie) do
+        value when is_list(value) -> value
+        true -> []
+        _ -> nil
       end
     end
 
