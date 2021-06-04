@@ -55,7 +55,7 @@ defmodule Guardian.Token.JwtTest do
     secret = __MODULE__.Impl.config(:secret_key)
 
     jose_jws = %{"alg" => algo}
-    jose_jwk = %{"kty" => "oct", "k" => :base64url.encode(secret)}
+    jose_jwk = %{"kty" => "oct", "k" => :base64.encode(secret)}
 
     sign_claims = fn claims ->
       {_, jwt} =
