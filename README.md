@@ -305,6 +305,7 @@ Look for a token in the header and verify it
 Look for a token in the session and verify it
 
 #### `Guardian.Plug.VerifyCookie`
+**NOTE**: this plug is deprecated. Please use `:verify_cookie` option in `Guardian.Plug.VerifyHeader` or `Guardian.Plug.VerifySession`
 
 Look for a token in cookies and exchange it for an access token
 
