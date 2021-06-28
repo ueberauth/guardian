@@ -173,7 +173,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     refute conn.halted
   end
 
-  describe "with verify_cookie option" do
+  describe "with refresh_from_cookie option" do
     defmodule ImplJwt do
       @moduledoc false
 
@@ -223,7 +223,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         :get
         |> conn("/")
         |> put_req_header("authorization", ctx.token)
-        |> VerifyHeader.call(module: ctx.impl, verify_cookie: [module: ctx.impl])
+        |> VerifyHeader.call(module: ctx.impl, refresh_from_cookie: [module: ctx.impl])
 
       assert Guardian.Plug.current_token(conn, []) == ctx.token
       assert Guardian.Plug.current_claims(conn, []) == ctx.claims
@@ -240,7 +240,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> put_req_header("authorization", expired_token)
-        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
 
       refute conn.halted
       assert new_access_token = Guardian.Plug.current_token(conn)
@@ -258,7 +258,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> put_req_header("authorization", invalid_token)
-        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
 
       assert conn.status == 401
       assert conn.halted

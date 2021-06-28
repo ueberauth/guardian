@@ -53,22 +53,22 @@ if Code.ensure_loaded?(Plug) do
 
     @impl Plug
     @spec init(opts :: Keyword.t()) :: Keyword.t()
-    @deprecated "Use Guardian.Plug.VerifySession or Guardian.Plug.VerifyHeader plug with `:verify_cookie` option."
+    @deprecated "Use Guardian.Plug.VerifySession or Guardian.Plug.VerifyHeader plug with `:refresh_from_cookie` option."
     def init(opts), do: opts
 
     @impl Plug
     @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
     def call(conn, opts) do
-      verify_cookie(conn, opts)
+      refresh_from_cookie(conn, opts)
     end
 
-    def verify_cookie(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
+    def refresh_from_cookie(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
       conn
       |> fetch_cookies()
-      |> verify_cookie(opts)
+      |> refresh_from_cookie(opts)
     end
 
-    def verify_cookie(conn, opts) do
+    def refresh_from_cookie(conn, opts) do
       with nil <- Guardian.Plug.current_token(conn, opts),
            {:ok, token} <- find_token_from_cookies(conn, opts),
            module <- Pipeline.fetch_module!(conn, opts),

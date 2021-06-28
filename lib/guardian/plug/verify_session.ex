@@ -29,9 +29,9 @@ if Code.ensure_loaded?(Plug) do
 
     Options:
 
-    * `:verify_cookie` - Looks for and validates a token found in the request cookies. (default `false`)
+    * `:refresh_from_cookie` - Looks for and validates a token found in the request cookies. (default `false`)
 
-    Verify cookie option
+    Refresh from cookie option
 
     * `:key` - The location of the token (default `:default`)
     * `:exchange_from` - The type of the cookie (default `"refresh"`)
@@ -85,8 +85,8 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp handle_error(conn, :token_expired = reason, opts) do
-      if verify_cookie_opts = fetch_verify_cookie_options(opts) do
-        Guardian.Plug.VerifyCookie.verify_cookie(conn, verify_cookie_opts)
+      if refresh_from_cookie_opts = fetch_refresh_from_cookie_options(opts) do
+        Guardian.Plug.VerifyCookie.refresh_from_cookie(conn, refresh_from_cookie_opts)
       else
         apply_error(conn, reason, opts)
       end
@@ -103,8 +103,8 @@ if Code.ensure_loaded?(Plug) do
       |> Guardian.Plug.maybe_halt(opts)
     end
 
-    defp fetch_verify_cookie_options(opts) do
-      case Keyword.get(opts, :verify_cookie) do
+    defp fetch_refresh_from_cookie_options(opts) do
+      case Keyword.get(opts, :refresh_from_cookie) do
         value when is_list(value) -> value
         true -> []
         _ -> nil

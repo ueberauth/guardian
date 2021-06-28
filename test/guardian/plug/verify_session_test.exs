@@ -198,7 +198,7 @@ defmodule Guardian.Plug.VerifySessionTest do
     assert Guardian.Plug.current_claims(conn, key: :admin) == claims
   end
 
-  describe "with verify_cookie option" do
+  describe "with refresh_from_cookie option" do
     defmodule ImplJwt do
       @moduledoc false
 
@@ -248,7 +248,7 @@ defmodule Guardian.Plug.VerifySessionTest do
         :get
         |> conn("/")
         |> init_test_session(%{guardian_default_token: ctx.token})
-        |> VerifySession.call(module: ctx.impl, verify_cookie: [module: ctx.impl])
+        |> VerifySession.call(module: ctx.impl, refresh_from_cookie: [module: ctx.impl])
 
       assert Guardian.Plug.current_token(conn, []) == ctx.token
       assert Guardian.Plug.current_claims(conn, []) == ctx.claims
@@ -265,7 +265,7 @@ defmodule Guardian.Plug.VerifySessionTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> init_test_session(%{guardian_default_token: expired_token})
-        |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+        |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
 
       refute conn.halted
       assert new_access_token = Guardian.Plug.current_token(conn)
@@ -283,7 +283,7 @@ defmodule Guardian.Plug.VerifySessionTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> init_test_session(%{guardian_default_token: invalid_token})
-        |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler, verify_cookie: [module: ctx.impl])
+        |> VerifySession.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
 
       assert conn.status == 401
       assert conn.halted
