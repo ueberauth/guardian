@@ -223,7 +223,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         :get
         |> conn("/")
         |> put_req_header("authorization", ctx.token)
-        |> VerifyHeader.call(module: ctx.impl, refresh_from_cookie: [module: ctx.impl])
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(refresh_from_cookie: [])
 
       assert Guardian.Plug.current_token(conn, []) == ctx.token
       assert Guardian.Plug.current_claims(conn, []) == ctx.claims
@@ -240,7 +242,30 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> put_req_header("authorization", expired_token)
-        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(refresh_from_cookie: [])
+
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
+    end
+
+    test "when session is expired and refresh_from_cookie: true", ctx do
+      {:ok, expired_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [ttl: {0, :second}]])
+      {:ok, refresh_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [token_type: "refresh"]])
+      :timer.sleep(1000)
+      assert {:error, :token_expired} = apply(ctx.impl, :decode_and_verify, [expired_token])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> put_req_header("authorization", expired_token)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(refresh_from_cookie: true)
 
       refute conn.halted
       assert new_access_token = Guardian.Plug.current_token(conn)
@@ -258,7 +283,9 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> conn("/")
         |> put_req_cookie("guardian_default_token", refresh_token)
         |> put_req_header("authorization", invalid_token)
-        |> VerifyHeader.call(module: ctx.impl, error_handler: ctx.handler, refresh_from_cookie: [module: ctx.impl])
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(refresh_from_cookie: [module: ctx.impl])
 
       assert conn.status == 401
       assert conn.halted
