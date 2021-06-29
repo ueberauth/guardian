@@ -36,6 +36,16 @@ if Code.ensure_loaded?(Plug) do
       `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
     * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
+    * `:refresh_from_cookie` - Looks for and validates a token found in the request cookies. (default `false`)
+
+    Refresh from cookie option
+
+    * `:key` - The location of the token (default `:default`)
+    * `:exchange_from` - The type of the cookie (default `"refresh"`)
+    * `:exchange_to` - The type of token to provide. Defaults to the
+      implementation modules `default_type`
+    * `:ttl` - The time to live of the exchanged token. Defaults to configured values.
+    * `:halt` - Whether to halt the connection in case of error. Defaults to `true`
 
     ### Example
 
@@ -98,13 +108,37 @@ if Code.ensure_loaded?(Plug) do
           conn
 
         {:error, reason} ->
-          conn
-          |> Pipeline.fetch_error_handler!(opts)
-          |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
-          |> Guardian.Plug.maybe_halt(opts)
+          handle_error(conn, reason, opts)
 
         _ ->
           conn
+      end
+    end
+
+    defp handle_error(conn, :token_expired = reason, opts) do
+      if refresh_from_cookie_opts = fetch_refresh_from_cookie_options(opts) do
+        Guardian.Plug.VerifyCookie.refresh_from_cookie(conn, refresh_from_cookie_opts)
+      else
+        apply_error(conn, reason, opts)
+      end
+    end
+
+    defp handle_error(conn, reason, opts) do
+      apply_error(conn, reason, opts)
+    end
+
+    defp apply_error(conn, reason, opts) do
+      conn
+      |> Pipeline.fetch_error_handler!(opts)
+      |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
+      |> Guardian.Plug.maybe_halt(opts)
+    end
+
+    defp fetch_refresh_from_cookie_options(opts) do
+      case Keyword.get(opts, :refresh_from_cookie) do
+        value when is_list(value) -> value
+        true -> []
+        _ -> nil
       end
     end
 

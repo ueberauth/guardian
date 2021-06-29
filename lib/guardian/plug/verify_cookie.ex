@@ -53,26 +53,33 @@ if Code.ensure_loaded?(Plug) do
 
     @impl Plug
     @spec init(opts :: Keyword.t()) :: Keyword.t()
+    @deprecated "Use Guardian.Plug.VerifySession or Guardian.Plug.VerifyHeader plug with `:refresh_from_cookie` option."
     def init(opts), do: opts
 
     @impl Plug
     @spec call(conn :: Plug.Conn.t(), opts :: Keyword.t()) :: Plug.Conn.t()
-    def call(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
-      conn
-      |> fetch_cookies()
-      |> call(opts)
+    def call(conn, opts) do
+      refresh_from_cookie(conn, opts)
     end
 
-    def call(conn, opts) do
+    def refresh_from_cookie(%{req_cookies: %Plug.Conn.Unfetched{}} = conn, opts) do
+      conn
+      |> fetch_cookies()
+      |> refresh_from_cookie(opts)
+    end
+
+    def refresh_from_cookie(conn, opts) do
       with nil <- Guardian.Plug.current_token(conn, opts),
            {:ok, token} <- find_token_from_cookies(conn, opts),
            module <- Pipeline.fetch_module!(conn, opts),
            key <- storage_key(conn, opts),
-           exchange_from <- Keyword.get(opts, :exchange_from, "refresh"),
+           exchange_from <-
+             Keyword.get(opts, :exchange_from, "refresh"),
            default_type <- module.default_token_type(),
            exchange_to <- Keyword.get(opts, :exchange_to, default_type),
            active_session? <- Guardian.Plug.session_active?(conn),
-           {:ok, _old, {new_t, new_c}} <- Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
+           {:ok, _old, {new_t, new_c}} <-
+             Guardian.exchange(module, token, exchange_from, exchange_to, opts) do
         conn
         |> Guardian.Plug.put_current_token(new_t, key: key)
         |> Guardian.Plug.put_current_claims(new_c, key: key)
