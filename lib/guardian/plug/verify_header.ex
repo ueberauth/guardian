@@ -32,7 +32,7 @@ if Code.ensure_loaded?(Plug) do
     * `claims` - The literal claims to check to ensure that a token is valid
     * `max_age` - If the token has an "auth_time" claim, check it is not older than the maximum age.
     * `header_name` - The name of the header to search for a token. Defaults to `authorization`.
-    * `realm` - The prefix for the token in the header. Defaults to `Bearer`.
+    * `scheme` - The prefix for the token in the header. Defaults to `Bearer`.
       `:none` will not use a prefix.
     * `key` - The location to store the information in the connection. Defaults to: `default`
     * `halt` - Whether to halt the connection in case of error. Defaults to `true`.
@@ -76,19 +76,9 @@ if Code.ensure_loaded?(Plug) do
     @impl Plug
     @spec init(opts :: Keyword.t()) :: Keyword.t()
     def init(opts \\ []) do
-      realm = Keyword.get(opts, :realm, "Bearer")
-
-      case realm do
-        "" ->
-          opts
-
-        :none ->
-          opts
-
-        _realm ->
-          {:ok, reg} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
-          Keyword.put(opts, :realm_reg, reg)
-      end
+      opts
+      |> get_scheme()
+      |> put_scheme_reg(opts)
     end
 
     @impl Plug
@@ -112,6 +102,28 @@ if Code.ensure_loaded?(Plug) do
 
         _ ->
           conn
+      end
+    end
+
+    defp put_scheme_reg("", opts) do
+      opts
+    end
+
+    defp put_scheme_reg(:none, opts) do
+      opts
+    end
+
+    defp put_scheme_reg(scheme, opts) do
+      {:ok, reg} = Regex.compile("#{scheme}\:?\s+(.*)$", "i")
+      Keyword.put(opts, :scheme_reg, reg)
+    end
+
+    defp get_scheme(opts) do
+      if Keyword.has_key?(opts, :realm) do
+        IO.warn("`:realm` option is deprecated; please rename `:realm` to `:scheme` option instead.")
+        Keyword.get(opts, :realm, "Bearer")
+      else
+        Keyword.get(opts, :scheme, "Bearer")
       end
     end
 
@@ -157,7 +169,7 @@ if Code.ensure_loaded?(Plug) do
     defp fetch_token_from_header(_, _, []), do: :no_token_found
 
     defp fetch_token_from_header(conn, opts, [token | tail]) do
-      reg = Keyword.get(opts, :realm_reg, ~r/^(.*)$/)
+      reg = Keyword.get(opts, :scheme_reg, ~r/^(.*)$/)
       trimmed_token = String.trim(token)
 
       case Regex.run(reg, trimmed_token) do

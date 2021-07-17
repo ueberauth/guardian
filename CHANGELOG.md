@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.2.0
+
+### Enhancement
+
+* Add `:scheme` option to `Guardian.Plug.VerifyHeader` [#680](https://github.com/ueberauth/guardian/pull/680)
+
+### Deprecation
+
+* `:realm` option configuration of  `Guardian.Plug.VerifyHeader` is deprecated
+  please use `:scheme` instead.
+
 ## v2.1.2
 ### Enhancement
 * Documentation improvements

@@ -23,7 +23,7 @@ if Code.ensure_loaded?(Plug) do
     @claims %{iss: "IssuerApp"}
 
     plug Guardian.Plug.VerifySession, claims: @claims
-    plug Guardian.Plug.VerifyHeader, claims: @claims, realm: "Bearer"
+    plug Guardian.Plug.VerifyHeader, claims: @claims, scheme: "Bearer"
     plug Guardian.Plug.EnsureAuthenticated
     plug Guardian.Plug.LoadResource, allow_blank: true
     end
@@ -90,7 +90,7 @@ if Code.ensure_loaded?(Plug) do
     ```elixir
     plug Guardian.Plug.Pipeline, module: MyApp.Tokens,
     error_handler: MyApp.AuthErrorHandler
-    plug Guardian.VerifyHeader, realm: "Bearer"
+    plug Guardian.VerifyHeader, scheme: "Bearer"
     ```
 
     Inline pipelines are also good to change the error handler that you want to use.
@@ -101,7 +101,7 @@ if Code.ensure_loaded?(Plug) do
     # Use the MyApp.AuthErrorHandler for downstream Guardian plugs
     plug Guardian.Plug.Pipeline, module: MyApp.Tokens,
     error_handler: MyApp.AuthErrorHandler
-    plug Guardian.VerifyHeader, realm: "Bearer"
+    plug Guardian.VerifyHeader, scheme: "Bearer"
 
     # Now change out the error handler for plugs downstream of this one.
     plug Guardian.Plug.Pipeline, error_handler: MyApp.SpecialAuthErrorHandler
