@@ -8,7 +8,7 @@
 
 ### Deprecation
 
-* `:scheme` option configuration of  `Guardian.Plug.VerifyHeader` is deprecated
+* `:realm` option configuration of  `Guardian.Plug.VerifyHeader` is deprecated
   please use `:scheme` instead.
 
 ## v2.1.2
