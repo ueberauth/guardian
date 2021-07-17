@@ -434,7 +434,8 @@ For more in-depth documentation please see the [GuardianDb README](https://githu
 
 ### How to add the token to a request (the Phoenix way)
 
-Assuming you are using the default realm `Bearer` for the `Authorization` header:
+Assuming you are using the default authentication scheme `Bearer` for
+the `Authorization` header:
 
 ```elixir
 defmodule HelloWeb.AuthControllerTest do

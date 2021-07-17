@@ -2,11 +2,12 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   @moduledoc false
 
   use Plug.Test
+  use ExUnit.Case, async: true
+
+  import ExUnit.CaptureIO
 
   alias Guardian.Plug.Pipeline
   alias Guardian.Plug.VerifyHeader
-
-  use ExUnit.Case, async: true
 
   defmodule Handler do
     @moduledoc false
@@ -114,6 +115,23 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
     assert Guardian.Plug.current_token(conn, key: :secret) == ctx.token
     assert Guardian.Plug.current_claims(conn, key: :secret) == ctx.claims
+  end
+
+  test "with :realm option shows a warning message" do
+    has_warning_message =
+      :stderr
+      |> capture_io(fn -> VerifyHeader.init(realm: "Bearer") end)
+      |> String.contains?("`:realm` option is deprecated; please rename `:realm` to `:scheme` option instead.")
+
+    assert has_warning_message
+  end
+
+  test "getting the scheme config" do
+    opts = VerifyHeader.init(realm: "Bearer")
+    assert opts[:scheme_reg] == ~r/Bearer:? +(.*)$/i
+
+    opts = VerifyHeader.init(scheme: "Basic")
+    assert opts[:scheme_reg] == ~r/Basic:? +(.*)$/i
   end
 
   test "with a token and mismatching claims", ctx do
