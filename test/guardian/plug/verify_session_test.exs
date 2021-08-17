@@ -312,8 +312,10 @@ defmodule Guardian.Plug.VerifySessionTest do
         |> Pipeline.put_error_handler(ctx.handler)
         |> VerifySession.call(refresh_from_cookie: [])
 
-      assert conn.status == 401
-      assert conn.halted
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
   end
 end
