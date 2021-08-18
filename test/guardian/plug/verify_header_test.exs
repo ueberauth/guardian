@@ -310,5 +310,22 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
       assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
+
+    test "when no header found", ctx do
+      {:ok, refresh_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [token_type: "refresh"]])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(refresh_from_cookie: [module: ctx.impl])
+
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
+    end
   end
 end

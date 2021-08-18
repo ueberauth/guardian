@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.2.1
+
+### Enhancement
+
+* `Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession` `:refresh_from_cookie` option will try refreshing
+when access token not found, invalid or expired if cookie present [#683](https://github.com/ueberauth/guardian/pull/683)
+
 ## v2.2.0
 
 ### Enhancement
