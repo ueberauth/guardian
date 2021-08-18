@@ -12,11 +12,15 @@ when access token not found, invalid or expired if cookie present [#683](https:/
 ### Enhancement
 
 * Add `:scheme` option to `Guardian.Plug.VerifyHeader` [#680](https://github.com/ueberauth/guardian/pull/680)
+* Add `:refresh_from_cookie` option to `Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession` 
+to replace `Guardian.Plug.VerifyCookie` plug [#675](https://github.com/ueberauth/guardian/pull/675)
 
 ### Deprecation
 
-* `:realm` option configuration of  `Guardian.Plug.VerifyHeader` is deprecated
+* `:realm` option configuration of `Guardian.Plug.VerifyHeader` is deprecated
   please use `:scheme` instead.
+* `Guardian.Plug.VerifyCookie` is deprecated in favor of `:refresh_from_cookie` option in
+`Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession`
 
 ## v2.1.2
 ### Enhancement
