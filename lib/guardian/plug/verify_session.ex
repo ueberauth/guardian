@@ -73,34 +73,28 @@ if Code.ensure_loaded?(Plug) do
         |> Guardian.Plug.put_current_token(token, key: key)
         |> Guardian.Plug.put_current_claims(claims, key: key)
       else
-        :no_token_found ->
-          conn
-
-        {:error, reason} ->
-          handle_error(conn, reason, opts)
-
-        _ ->
-          conn
+        error ->
+          handle_error(conn, error, opts)
       end
     end
 
-    defp handle_error(conn, :token_expired = reason, opts) do
+    defp handle_error(conn, error, opts) do
       if refresh_from_cookie_opts = fetch_refresh_from_cookie_options(opts) do
         Guardian.Plug.VerifyCookie.refresh_from_cookie(conn, refresh_from_cookie_opts)
       else
-        apply_error(conn, reason, opts)
+        apply_error(conn, error, opts)
       end
     end
 
-    defp handle_error(conn, reason, opts) do
-      apply_error(conn, reason, opts)
-    end
-
-    defp apply_error(conn, reason, opts) do
+    defp apply_error(conn, {:error, reason}, opts) do
       conn
       |> Pipeline.fetch_error_handler!(opts)
       |> apply(:auth_error, [conn, {:invalid_token, reason}, opts])
       |> Guardian.Plug.maybe_halt(opts)
+    end
+
+    defp apply_error(conn, _, _) do
+      conn
     end
 
     defp fetch_refresh_from_cookie_options(opts) do

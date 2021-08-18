@@ -312,8 +312,28 @@ defmodule Guardian.Plug.VerifySessionTest do
         |> Pipeline.put_error_handler(ctx.handler)
         |> VerifySession.call(refresh_from_cookie: [])
 
-      assert conn.status == 401
-      assert conn.halted
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
+    end
+
+    test "when no session found", ctx do
+      {:ok, refresh_token, _} = apply(ctx.impl, :encode_and_sign, [%{id: "jane"}, %{}, [token_type: "refresh"]])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> init_test_session(%{})
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifySession.call(refresh_from_cookie: [])
+
+      refute conn.halted
+      assert new_access_token = Guardian.Plug.current_token(conn)
+      assert {:ok, _} = apply(ctx.impl, :decode_and_verify, [new_access_token])
+      assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
   end
 end
