@@ -12,7 +12,7 @@ when access token not found, invalid or expired if cookie present [#683](https:/
 ### Enhancement
 
 * Add `:scheme` option to `Guardian.Plug.VerifyHeader` [#680](https://github.com/ueberauth/guardian/pull/680)
-* Add `:refresh_from_cookie` option to `Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession` 
+* Add `:refresh_from_cookie` option to `Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession`
 to replace `Guardian.Plug.VerifyCookie` plug [#675](https://github.com/ueberauth/guardian/pull/675)
 
 ### Deprecation
@@ -23,7 +23,9 @@ to replace `Guardian.Plug.VerifyCookie` plug [#675](https://github.com/ueberauth
 `Guardian.Plug.VerifyHeader` and `Guardian.Plug.VerifySession`
 
 ## v2.1.2
+
 ### Enhancement
+
 * Documentation improvements
 * Parse the kid from the signing secret to the signature [#654](https://github.com/ueberauth/guardian/pull/654)
 
