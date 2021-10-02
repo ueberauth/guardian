@@ -9,39 +9,41 @@ on:
 jobs:
   Test:
     runs-on: ubuntu-latest
-
-    container:
-      image: elixir:1.9-alpine
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
+
+      - name: Set up Elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: '1.11'
+          otp-version: '22.3'
 
       - name: Install Dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
-
       - name: Run Tests
         run: mix test
 
   Linting:
     runs-on: ubuntu-latest
-
-    container:
-      image: elixir:1.9-alpine
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
+
+      - name: Set up Elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: '1.11'
+          otp-version: '22.3'
 
       - name: Install Dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
-
       - name: Run Formatter
         run: mix format --check-formatted
 
