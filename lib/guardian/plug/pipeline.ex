@@ -68,7 +68,7 @@ if Code.ensure_loaded?(Plug) do
 
     ### Keys
 
-    Using keys allows you to specifiy locations in the session/connection where
+    Using keys allows you to specify locations in the session/connection where
     the tokens and resources will be placed. This allows multiple authenticated
     tokens to be in play for a single request. This is useful for impersonation or
     higher security areas where you can have a specific set of privileges and

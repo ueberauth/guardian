@@ -22,7 +22,7 @@ if Code.ensure_loaded?(Plug) do
     If a token is found but is invalid, the error handler will be called with
     `auth_error(conn, {:invalid_token, reason}, opts)`
 
-    If a token is expired, the error handler WONT be called, the error can be
+    If a token is expired, the error handler WON'T be called, the error can be
     handled with the ensure_authenticated plug
 
     Once a token has been found it will be exchanged for an access (default) token.
