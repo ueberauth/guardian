@@ -539,7 +539,7 @@ config :my_app, MyApp.Guardian,
   allowed_algos: ["Ed25519"],
   secret_key: {MySecretKey, :fetch, []}
 ```
-### Private/Public Keypairs
+### Private/Public Key pairs
 
 A full example of how to configure guardian to use private/public key files as secrets, can be found [here](https://github.com/ueberauth/guardian_pemfile_config_example).
 
@@ -599,7 +599,7 @@ defmodule MyApp.Guardian.KeyServer do
   def expire_private_key,
     do: GenServer.cast(__MODULE__, :expire_private_key)
 
-  # Generate a new keypair along with the key ID (kid)
+  # Generate a new key pair along with the key ID (kid)
   @spec generate_keypair() :: {:ok, JOSE.JWK.t(), JOSE.JWK.t(), String.t()}
   def generate_keypair() do
     # Choose an appropriate signing algorithm for your security needs.

@@ -297,7 +297,7 @@ defmodule AuthMeWeb.SessionController do
   def logout(conn, _) do
     conn
     |> Guardian.Plug.sign_out() #This module's full name is Auth.UserManager.Guardian.Plug,
-    |> redirect(to: "/login")   #and the arguments specfied in the Guardian.Plug.sign_out()
+    |> redirect(to: "/login")   #and the arguments specified in the Guardian.Plug.sign_out()
   end                           #docs are not applicable here
 
   defp login_reply({:ok, user}, conn) do
