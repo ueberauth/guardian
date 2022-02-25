@@ -7,6 +7,7 @@ if Code.ensure_loaded?(Plug) do
 
     1. The session is not loaded
     2. A token is already found for `:key`
+    3. No token is found on the session
 
     This plug will not do anything.
 
