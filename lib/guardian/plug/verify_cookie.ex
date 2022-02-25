@@ -3,10 +3,10 @@ if Code.ensure_loaded?(Plug) do
     @moduledoc """
     Looks for and validates a token found in the request cookies.
 
-    In the case where:
+    In the case where either:
 
-    a. The cookies are not loaded
-    b. A token is already found for `:key`
+    1. The cookies are not loaded
+    2. A token is already found for `:key`
 
     This plug will not do anything.
 

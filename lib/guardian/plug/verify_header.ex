@@ -3,7 +3,7 @@ if Code.ensure_loaded?(Plug) do
     @moduledoc """
     Looks for and validates a token found in the `Authorization` header.
 
-    In the case where:
+    In the case where either:
 
     1. The session is not loaded
     2. A token is already found for `:key`

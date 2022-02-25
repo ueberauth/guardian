@@ -3,10 +3,10 @@ if Code.ensure_loaded?(Plug) do
     @moduledoc """
     Looks for and validates a token found in the session.
 
-    In the case where:
+    In the case where either:
 
-    a. The session is not loaded
-    b. A token is already found for `:key`
+    1. The session is not loaded
+    2. A token is already found for `:key`
 
     This plug will not do anything.
 
