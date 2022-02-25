@@ -3,6 +3,10 @@ if Code.ensure_loaded?(Plug) do
     @moduledoc """
     Looks for and validates a token found in the request cookies.
 
+    This module is deprecated in favor of using
+    `Guardian.Plug.VerifySession` or the `Guardian.Plug.VerifyHeader`
+    plug with the `:refresh_from_cookie` option
+
     In the case where either:
 
     1. The cookies are not loaded
