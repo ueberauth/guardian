@@ -268,7 +268,7 @@ The callbacks are:
 ## Plugs
 
 Guardian provides various plugs to help work with web requests in Elixir.
-Guardians plugs are optional and will not be compiled if you're not using Plug in your application.
+Guardian's plugs are optional and will not be compiled if you're not using Plug in your application.
 
 All plugs need to be in a `pipeline`.
 A pipeline is just a way to get the implementation module and error handler
