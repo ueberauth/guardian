@@ -12,7 +12,7 @@ JWT is a reasonable default that can be used in most situations including browse
 
 ## Guardian
 
-Guardians functionality has two core pieces.
+Guardian's functionality has two core pieces.
 
 * Creating Tokens
 * Verifying tokens

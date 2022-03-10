@@ -1,10 +1,10 @@
 # Pipelines
 
-Guardians Plug support provides an easy and composable way to put together your authentication.
+Guardian's Plug support provides an easy and composable way to put together your authentication.
 
 Different parts of your application are going to need different parts of the authentication system. Some areas a user can be logged in, or not. Others users are required.
 
-Guardians composable nature, coupled with the composable nature of Plug means that the options are pretty much endless. For that reason this documentation will focus on walking through how Guardian pipelines work so you can get just the right solution for you.
+Guardian's composable nature, coupled with the composable nature of Plug means that the options are pretty much endless. For that reason this documentation will focus on walking through how Guardian pipelines work so you can get just the right solution for you.
 
 ## What is a Guardian Pipeline?
 
