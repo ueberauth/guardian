@@ -2,9 +2,9 @@
 
 Guardian's Plug support provides an easy and composable way to put together your authentication.
 
-Different parts of your application are going to need different parts of the authentication system. Some areas a user can be logged in, or not. Others users are required.
+Different parts of your application are going to need different parts of the authentication system. For some areas, a user can be logged in, or not. For others users are required.
 
-Guardian's composable nature, coupled with the composable nature of Plug means that the options are pretty much endless. For that reason this documentation will focus on walking through how Guardian pipelines work so you can get just the right solution for you.
+Guardian's composable nature, coupled with the composable nature of Plug provide nearly endless options for customization. For that reason, this documentation will focus on walking through how Guardian pipelines work so you can get just the right solution for you.
 
 ## What is a Guardian Pipeline?
 
@@ -13,11 +13,11 @@ A pipeline provides two main pieces.
 1. Access to your [implementation module](introduction-implementation.html)
 2. An error handler for when folks aren't authenticated
 
-The pipeline puts these two modules into the `Plug.Conn` struct so that they're available to all downstream plugs. This means that we can set these at the start of our plug chain and even swap them out downstream if we need to. More on that later though.
+The pipeline puts these two modules into the `Plug.Conn` struct so that they're available to all downstream plugs. This means that we can set these at the start of our plug chain and even swap them out downstream if we need to. More on that later, though.
 
 ## A manual version
 
-When we `use Guardian.Plug.Pipeline` it's just wrapping up a bunch of plugs for us into a nice neat bundle. In order to understand what it's doing we'll first look at it manually.
+When we `use Guardian.Plug.Pipeline`, it's just wrapping up a bunch of plugs for us into a nice neat bundle. In order to understand what it's doing, we'll first look at it manually.
 
 The first step is to use the pipeline plug to specify the implementation module and error handler.
 
@@ -32,7 +32,7 @@ The next thing that we're going to want to do is find the token. Guardian provid
 
 * [VerifySession](Guardian.Plug.VerifySession.html) - For when the token is stored in the session
 * [VerifyHeader](Guardian.Plug.VerifyHeader.html) - `Authorization` header token location
-* [VerifyCookie](Guardian.Plug.VerifyCookie.html) - A cookie has the token stored
+* [VerifyCookie](Guardian.Plug.VerifyCookie.html) (deprecated) - A cookie has the token stored
 
 ```elixir
 # ...
@@ -165,7 +165,7 @@ It's a good idea to have at least two Phoenix pipelines for authentication.
 1. Find and verify the token if it's provided
 2. Ensure authenticated where appropriate
 
-The `Guardian.Plug.VerifySession` will work fine if sessions are loaded and if they're no it will just move on to the next plug so we can always just check both.
+The `Guardian.Plug.VerifySession` will work fine if sessions are loaded and if they're not it will just move on to the next plug so we can always just check both.
 
 In this example we'll show it without the Pipeline module. Using the pipeline module can tidy things up for you and make it reusable if you're not using Phoenix.
 
