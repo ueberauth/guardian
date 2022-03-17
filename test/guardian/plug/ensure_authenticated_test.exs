@@ -37,7 +37,7 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
   setup do
     impl = Impl
     handler = Handler
-    {:ok, token, claims} = Impl.encode_and_sign(@resource)
+    {:ok, token, claims} = Impl.encode_and_sign(@resource, %{custom: true})
     {:ok, %{claims: claims, conn: conn(:get, "/"), token: token, impl: impl, handler: handler}}
   end
 
@@ -82,7 +82,33 @@ defmodule Guardian.Plug.EnsureAuthenticatedTest do
 
       assert conn.halted
       assert conn.status == 401
-      assert {401, _, "{:unauthenticated, :no}"} = sent_resp(conn)
+      assert {401, _, "{:unauthenticated, \"no\"}"} = sent_resp(conn)
+    end
+
+    test "allows the plug to continue if the claims do match, with atom keys", ctx do
+      conn =
+        EnsureAuthenticated.call(
+          ctx.conn,
+          module: ctx.impl,
+          error_handler: ctx.handler,
+          claims: %{custom: true}
+        )
+
+      refute conn.halted
+      refute conn.status == 401
+    end
+
+    test "allows the plug to continue if the claims do match, with string keys", ctx do
+      conn =
+        EnsureAuthenticated.call(
+          ctx.conn,
+          module: ctx.impl,
+          error_handler: ctx.handler,
+          claims: %{"custom" => true}
+        )
+
+      refute conn.halted
+      refute conn.status == 401
     end
   end
 end

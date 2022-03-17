@@ -71,7 +71,7 @@ if Code.ensure_loaded?(Plug) do
 
     @spec verify_claims(Guardian.Token.claims(), Keyword.t()) :: {:ok, Guardian.Token.claims()} | {:error, any}
     defp verify_claims(claims, opts) do
-      to_check = Keyword.get(opts, :claims)
+      to_check = Keyword.get(opts, :claims) |> Guardian.stringify_keys()
       Guardian.Token.Verify.verify_literal_claims(claims, to_check, opts)
     end
   end
