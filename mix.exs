@@ -2,7 +2,7 @@ defmodule Guardian.Mixfile do
   @moduledoc false
   use Mix.Project
 
-  @version "2.2.1"
+  @version "2.2.2"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
