@@ -88,7 +88,7 @@ defmodule Guardian.Token.Verify do
     end
   end
 
-  @spec verify_literal_claims(map(), binary(), [binary()] | binary()) ::
+  @spec verify_literal_claim(map(), binary(), [binary()] | binary()) ::
           {:ok, [binary()] | binary()} | {:error, binary()}
   defp verify_literal_claim(claims, key, value) do
     claim_value = Map.get(claims, key)

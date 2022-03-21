@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.2
+
+### Enhancement
+
+* `Guardian.Plug.EnsureAuthenticated` will now accept atom keys in the map passed to the `claims` option.
+
 ## v2.2.1
 
 ### Enhancement
