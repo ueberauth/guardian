@@ -2,9 +2,9 @@
 
 > An authentication library for use with Elixir applications.
 
-[![Build Status](https://travis-ci.org/ueberauth/guardian.svg?branch=master)](https://travis-ci.org/ueberauth/guardian)
+![Build Status](https://github.com/ueberauth/guardian/actions/workflows/ci.yml/badge.svg)
 [![Codecov](https://codecov.io/gh/ueberauth/guardian/branch/master/graph/badge.svg)](https://codecov.io/gh/ueberauth/guardian)
-[![Inline docs](http://inch-ci.org/github/ueberauth/guardian.svg)](http://inch-ci.org/github/ueberauth/guardian)
+[![Inline docs](https://inch-ci.org/github/ueberauth/guardian.svg)](https://inch-ci.org/github/ueberauth/guardian)
 [![Module Version](https://img.shields.io/hexpm/v/guardian.svg)](https://hex.pm/packages/guardian)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/guardian/)
 [![Total Download](https://img.shields.io/hexpm/dt/guardian.svg)](https://hex.pm/packages/guardian)
