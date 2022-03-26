@@ -239,6 +239,8 @@ defmodule Guardian.Token.Jwt do
 
   def peek(_mod, token) do
     %{headers: JWT.peek_protected(token).fields, claims: JWT.peek_payload(token).fields}
+  rescue
+    ArgumentError -> nil
   end
 
   @doc """
@@ -329,6 +331,8 @@ defmodule Guardian.Token.Jwt do
         {true, jose_jwt, _} -> {:ok, jose_jwt.fields}
         {false, _, _} -> {:error, :invalid_token}
       end
+    else
+      _ -> {:error, :invalid_token}
     end
   end
 

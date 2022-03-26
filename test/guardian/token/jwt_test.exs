@@ -185,6 +185,12 @@ defmodule Guardian.Token.JwtTest do
       assert {:ok, ctx.claims} == result
     end
 
+    test "does not verify with a bad token format", ctx do
+      secret = ctx.es512.jwk
+      result = Jwt.decode_token(ctx.impl, "badtoken", secret: secret)
+      assert {:error, :invalid_token} == result
+    end
+
     test "it decodes the jwt with an {m, f, a}", ctx do
       the_secret = ctx.impl.config(:secret_key)
       secret = {ctx.impl, :the_secret_yo, [the_secret]}

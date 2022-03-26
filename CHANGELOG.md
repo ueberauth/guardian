@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.3
+
+### Enhancement
+
+* Ensure that badly-formatted tokens don't raise an exception when attempting to decode them.
+
 ## v2.2.2
 
 ### Enhancement
