@@ -362,8 +362,18 @@ defmodule Guardian.Token.JwtTest do
       assert {:error, :token_expired} = Jwt.verify_claims(ctx.impl, claims, [])
     end
 
+    test "it is invalid when exp is a float and too early", ctx do
+      claims = Map.put(ctx.claims, "exp", Guardian.timestamp() * 1.0 - 1)
+      assert {:error, :token_expired} = Jwt.verify_claims(ctx.impl, claims, [])
+    end
+
     test "it is invalid when nbf is too late", ctx do
       claims = Map.put(ctx.claims, "nbf", Guardian.timestamp() + 5)
+      assert {:error, :token_not_yet_valid} = Jwt.verify_claims(ctx.impl, claims, [])
+    end
+
+    test "it is invalid when nbf is a float and too late", ctx do
+      claims = Map.put(ctx.claims, "nbf", Guardian.timestamp() * 1.0 + 5)
       assert {:error, :token_not_yet_valid} = Jwt.verify_claims(ctx.impl, claims, [])
     end
 
