@@ -39,7 +39,7 @@ defmodule Guardian.Token.Verify do
     end
   end
 
-  @spec time_within_drift?(mod :: module, time :: pos_integer) :: true | false
+  @spec time_within_drift?(mod :: module, time :: pos_integer | float) :: true | false
   @doc """
   Checks that a time value is within the `allowed_drift` as
   configured for the provided module.
@@ -49,7 +49,7 @@ defmodule Guardian.Token.Verify do
 
   This is to deal with clock skew.
   """
-  def time_within_drift?(mod, time) when is_integer(time) do
+  def time_within_drift?(mod, time) when is_integer(time) or is_float(time) do
     allowed_drift = apply(mod, :config, [:allowed_drift, 0]) / 1000
     diff = abs(time - Guardian.timestamp())
     diff <= allowed_drift

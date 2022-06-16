@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.4
+
+### Enhancement
+
+* Check float values of `time` in `time_within_drift?/2`.
+
 ## v2.2.3
 
 ### Enhancement
