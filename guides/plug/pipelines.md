@@ -80,7 +80,7 @@ end
 
 ## Module version
 
-You can take the above setup and wrap it up in a plug all of it's own.
+You can take the above setup and wrap it up in a plug all of its own.
 
 ```elixir
 defmodule AuthMe.UserManager.Pipeline do
