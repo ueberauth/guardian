@@ -118,7 +118,7 @@ defmodule GuardianTest do
 
   describe "encode_and_sign" do
     @resource %{id: "bobby"}
-    test "the impl has access to it's config", ctx do
+    test "the impl has access to its config", ctx do
       assert ctx.impl.config(:token_module) == Guardian.Support.TokenModule
     end
 

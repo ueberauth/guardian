@@ -3,7 +3,7 @@ defmodule Guardian.Token.Jwt do
   Deals with things JWT. This module should not be used directly.
 
   It is intended to be used by Guardian on behalf of your implementation
-  as it's token module.
+  as its token module.
 
   Token types are encoded in the `typ` field.
 
