@@ -2,12 +2,13 @@ defmodule Guardian.Mixfile do
   @moduledoc false
   use Mix.Project
 
-  @version "2.2.4"
+  @version "2.3.0"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
     "Sonny Scroggin",
-    "Sean Callan"
+    "Sean Callan",
+    "Yordis Prieto"
   ]
 
   def project do
@@ -15,7 +16,7 @@ defmodule Guardian.Mixfile do
       name: "Guardian",
       app: :guardian,
       version: @version,
-      elixir: "~> 1.4 or ~> 1.5",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       package: package(),
       source_url: @url,
@@ -172,7 +173,7 @@ defmodule Guardian.Mixfile do
 
       # Tools
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:dialyxir, ">= 1.0.0-rc4", only: [:dev], runtime: false},
+      {:dialyxir, ">= 0.0.0", only: [:dev], runtime: false},
       {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false},
       {:excoveralls, ">= 0.0.0", only: [:test], runtime: false},
       {:inch_ex, ">= 0.0.0", only: [:dev], runtime: false},

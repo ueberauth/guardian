@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, synchronize]
   push:
     branches:
-      - 'master'
+      - master
 jobs:
   Test:
     runs-on: ubuntu-latest
@@ -16,8 +16,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-elixir@v1
         with:
-          elixir-version: '1.11'
-          otp-version: '22.3'
+          elixir-version: '1.14'
+          otp-version: '24.3'
 
       - name: Install Dependencies
         run: |
@@ -36,14 +36,15 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-elixir@v1
         with:
-          elixir-version: '1.11'
-          otp-version: '22.3'
+          elixir-version: '1.14'
+          otp-version: '24.3'
 
       - name: Install Dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
+
       - name: Run Formatter
         run: mix format --check-formatted
 
