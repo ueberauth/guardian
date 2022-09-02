@@ -322,9 +322,9 @@ defmodule Guardian.Token.Jwt do
   def decode_token(mod, token, options \\ []) do
     with {:ok, secret_fetcher} <- fetch_secret_fetcher(mod),
          %{headers: headers} <- peek(mod, token),
-         {:ok, raw_secret} <- secret_fetcher.fetch_verifying_secret(mod, headers, options),
-         secret <- jose_jwk(raw_secret),
-         algos = fetch_allowed_algos(mod, options) do
+         {:ok, raw_secret} <- secret_fetcher.fetch_verifying_secret(mod, headers, options) do
+      secret = jose_jwk(raw_secret)
+      algos = fetch_allowed_algos(mod, options)
       verify_result = JWT.verify_strict(secret, algos, token)
 
       case verify_result do

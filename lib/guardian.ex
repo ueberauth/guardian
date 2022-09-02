@@ -634,9 +634,7 @@ defmodule Guardian do
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
          {:ok, claims} <- returning_tuple({token_mod, :verify_claims, [mod, claims, opts]}),
          {:ok, claims} <- returning_tuple({mod, :verify_claims, [claims, opts]}),
-         {:ok, claims} <- returning_tuple({mod, :on_verify, [claims, token, opts]}) do
-      {:ok, claims}
-    end
+         do: returning_tuple({mod, :on_verify, [claims, token, opts]})
   rescue
     e -> {:error, e}
   end
