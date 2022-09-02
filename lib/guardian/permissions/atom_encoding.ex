@@ -4,7 +4,7 @@ defmodule Guardian.Permissions.AtomEncoding do
   """
 
   @behaviour Guardian.Permissions.PermissionEncoding
-  use Bitwise
+  import Bitwise
 
   def encode(value, type, perm_set) when is_integer(value) do
     perms = Map.get(perm_set, type)

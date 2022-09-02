@@ -1,6 +1,9 @@
 # Changelog
 
-## v2.2.4
+## v2.3.0
+
+* Fix warning about the usage of `Application.get_env` in the module scope
+* Change Elixir required version to follow https://github.com/ueberauth/.github/blob/master/SECURITY.md#supported-versions
 
 ### Enhancement
 

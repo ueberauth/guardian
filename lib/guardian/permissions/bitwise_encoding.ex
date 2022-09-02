@@ -4,7 +4,7 @@ defmodule Guardian.Permissions.BitwiseEncoding do
   """
 
   @behaviour Guardian.Permissions.PermissionEncoding
-  use Bitwise
+  import Bitwise
 
   def encode(value, _type, _perm_set) when is_integer(value) do
     value

@@ -343,7 +343,7 @@ defmodule Guardian do
       # Provide a way to get at the configuration during compile time
       # for other macros that may want to use them
       @config fn ->
-        the_otp_app |> Application.get_env(__MODULE__, []) |> Keyword.merge(the_opts)
+        the_otp_app |> Application.compile_env(__MODULE__, []) |> Keyword.merge(the_opts)
       end
       @config_with_key fn key ->
         @config.() |> Keyword.get(key) |> Guardian.Config.resolve_value()
@@ -634,9 +634,7 @@ defmodule Guardian do
          {:ok, claims} <- Verify.verify_literal_claims(claims, claims_to_check, opts),
          {:ok, claims} <- returning_tuple({token_mod, :verify_claims, [mod, claims, opts]}),
          {:ok, claims} <- returning_tuple({mod, :verify_claims, [claims, opts]}),
-         {:ok, claims} <- returning_tuple({mod, :on_verify, [claims, token, opts]}) do
-      {:ok, claims}
-    end
+         do: returning_tuple({mod, :on_verify, [claims, token, opts]})
   rescue
     e -> {:error, e}
   end
