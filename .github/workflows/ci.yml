@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Set up Elixir
-        uses: erlef/setup-elixir@v1
+        uses: erlef/setup-beam@v1
         with:
-          elixir-version: '1.14'
-          otp-version: '24.3'
+          elixir-version: "1.14"
+          otp-version: "24.3"
 
       - name: Install Dependencies
         run: |
@@ -34,10 +34,10 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Set up Elixir
-        uses: erlef/setup-elixir@v1
+        uses: erlef/setup-beam@v1
         with:
-          elixir-version: '1.14'
-          otp-version: '24.3'
+          elixir-version: "1.14"
+          otp-version: "24.3"
 
       - name: Install Dependencies
         run: |
