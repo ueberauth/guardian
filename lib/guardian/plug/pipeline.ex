@@ -145,7 +145,7 @@ if Code.ensure_loaded?(Plug) do
 
             otp_app ->
               otp_app
-              |> Application.get_env(__MODULE__, [])
+              |> Application.compile_env(__MODULE__, [])
               |> Keyword.merge(opts)
           end
         end
