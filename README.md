@@ -118,8 +118,8 @@ Congrats! We have a working Guardian implementation.
 With Plug:
 
 ```elixir
-# If a session is loaded the token/resource/claims will be put into the session and connection
-# If no session is loaded, the token/resource/claims only go onto the connection
+# The token/resource/claims will be stored on the connection.
+# The token will also be stored in the session (if fetched)
 conn = MyApp.Guardian.Plug.sign_in(conn, resource)
 
 # Optionally with claims and options
