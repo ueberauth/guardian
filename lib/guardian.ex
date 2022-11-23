@@ -349,7 +349,8 @@ defmodule Guardian do
       # environements.And hardcoding secret keys wouldn't be considered a good
       # practice.
       @config_permissions fn ->
-        the_otp_app |> Application.compile_env([__MODULE__, :permissions]) || Keyword.get(the_opts, :permissions, []) |> Guardian.Config.resolve_value()
+        the_otp_app |> Application.compile_env([__MODULE__, :permissions]) ||
+          Keyword.get(the_opts, :permissions, []) |> Guardian.Config.resolve_value()
       end
 
       @doc """
