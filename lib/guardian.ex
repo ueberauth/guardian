@@ -352,6 +352,7 @@ defmodule Guardian do
         perms =
           Application.compile_env(the_otp_app, [__MODULE__, :permissions]) ||
             Keyword.get(the_opts, :permissions, [])
+
         Guardian.Config.resolve_value(perms)
       end
 
