@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.3.1
+
+* Change compile time loading of configuration to only load permissions
+  allowing the app to change things like ttl or secret key at runtime
+
 ## v2.3.0
 
 * Fix warning about the usage of `Application.get_env` in the module scope
