@@ -2,6 +2,7 @@ defmodule Guardian.Mixfile do
   @moduledoc false
   use Mix.Project
 
+  @app :guardian
   @version "2.3.1"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
@@ -14,7 +15,7 @@ defmodule Guardian.Mixfile do
   def project do
     [
       name: "Guardian",
-      app: :guardian,
+      app: @app,
       version: @version,
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -32,7 +33,6 @@ defmodule Guardian.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
-        docs: :docs,
         "coveralls.html": :test
       ]
     ]
@@ -70,6 +70,9 @@ defmodule Guardian.Mixfile do
     [
       "README.md": [
         title: "Readme"
+      ],
+      "CHANGELOG.md": [
+        title: "Changelog"
       ],
       "guides/introduction/overview.md": [
         filename: "introduction-overview"
@@ -127,7 +130,7 @@ defmodule Guardian.Mixfile do
       Plug: Path.wildcard("guides/plug/*.md"),
       Phoenix: Path.wildcard("guides/phoenix/*.md"),
       Permissions: Path.wildcard("guides/permissions/*.md"),
-      "Upgrade Guides": Path.wildcard("guides/upgrading/*.md")
+      "Upgrade Guides": ["CHANGELOG.md"] ++ Path.wildcard("guides/upgrading/*.md")
     ]
   end
 
@@ -186,7 +189,7 @@ defmodule Guardian.Mixfile do
       maintainers: @maintainers,
       licenses: ["MIT"],
       links: %{
-        Changelog: "https://hexdocs.pm/guardian/changelog.html",
+        Changelog: "https://hexdocs.pm/#{@app}/#{@version}/changelog.html",
         GitHub: @url
       },
       files: ~w(lib CHANGELOG.md LICENSE mix.exs README.md)
