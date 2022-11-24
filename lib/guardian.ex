@@ -341,7 +341,7 @@ defmodule Guardian do
       the_opts = unquote(opts)
 
       # Provide a way to get at the permissions during compile time. Uses
-      # permissions from config if they are available and falss back to the
+      # permissions from config if they are available and falls back to the
       # permissins defined on the `use Guardian` implementation
       #
       # NOTE: Generally you can't use compile_env for most keys because that
