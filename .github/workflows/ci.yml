@@ -9,6 +9,8 @@ on:
 jobs:
   Test:
     runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
@@ -16,14 +18,16 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.14"
-          otp-version: "24.3"
+          version-file: .tool-versions
+          version-type: strict
 
       - name: Install Dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
+          mix deps.update ssl_verify_fun
+
       - name: Run Tests
         run: mix test
 
@@ -36,8 +40,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.14"
-          otp-version: "24.3"
+          version-file: .tool-versions
+          version-type: strict
 
       - name: Install Dependencies
         run: |
