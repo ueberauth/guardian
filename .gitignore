@@ -30,3 +30,5 @@ guardian-*.tar
 .DS_Store
 /priv/plts/*.plt
 /priv/plts/*.plt.hash
+
+!.tool-versions
