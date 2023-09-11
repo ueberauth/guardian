@@ -3,7 +3,7 @@ defmodule Guardian.Mixfile do
   use Mix.Project
 
   @app :guardian
-  @version "2.3.1"
+  @version "2.3.2"
   @url "https://github.com/ueberauth/guardian"
   @maintainers [
     "Daniel Neighman",
