@@ -522,7 +522,7 @@ defmodule Guardian do
   Provides the current system time in seconds.
   """
   @spec timestamp() :: pos_integer
-  def timestamp, do: System.system_time(:second)
+  def timestamp, do: DateTime.to_unix(DateTime.utc_now())
 
   @doc """
   Converts keys in a map or list of maps to strings.
