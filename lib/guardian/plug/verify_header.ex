@@ -152,7 +152,9 @@ if Code.ensure_loaded?(Plug) do
             :no_token_found
             | {:ok, String.t()}
     defp fetch_token_from_header(conn, opts) do
-      header_name = Keyword.get(opts, :header_name, "authorization")
+      header_name =
+        Keyword.get(opts, :header_name, "authorization")
+        |> String.downcase
       headers = get_req_header(conn, header_name)
       fetch_token_from_header(conn, opts, headers)
     end
