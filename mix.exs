@@ -169,7 +169,7 @@ defmodule Guardian.Mixfile do
 
   defp deps do
     [
-      {:jose, "~> 1.8"},
+      {:jose, "~> 1.11.9"},
 
       # Optional dependencies
       {:plug, "~> 1.3.3 or ~> 1.4", optional: true},
