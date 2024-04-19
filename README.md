@@ -45,7 +45,7 @@ Add Guardian to your application to your list of dependencies in `mix.exs`:
 ```elixir
 defp deps do
   [
-    {:guardian, "~> 2.0"}
+    {:guardian, "~> 2.3"}
   ]
 end
 ```
