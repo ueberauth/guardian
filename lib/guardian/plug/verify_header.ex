@@ -162,6 +162,10 @@ if Code.ensure_loaded?(Plug) do
             | {:ok, String.t()}
     defp fetch_token_from_header(_, _, []), do: :no_token_found
 
+    defp fetch_token_from_header(conn, opts, [token | tail]) when not is_binary(token) do
+      fetch_token_from_header(conn, opts, tail)
+    end
+
     defp fetch_token_from_header(conn, opts, [token | tail]) do
       reg = Keyword.get(opts, :scheme_reg, ~r/^(.*)$/)
       trimmed_token = String.trim(token)
