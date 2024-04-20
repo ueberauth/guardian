@@ -29,7 +29,7 @@ You'll need to update the dependencies to whatever is latest.
 
 defp deps do
   [
-    {:guardian, "~> 2.0"},
+    {:guardian, "~> 2.3"},
     {:argon2_elixir, "~> 2.0"},
   ]
 end
