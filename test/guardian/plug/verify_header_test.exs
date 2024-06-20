@@ -53,6 +53,18 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     assert Guardian.Plug.current_claims(conn, []) == nil
   end
 
+  test "with nil in the authorization header" do
+    conn =
+      :get
+      |> conn("/")
+      |> Map.put(:req_headers, [{"authorization", nil}])
+      |> VerifyHeader.call([])
+
+    refute conn.status == 401
+    assert Guardian.Plug.current_token(conn, []) == nil
+    assert Guardian.Plug.current_claims(conn, []) == nil
+  end
+
   test "it uses the module from options", ctx do
     conn =
       :get
