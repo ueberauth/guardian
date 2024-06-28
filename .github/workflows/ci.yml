@@ -6,7 +6,53 @@ on:
   push:
     branches:
       - master
+
 jobs:
+  job1:
+    runs-on: ubuntu-latest
+    outputs:
+      elixir: ${{ steps.set-matrix.outputs.elixir }}
+    steps:
+      - id: set-matrix
+        run: |
+          elixir_matrix=""
+          elixir_matrix+=$(echo -n '"{include":[')
+          elixir_matrix+=$(echo -n '{"elixir":"1.10.4","otp":"23.0"},g')
+          elixir_matrix+=$(echo -n '{"elixir":"1.17.0","otp":"27.0"}')
+          elixir_matrix+=$(echo -n ']}')
+          echo "elixir=$elixir_matrix" >> $GITHUB_OUTPUT
+
+  job2:
+    needs: job1
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.job1.outputs.elixir) }}
+    name: Elixir ${{ matrix.elixir }} with OTP ${{ matrix.otp }}
+    steps:
+      - run: echo "Matrix - Elixir ${{ matrix.elixir }}, OTP ${{ matrix.otp }}"
+
+  # VersionMatrix:
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     elixir: ${{ steps.set-matrix.outputs.elixir }}
+  #   steps:
+  #     - name: Set
+  #       id: set-matrix
+  #       run: echo 'elixir=[{"version":"1.10.4","otp":"23.0"},{"version":"1.11.2","otp":"23.0"}]' >> "$GITHUB_OUTPUT"
+
+  # TestingMatrix:
+  #   runs-on: ubuntu-latest
+  #   needs: VersionMatrix
+  #   strategy:
+  #     matrix: ${{ fromJson(needs.VersionMatrix.outputs.elixir) }}
+  #   # name: Elixir ${{ matrix.version }} with OTP ${{ matrix.otp }}
+  #   steps:
+  #     - name: echo
+  #       env:
+  #         MATRIX: ${{ needs.VersionMatrix.outputs.elixir }}
+  #       # run: echo "${{ matrix.otp }} ${{ matrix.version }}"
+  #       run: echo $MATRIX
+
   Test:
     runs-on: ubuntu-latest
     env:
