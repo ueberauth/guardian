@@ -41,7 +41,7 @@ For example:
 
 ## Basic Setup
 
-The most basic setup for an implementation module consists of `use Guardian` passing the atom of your otp app. See [JWT implementation](tokens-jwt-setup.html) for specific information about setting up for JWT.
+The most basic setup for an implementation module consists of `use Guardian` passing the atom of your otp app. See [JWT implementation](tokens-jwt-start.html) for specific information about setting up for JWT.
 
 ```elixir
 defmodule MyApp.TokenImpl do
