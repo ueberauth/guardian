@@ -133,7 +133,7 @@ if Code.ensure_loaded?(Plug) do
             |> Keyword.merge(unquote(opts))
             |> config()
 
-          unless Keyword.get(new_opts, :otp_app), do: raise_error(:otp_app)
+          if !Keyword.get(new_opts, :otp_app), do: raise_error(:otp_app)
 
           new_opts
         end

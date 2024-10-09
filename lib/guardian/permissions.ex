@@ -139,7 +139,7 @@ defmodule Guardian.Permissions do
 
       raw_perms = @config_permissions.()
 
-      unless raw_perms do
+      if !raw_perms do
         raise "Permissions are not defined for #{to_string(__MODULE__)}"
       end
 
