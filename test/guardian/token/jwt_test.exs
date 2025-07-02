@@ -216,7 +216,7 @@ defmodule Guardian.Token.JwtTest do
       assert result["iat"]
       assert result["iss"] == ctx.impl.config(:issuer)
       assert result["aud"] == ctx.impl.config(:issuer)
-      assert result["typ"] == ctx.impl.default_token_type
+      assert result["typ"] == ctx.impl.default_token_type()
       assert result["sub"] == ctx.sub
     end
 

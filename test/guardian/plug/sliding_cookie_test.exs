@@ -1,7 +1,8 @@
 defmodule Guardian.Plug.SlidingCookieTest do
   @moduledoc false
 
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
 
   alias Guardian.Plug.Pipeline
   alias Guardian.Plug.SlidingCookie

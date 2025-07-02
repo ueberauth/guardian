@@ -1,7 +1,8 @@
 defmodule Guardian.Plug.VerifyCookieTest do
   @moduledoc false
 
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
 
   alias Guardian.Plug.Pipeline
   alias Guardian.Plug.VerifyCookie

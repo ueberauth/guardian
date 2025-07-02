@@ -2,7 +2,8 @@ defmodule Guardian.PlugTest do
   @moduledoc false
 
   import Guardian.Support.Utils, only: [gather_function_calls: 0]
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
 
   use ExUnit.Case, async: true
 
@@ -434,7 +435,7 @@ defmodule Guardian.PlugTest do
     test "it creates a cookie with the default token and key and a exp in claimss ", ctx do
       conn = ctx.conn
 
-      exp = Guardian.timestamp() + 10000
+      exp = Guardian.timestamp() + 10_000
 
       assert %Plug.Conn{} = xconn = Guardian.Plug.remember_me(conn, ctx.impl, @resource, %{exp: exp}, [])
 
@@ -442,7 +443,7 @@ defmodule Guardian.PlugTest do
       %{value: token, max_age: max_age} = Map.get(xconn.resp_cookies, "guardian_default_token")
 
       # default max age
-      assert max_age <= 10000
+      assert max_age <= 10_000
       assert token
 
       claims = %{"sub" => @resource.id, "typ" => "refresh", "exp" => exp}

@@ -1,7 +1,8 @@
 defmodule Guardian.Plug.VerifyHeaderTest do
   @moduledoc false
 
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
   use ExUnit.Case, async: true
 
   import ExUnit.CaptureIO
@@ -127,7 +128,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
   end
 
   test "getting the scheme config" do
-    opts = VerifyHeader.init(realm: "Bearer")
+    opts = VerifyHeader.init(scheme: "Bearer")
     assert opts[:scheme_reg] == ~r/Bearer:? +(.*)$/i
 
     opts = VerifyHeader.init(scheme: "Basic")
