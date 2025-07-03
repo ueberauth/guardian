@@ -12,8 +12,13 @@ jobs:
     name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
       matrix:
-        otp: ['25.3.2', '26.2.5', '27.3.3']
-        elixir: ['1.17.3', '1.18.4']
+        versions:
+          - elixir: "1.16"
+            otp: "26"
+          - elixir: "1.17"
+            otp: "27"
+          - elixir: "1.18"
+            otp: "27"
     env:
       MIX_ENV: test
     steps:
@@ -32,8 +37,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{matrix.otp}}
-          elixir-version: ${{matrix.elixir}}
+          otp-version: ${{matrix.versions.otp}}
+          elixir-version: ${{matrix.versions.elixir}}
 
       - name: Install Dependencies
         run: |
@@ -45,10 +50,6 @@ jobs:
   Linting:
     runs-on: ubuntu-latest
     name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}} Linting
-    strategy:
-      matrix:
-        otp: ['25.3.2', '26.2.5', '27.3.3']
-        elixir: ['1.17.3', '1.18.4']
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -56,8 +57,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{matrix.otp}}
-          elixir-version: ${{matrix.elixir}}
+          elixir-version: "1.16"
+          otp-version: "26"
 
       - name: Install Dependencies
         run: |
