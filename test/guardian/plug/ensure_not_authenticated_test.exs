@@ -1,7 +1,8 @@
 defmodule Guardian.Plug.EnsureNotAuthenticatedTest do
   @moduledoc false
 
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
   use ExUnit.Case, async: true
 
   alias Guardian.Plug.EnsureNotAuthenticated

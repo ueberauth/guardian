@@ -9,39 +9,56 @@ on:
 jobs:
   Test:
     runs-on: ubuntu-latest
+    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    strategy:
+      matrix:
+        versions:
+          - elixir: "1.16"
+            otp: "26"
+          - elixir: "1.17"
+            otp: "27"
+          - elixir: "1.18"
+            otp: "27"
     env:
       MIX_ENV: test
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          version-file: .tool-versions
-          version-type: strict
+          otp-version: ${{matrix.versions.otp}}
+          elixir-version: ${{matrix.versions.elixir}}
 
       - name: Install Dependencies
         run: |
-          mix local.rebar --force
-          mix local.hex --force
           mix deps.get
-          mix deps.update ssl_verify_fun
 
       - name: Run Tests
         run: mix test
 
   Linting:
     runs-on: ubuntu-latest
+    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}} Linting
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          version-file: .tool-versions
-          version-type: strict
+          elixir-version: "1.16"
+          otp-version: "26"
 
       - name: Install Dependencies
         run: |
