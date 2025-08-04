@@ -108,8 +108,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp put_scheme_reg(scheme, opts) do
-      {:ok, reg} = Regex.compile("#{scheme}\:?\s+(.*)$", "i")
-      Keyword.put(opts, :scheme_reg, reg)
+      Keyword.put(opts, :scheme_reg, "#{scheme}\:?\s+(.*)$")
     end
 
     defp get_scheme(opts) do
@@ -163,7 +162,12 @@ if Code.ensure_loaded?(Plug) do
     defp fetch_token_from_header(_, _, []), do: :no_token_found
 
     defp fetch_token_from_header(conn, opts, [token | tail]) do
-      reg = Keyword.get(opts, :scheme_reg, ~r/^(.*)$/)
+      reg =
+        case Keyword.get(opts, :scheme_reg, ~r/^(.*)$/) do
+          %Regex{} = reg -> reg
+          reg_str -> Regex.compile!(reg_str, "i")
+        end
+
       trimmed_token = String.trim(token)
 
       case Regex.run(reg, trimmed_token) do
