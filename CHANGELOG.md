@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.4.0
+
+* Add compatibility with Elixir 1.18.0
+
 ## v2.3.1
 
 * Change compile time loading of configuration to only load permissions
