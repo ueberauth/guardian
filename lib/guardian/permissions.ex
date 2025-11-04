@@ -181,7 +181,7 @@ defmodule Guardian.Permissions do
 
       @doc """
       Decodes permissions directly from a claims map. This does the same as `decode_permissions` but
-      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions places them
+      will fetch the permissions map from the `"pem"` key where `Guardian.Permissions` places them
       when it encodes them into claims.
       """
       @spec decode_permissions_from_claims(Guardian.Token.claims()) :: Guardian.Permissions.t()
