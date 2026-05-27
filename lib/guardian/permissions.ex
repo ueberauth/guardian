@@ -360,22 +360,25 @@ defmodule Guardian.Permissions do
       case v do
         # A list of permission names.
         # Positional values
-        list
-        when is_list(list) ->
-          perms =
-            for {perm, idx} <- Enum.with_index(list), into: %{} do
-              {to_string(perm), trunc(:math.pow(2, idx))}
-            end
-
-          {to_string(k), perms}
-
+        list when is_list(list) -> list_to_perms(list, k)
         # A map of permissions. The permissions should be name => bit value
-        map
-        when is_map(map) ->
-          perms = for {perm, val} <- map, into: %{}, do: {to_string(perm), val}
-          {to_string(k), perms}
+        map when is_map(map) -> map_to_perms(map, k)
       end
     end
+  end
+
+  defp list_to_perms(list, k) do
+    perms =
+      for {perm, idx} <- Enum.with_index(list), into: %{} do
+        {to_string(perm), trunc(:math.pow(2, idx))}
+      end
+
+    {to_string(k), perms}
+  end
+
+  defp map_to_perms(map, k) do
+    perms = for {perm, val} <- map, into: %{}, do: {to_string(perm), val}
+    {to_string(k), perms}
   end
 
   @doc false
