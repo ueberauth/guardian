@@ -25,6 +25,8 @@ jobs:
             otp: "28"
           - elixir: "1.19"
             otp: "29"
+          - elixir: "1.20"
+            otp: "29"
     env:
       MIX_ENV: test
     steps:

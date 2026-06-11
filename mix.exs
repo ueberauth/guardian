@@ -28,14 +28,14 @@ defmodule Guardian.Mixfile do
       homepage_url: @url,
       docs: docs(),
       deps: deps(),
-      xref: [exclude: [:phoenix]],
+      elixirc_options: [no_warn_undefined: [Phoenix]],
       dialyzer: dialyxir(),
-      test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.html": :test
-      ]
+      test_coverage: [tool: ExCoveralls]
     ]
+  end
+
+  def cli do
+    [preferred_envs: [coveralls: :test, "coveralls.html": :test]]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
