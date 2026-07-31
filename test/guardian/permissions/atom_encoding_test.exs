@@ -55,6 +55,30 @@ defmodule Guardian.Permissions.AtomEncodingTest do
     end
   end
 
+  describe "encode/3 with a list of binaries" do
+    alias Guardian.Permissions.AtomEncoding
+
+    @perm_set Guardian.Permissions.normalize_permissions(%{"default" => ["read", "write"]})
+
+    test "it encodes known permissions to existing atoms" do
+      assert AtomEncoding.encode(["read", "write"], "default", @perm_set) == [:write, :read]
+    end
+
+    test "it drops unknown permissions instead of minting atoms" do
+      assert AtomEncoding.encode(["read", "bogus"], "default", @perm_set) == [:read]
+    end
+
+    test "it does not create atoms for attacker-supplied binaries" do
+      attacker = for i <- 1..5_000, do: "attacker_perm_#{i}"
+
+      before = :erlang.system_info(:atom_count)
+      assert AtomEncoding.encode(attacker, "default", @perm_set) == []
+      after_count = :erlang.system_info(:atom_count)
+
+      assert after_count - before == 0
+    end
+  end
+
   describe "decode_permissions" do
     test "it decodes to an empty map when there are no permissions given" do
       perms = %{profile: [:read], user: []}

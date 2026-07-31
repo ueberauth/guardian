@@ -22,8 +22,13 @@ defmodule Guardian.Permissions.AtomEncoding do
   defp encode_value(value, _perm_set, acc) when is_atom(value),
     do: [value | acc]
 
-  defp encode_value(value, _perm_set, acc) when is_binary(value),
-    do: [String.to_atom(value) | acc]
+  defp encode_value(value, perm_set, acc) when is_binary(value) do
+    if is_map(perm_set) and Map.has_key?(perm_set, value) do
+      [String.to_existing_atom(value) | acc]
+    else
+      acc
+    end
+  end
 
   def decode(value, _type, _perm_set) do
     value
