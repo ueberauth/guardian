@@ -284,6 +284,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl, :before_sign_out, [:conn, :bob, [key: :bob]]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, bob_token, [key: :bob]]},
         {Guardian.Support.TokenModule, :revoke, [ctx.impl, bob_claims, bob_token, [key: :bob]]},
         {ctx.impl, :on_revoke, [bob_claims, bob_token, [key: :bob]]}
       ]
@@ -314,9 +315,11 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {ctx.impl, :before_sign_out, [:conn, :bob, []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, bob_token, []]},
         {Guardian.Support.TokenModule, :revoke, [ctx.impl, bob_claims, bob_token, []]},
         {ctx.impl, :on_revoke, [bob_claims, bob_token, []]},
         {ctx.impl, :before_sign_out, [:conn, :jane, []]},
+        {Guardian.Support.TokenModule, :decode_token, [ctx.impl, jane_token, []]},
         {Guardian.Support.TokenModule, :revoke, [ctx.impl, jane_claims, jane_token, []]},
         {ctx.impl, :on_revoke, [jane_claims, jane_token, []]}
       ]
@@ -393,6 +396,7 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, [key: :bob]]},
+        {Guardian.Support.TokenModule, :decode_token, [Guardian.PlugTest.Impl, bob_token, [key: :bob]]},
         {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, bob_claims, bob_token, [key: :bob]]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, [key: :bob]]}
       ]
@@ -419,9 +423,11 @@ defmodule Guardian.PlugTest do
 
       expected = [
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :bob, []]},
+        {Guardian.Support.TokenModule, :decode_token, [Guardian.PlugTest.Impl, bob_token, []]},
         {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [bob_claims, bob_token, []]},
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :jane, []]},
+        {Guardian.Support.TokenModule, :decode_token, [Guardian.PlugTest.Impl, jane_token, []]},
         {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, jane_claims, jane_token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [jane_claims, jane_token, []]}
       ]
@@ -700,6 +706,7 @@ defmodule Guardian.PlugTest do
         {Guardian.Support.TokenModule, :create_token, [Guardian.PlugTest.Impl, claims, []]},
         {Guardian.PlugTest.Impl, :after_sign_in, [:conn, @resource, token, claims, []]},
         {Guardian.PlugTest.Impl, :before_sign_out, [:conn, :default, []]},
+        {Guardian.Support.TokenModule, :decode_token, [Guardian.PlugTest.Impl, token, []]},
         {Guardian.Support.TokenModule, :revoke, [Guardian.PlugTest.Impl, claims, token, []]},
         {Guardian.PlugTest.Impl, :on_revoke, [claims, token, []]}
       ]

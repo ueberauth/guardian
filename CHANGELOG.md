@@ -4,6 +4,12 @@
 
 ### Security
 
+* Verify a token's signature in `Guardian.revoke/3` before invoking the token
+  module's `revoke` and the implementation's `on_revoke` callbacks. Previously
+  the claims were read with `peek/1`, which performs no signature verification,
+  allowing a forged token to drive revocation of another session. Claim
+  validation such as expiry is still skipped so already expired tokens remain
+  revocable (GHSA-7975-hp3r-5qhv).
 * Fix unbounded atom creation in `Guardian.Plug.Keys` (GHSA-xqch-c77q-rgh5 /
   CVE-2026-54894). Deriving a Guardian key from attacker-influenced input no
   longer creates atoms: namespace lookups resolve through

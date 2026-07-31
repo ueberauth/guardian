@@ -199,6 +199,32 @@ defmodule Guardian.Token.JwtTest do
     end
   end
 
+  describe "revoke" do
+    test "rejects a token whose signature does not verify", ctx do
+      forged =
+        %{"kty" => "oct", "k" => :base64.encode("attacker-controlled-garbage-key")}
+        |> JOSE.JWT.sign(ctx.jose_jws, ctx.claims)
+        |> JOSE.JWS.compact()
+        |> elem(1)
+
+      assert {:error, :invalid_token} = Guardian.decode_and_verify(ctx.impl, forged, %{})
+      assert {:error, :invalid_token} = Guardian.revoke(ctx.impl, forged, [])
+    end
+
+    test "revokes a legitimately signed token", ctx do
+      assert {:ok, claims} = Guardian.revoke(ctx.impl, ctx.jwt, [])
+      assert claims == ctx.claims
+    end
+
+    test "still revokes an expired but legitimately signed token", ctx do
+      expired_claims = Map.put(ctx.claims, "exp", Guardian.timestamp() - 10_000)
+      expired = ctx.sign_claims.(expired_claims)
+
+      assert {:error, :token_expired} = Guardian.decode_and_verify(ctx.impl, expired, %{})
+      assert {:ok, ^expired_claims} = Guardian.revoke(ctx.impl, expired, [])
+    end
+  end
+
   describe "build_claims" do
     alias Guardian.Token.Jwt
 

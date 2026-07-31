@@ -272,6 +272,7 @@ defmodule GuardianTest do
       assert {:ok, ^claims} = Guardian.revoke(impl, token, [])
 
       expected = [
+        {Guardian.Support.TokenModule, :decode_token, [impl, token, []]},
         {Guardian.Support.TokenModule, :revoke, [impl, claims, token, []]},
         {GuardianTest.Impl, :on_revoke, [claims, token, []]}
       ]
@@ -283,7 +284,18 @@ defmodule GuardianTest do
       assert {:error, :fails} = Guardian.revoke(impl, token, fail_revoke: :fails)
 
       expected = [
+        {Guardian.Support.TokenModule, :decode_token, [impl, token, [fail_revoke: :fails]]},
         {Guardian.Support.TokenModule, :revoke, [impl, claims, token, [fail_revoke: :fails]]}
+      ]
+
+      assert gather_function_calls() == expected
+    end
+
+    test "it rejects a token whose signature does not verify", %{impl: impl, token: token} do
+      assert {:error, :fails} = Guardian.revoke(impl, token, fail_decode_token: :fails)
+
+      expected = [
+        {Guardian.Support.TokenModule, :decode_token, [impl, token, [fail_decode_token: :fails]]}
       ]
 
       assert gather_function_calls() == expected

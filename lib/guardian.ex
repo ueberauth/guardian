@@ -667,6 +667,11 @@ defmodule Guardian do
   @doc """
   Revoke a token.
 
+  The token's signature is verified before any revocation callback is invoked,
+  so a token with an invalid signature is rejected and cannot be used to revoke
+  another session. Claim validation (such as expiry) is intentionally skipped so
+  that already expired tokens remain revocable.
+
   Note: This is entirely dependent on the token module and callbacks.
 
   ### Lifecycle
@@ -683,12 +688,11 @@ defmodule Guardian do
   def revoke(mod, token, opts \\ []) do
     token_mod = Guardian.token_module(mod)
 
-    with %{claims: claims} <- mod.peek(token),
+    with {:ok, claims} <- returning_tuple({token_mod, :decode_token, [mod, token, opts]}),
          {:ok, claims} <- returning_tuple({token_mod, :revoke, [mod, claims, token, opts]}),
          {:ok, claims} <- returning_tuple({mod, :on_revoke, [claims, token, opts]}) do
       {:ok, claims}
     else
-      nil -> {:error, :not_found}
       {:error, _} = err -> err
     end
   end
