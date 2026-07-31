@@ -130,6 +130,24 @@ defmodule Guardian.PermissionsTest do
     end
   end
 
+  test "it raises on an unknown permission set with an integer value" do
+    msg = "#{to_string(Impl)} - Type: not_a_thing"
+
+    assert_raise Guardian.Permissions.PermissionNotFoundError, msg, fn ->
+      Impl.encode_permissions!(%{"not_a_thing" => 1})
+    end
+  end
+
+  test "it does not create atoms for unknown string permission set keys" do
+    key = "unknown_perm_#{System.unique_integer([:positive])}"
+
+    assert_raise Guardian.Permissions.PermissionNotFoundError, fn ->
+      Impl.encode_permissions!(%{key => 1})
+    end
+
+    assert_raise ArgumentError, fn -> String.to_existing_atom(key) end
+  end
+
   describe "when used as a plug with no permissions" do
     setup do
       claims = Impl.build_claims(%{"sub" => "user:1"}, nil, permissions: %{})

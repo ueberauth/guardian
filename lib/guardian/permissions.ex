@@ -265,8 +265,13 @@ defmodule Guardian.Permissions do
 
       def encode_permissions!(map) when is_map(map) do
         for {k, v} <- map, into: %{} do
-          key = String.to_atom(to_string(k))
-          {key, do_encode_permissions!(v, k)}
+          type = to_string(k)
+
+          if Map.get(@normalized_perms, type) == nil do
+            raise PermissionNotFoundError, message: "#{to_string(__MODULE__)} - Type: #{type}"
+          end
+
+          {String.to_existing_atom(type), do_encode_permissions!(v, k)}
         end
       end
 
