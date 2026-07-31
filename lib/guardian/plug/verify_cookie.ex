@@ -110,7 +110,7 @@ if Code.ensure_loaded?(Plug) do
     defp maybe_put_in_session(conn, false, _, _), do: conn
 
     defp maybe_put_in_session(conn, true, token, opts) do
-      key = conn |> storage_key(opts) |> token_key()
+      key = conn |> storage_key(opts) |> token_key_string()
       put_session(conn, key, token)
     end
 

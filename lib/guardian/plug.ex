@@ -159,7 +159,7 @@ if Code.ensure_loaded?(Plug) do
       key =
         conn
         |> fetch_key(opts)
-        |> token_key()
+        |> token_key!()
 
       put_private(conn, key, token)
     end
@@ -169,7 +169,7 @@ if Code.ensure_loaded?(Plug) do
       key =
         conn
         |> fetch_key(opts)
-        |> claims_key()
+        |> claims_key!()
 
       put_private(conn, key, claims)
     end
@@ -179,7 +179,7 @@ if Code.ensure_loaded?(Plug) do
       key =
         conn
         |> fetch_key(opts)
-        |> resource_key()
+        |> resource_key!()
 
       put_private(conn, key, resource)
     end
@@ -193,7 +193,7 @@ if Code.ensure_loaded?(Plug) do
       key =
         conn
         |> fetch_key(opts)
-        |> token_key()
+        |> token_key_string()
 
       conn
       |> put_session(key, token)
@@ -313,17 +313,16 @@ if Code.ensure_loaded?(Plug) do
       key =
         conn
         |> Pipeline.fetch_key(opts)
-        |> token_key()
+        |> token_key_string()
 
-      token = conn.req_cookies[key] || conn.req_cookies[to_string(key)]
+      token = conn.req_cookies[key]
       if token, do: {:ok, token}, else: :no_token_found
     end
 
     defp fetch_token_key(conn, opts) do
       conn
       |> Pipeline.fetch_key(opts)
-      |> token_key()
-      |> Atom.to_string()
+      |> token_key_string()
     end
 
     defp cookie_options(mod, %{"exp" => timestamp}) do
@@ -351,7 +350,7 @@ if Code.ensure_loaded?(Plug) do
           key =
             conn
             |> fetch_key(opts)
-            |> token_key()
+            |> token_key_string()
 
           conn
           |> delete_session(key)
@@ -403,7 +402,7 @@ if Code.ensure_loaded?(Plug) do
            {:ok, conn} <- revoke_token(conn, impl, key, opts),
            {:ok, conn} <- remove_data_from_conn(conn, key: key) do
         if session_active?(conn) do
-          {:ok, delete_session(conn, token_key(key))}
+          {:ok, delete_session(conn, token_key_string(key))}
         else
           {:ok, conn}
         end

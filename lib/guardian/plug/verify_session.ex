@@ -107,7 +107,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp find_token_from_session(conn, opts) do
-      key = conn |> storage_key(opts) |> token_key()
+      key = conn |> storage_key(opts) |> token_key_string()
       token = get_session(conn, key)
       if token, do: {:ok, token}, else: :no_token_found
     end

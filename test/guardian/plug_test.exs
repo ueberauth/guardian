@@ -323,6 +323,30 @@ defmodule Guardian.PlugTest do
 
       assert gather_function_calls() == expected
     end
+
+    test "it removes tenants stored under string keys", ctx do
+      tenant = "acme_#{:erlang.unique_integer([:positive])}"
+      claims = %{"sub" => "User:acme"}
+      token = Jason.encode!(%{claims: claims}) |> Base.encode64()
+
+      conn =
+        ctx.conn
+        |> Guardian.Plug.put_current_token(token, key: tenant)
+        |> Guardian.Plug.put_current_claims(claims, key: tenant)
+        |> Guardian.Plug.put_current_resource(%{id: "acme"}, key: tenant)
+        |> Guardian.Plug.put_session_token(token, key: tenant)
+
+      assert %Plug.Conn{} = xconn = Guardian.Plug.sign_out(conn, ctx.impl, [])
+
+      refute Guardian.Plug.current_token(xconn, key: tenant)
+      refute Guardian.Plug.current_claims(xconn, key: tenant)
+      refute Guardian.Plug.current_resource(xconn, key: tenant)
+      refute get_session(xconn, "guardian_#{tenant}_token")
+
+      calls = gather_function_calls()
+      assert {ctx.impl, :before_sign_out, [:conn, tenant, []]} in calls
+      assert {Guardian.Support.TokenModule, :revoke, [ctx.impl, claims, token, []]} in calls
+    end
   end
 
   describe "sign_out without session" do

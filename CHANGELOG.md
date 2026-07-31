@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Security
+
+* Fix unbounded atom creation in `Guardian.Plug.Keys` (GHSA-xqch-c77q-rgh5 /
+  CVE-2026-54894). Deriving a Guardian key from attacker-influenced input no
+  longer creates atoms: namespace lookups resolve through
+  `String.to_existing_atom/1` (an unknown value reads back as `nil`), atoms are
+  only interned on the write path from developer-controlled keys, and session
+  and cookie names are derived as strings.
+
 ## v2.4.0
 
 * Add compatibility with Elixir 1.18.0
