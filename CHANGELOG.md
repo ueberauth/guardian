@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.4.1
+
 ### Security
 
 * Verify a token's signature in `Guardian.revoke/3` before invoking the token
@@ -9,13 +11,21 @@
   the claims were read with `peek/1`, which performs no signature verification,
   allowing a forged token to drive revocation of another session. Claim
   validation such as expiry is still skipped so already expired tokens remain
-  revocable (GHSA-7975-hp3r-5qhv).
+  revocable (GHSA-7975-hp3r-5qhv / CVE-2026-55735).
 * Fix unbounded atom creation in `Guardian.Plug.Keys` (GHSA-xqch-c77q-rgh5 /
   CVE-2026-54894). Deriving a Guardian key from attacker-influenced input no
   longer creates atoms: namespace lookups resolve through
   `String.to_existing_atom/1` (an unknown value reads back as `nil`), atoms are
   only interned on the write path from developer-controlled keys, and session
   and cookie names are derived as strings.
+* Fix unbounded atom creation in `Guardian.Permissions.AtomEncoding.encode_value/3`
+  (GHSA-fjr5-7xrc-hmpj / CVE-2026-55733). Permission scopes reaching the
+  imported `encode/3` entry point are now validated against the configured
+  permission set before atom conversion instead of being interned unbounded.
+* Fix unbounded atom creation in `Guardian.Permissions.encode_permissions!/1`
+  (GHSA-9qx2-v587-q3gg / CVE-2026-55734). Permission-set keys are now
+  validated, including integer-valued entries which previously bypassed
+  validation entirely, before being converted to atoms.
 
 ## v2.4.0
 
