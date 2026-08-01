@@ -50,7 +50,7 @@ defmodule Guardian.Mixfile do
       source_ref: "v#{@version}",
       main: "readme",
       extra_section: "guides",
-      assets: "guides/assets",
+      assets: %{"guides/assets" => "assets"},
       formatters: ["html", "epub"],
       groups_for_modules: groups_for_modules(),
       extras: extras(),
