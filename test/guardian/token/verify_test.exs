@@ -5,6 +5,16 @@ defmodule Guardian.Token.VerifyTest do
 
   alias Guardian.Token.Verify
 
+  defmodule Config do
+    def config(:allowed_drift, _default), do: 0
+  end
+
+  describe "time_within_drift?/2" do
+    test "returns false for a non-numeric time" do
+      refute Verify.time_within_drift?(Config, "tomorrow")
+    end
+  end
+
   describe "test verify_literal_claims/3" do
     test "claims_to_check are nil" do
       claims = %{aud: "api_audience"}

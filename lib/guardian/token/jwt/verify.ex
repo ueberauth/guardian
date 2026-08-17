@@ -28,6 +28,9 @@ defmodule Guardian.Token.Jwt.Verify do
 
   def verify_claim(_mod, "nbf", %{"nbf" => nil} = claims, _opts), do: {:ok, claims}
 
+  def verify_claim(_mod, "nbf", %{"nbf" => nbf}, _opts) when not is_number(nbf),
+    do: {:error, :invalid_token}
+
   def verify_claim(mod, "nbf", %{"nbf" => nbf} = claims, _opts) do
     if Verify.time_within_drift?(mod, nbf) || nbf <= Guardian.timestamp() do
       {:ok, claims}
@@ -38,6 +41,9 @@ defmodule Guardian.Token.Jwt.Verify do
 
   def verify_claim(_mod, "exp", %{"exp" => nil} = claims, _opts), do: {:ok, claims}
 
+  def verify_claim(_mod, "exp", %{"exp" => exp}, _opts) when not is_number(exp),
+    do: {:error, :invalid_token}
+
   def verify_claim(mod, "exp", %{"exp" => exp} = claims, _opts) do
     if Verify.time_within_drift?(mod, exp) || exp >= Guardian.timestamp() do
       {:ok, claims}
@@ -47,6 +53,9 @@ defmodule Guardian.Token.Jwt.Verify do
   end
 
   def verify_claim(_mod, "auth_time", %{"auth_time" => nil} = claims, _opts), do: {:ok, claims}
+
+  def verify_claim(_mod, "auth_time", %{"auth_time" => auth_time}, _opts) when not is_number(auth_time),
+    do: {:error, :invalid_token}
 
   def verify_claim(mod, "auth_time", %{"auth_time" => auth_time} = claims, opts) do
     max_age = opts[:max_age] || mod.config(:max_age)
