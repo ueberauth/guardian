@@ -138,7 +138,8 @@ if Code.ensure_loaded?(Plug) do
     fails to compile.
 
     Every other value is left untouched, including `{module, function, args}` tuples, which are
-    resolved later by `Guardian.Config.resolve_value/1` without access to the connection.
+    resolved later by `Guardian.Config.resolve_value/1` without access to the connection. A
+    function of any other arity raises, since no token module can make sense of it.
 
     Returning `nil` is an error rather than a fallback to the implementation module's
     `:secret_key`. See `Guardian.Token.Jwt`.
@@ -154,8 +155,15 @@ if Code.ensure_loaded?(Plug) do
     @spec resolve_secret(Plug.Conn.t(), Guardian.options()) :: Guardian.options()
     def resolve_secret(conn, opts) do
       case Keyword.fetch(opts, :secret) do
-        {:ok, fun} when is_function(fun, 1) -> Keyword.put(opts, :secret, fun.(conn))
-        _ -> opts
+        {:ok, fun} when is_function(fun, 1) ->
+          Keyword.put(opts, :secret, fun.(conn))
+
+        {:ok, fun} when is_function(fun) ->
+          raise ArgumentError,
+                "the :secret option must be a function of one argument, got: #{inspect(fun)}"
+
+        _ ->
+          opts
       end
     end
 

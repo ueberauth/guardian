@@ -501,6 +501,50 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       assert resolve_count() == 0
     end
 
+    test "a :secret on the plug is not inherited by :refresh_from_cookie", ctx do
+      {:ok, refresh_token, _} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, token_type: "refresh", secret: @tenant_secret)
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> fetch_cookies()
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1, refresh_from_cookie: []))
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :invalid_token})
+      assert resolve_count() == 0
+    end
+
+    test "a :secret set on both the plug and :refresh_from_cookie is resolved for each", ctx do
+      {:ok, refresh_token, _} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, token_type: "refresh", secret: @tenant_secret)
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.configured_token}")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> fetch_cookies()
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(
+          VerifyHeader.init(
+            secret: &__MODULE__.counted_secret/1,
+            refresh_from_cookie: [secret: &__MODULE__.counted_secret/1]
+          )
+        )
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, [])["typ"] == "access"
+      assert resolve_count() == 2
+    end
+
     test "a connection aware :secret survives a compiled plug pipeline", ctx do
       defmodule TenantPipeline do
         @moduledoc false

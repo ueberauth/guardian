@@ -587,4 +587,77 @@ defmodule Guardian.Token.JwtTest do
       assert_received({:secret_fetcher, _headers})
     end
   end
+
+  describe "with a secret fetcher that inherits the defaults" do
+    defmodule InheritedFetcher do
+      @moduledoc false
+      use Guardian.Token.Jwt.SecretFetcher
+    end
+
+    defmodule InheritedImpl do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        secret_key: "inherited-secret-key",
+        allowed_algos: ["HS512"],
+        secret_fetcher: Guardian.Token.JwtTest.InheritedFetcher
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+      def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    end
+
+    @resource %{id: "bobby"}
+
+    setup do
+      {:ok, token, _claims} = InheritedImpl.encode_and_sign(@resource)
+      {:ok, %{token: token}}
+    end
+
+    test "falls back to the configured secret_key when :secret is absent", ctx do
+      assert {:ok, _claims} = Guardian.decode_and_verify(InheritedImpl, ctx.token, %{})
+    end
+
+    test "fails closed on a nil :secret rather than falling back", ctx do
+      assert {:error, :secret_not_found} =
+               Guardian.decode_and_verify(InheritedImpl, ctx.token, %{}, secret: nil)
+
+      assert {:error, :secret_not_found} =
+               Guardian.encode_and_sign(InheritedImpl, @resource, %{}, secret: nil)
+    end
+
+    test "honours an explicit :secret", ctx do
+      assert {:error, :invalid_token} =
+               Guardian.decode_and_verify(InheritedImpl, ctx.token, %{}, secret: "another-key")
+    end
+  end
+
+  describe "a missing secret through the public API" do
+    @resource %{id: "1"}
+
+    test "encode_and_sign reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.encode_and_sign(ctx.impl, @resource, %{}, secret: nil)
+    end
+
+    test "decode_and_verify reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.decode_and_verify(ctx.impl, ctx.jwt, %{}, secret: nil)
+    end
+
+    test "resource_from_token reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.resource_from_token(ctx.impl, ctx.jwt, %{}, secret: nil)
+    end
+
+    test "revoke reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.revoke(ctx.impl, ctx.jwt, secret: nil)
+    end
+
+    test "refresh reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.refresh(ctx.impl, ctx.jwt, secret: nil)
+    end
+
+    test "exchange reports it", ctx do
+      assert {:error, :secret_not_found} = Guardian.exchange(ctx.impl, ctx.jwt, "access", "refresh", secret: nil)
+    end
+  end
 end

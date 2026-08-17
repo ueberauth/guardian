@@ -113,6 +113,9 @@ The arguments are fixed at compile time and the connection is not passed, so thi
 read from a vault or environment rather than one that varies per request. Use the one argument
 function form when the choice depends on the connection.
 
+One argument is the only function form accepted. Any other arity raises an `ArgumentError` from
+the plug rather than reaching the token module, where it would surface as an opaque JOSE failure.
+
 ## Choosing a secret from the token headers
 
 If the secret depends on the token rather than on the connection (a `kid` header pointing into a

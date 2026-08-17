@@ -715,6 +715,57 @@ defmodule Guardian.PlugTest do
     end
   end
 
+  describe "#resolve_secret" do
+    def tenant_secret, do: "from-an-mfa-tuple"
+
+    setup do
+      {:ok, %{conn: conn(:get, "/") |> assign(:tenant_secret, "from-the-conn")}}
+    end
+
+    test "leaves options without a :secret untouched", ctx do
+      opts = [key: :default, allowed_algos: ["HS512"]]
+      assert Guardian.Plug.resolve_secret(ctx.conn, opts) == opts
+    end
+
+    test "leaves a static :secret untouched", ctx do
+      opts = [secret: "static", key: :default]
+      assert Guardian.Plug.resolve_secret(ctx.conn, opts) == opts
+    end
+
+    test "leaves an {m, f, a} :secret untouched", ctx do
+      opts = [secret: {__MODULE__, :tenant_secret, []}]
+      assert Guardian.Plug.resolve_secret(ctx.conn, opts) == opts
+    end
+
+    test "calls a one argument :secret with the connection", ctx do
+      opts = [secret: & &1.assigns.tenant_secret, key: :default]
+
+      assert Guardian.Plug.resolve_secret(ctx.conn, opts) == [secret: "from-the-conn", key: :default]
+    end
+
+    test "keeps an explicit nil rather than dropping the option", ctx do
+      opts = Guardian.Plug.resolve_secret(ctx.conn, secret: fn _conn -> nil end)
+
+      assert Keyword.fetch(opts, :secret) == {:ok, nil}
+    end
+
+    test "raises on a :secret function of the wrong arity", ctx do
+      assert_raise ArgumentError, ~r/must be a function of one argument/, fn ->
+        Guardian.Plug.resolve_secret(ctx.conn, secret: fn -> "nope" end)
+      end
+
+      assert_raise ArgumentError, ~r/must be a function of one argument/, fn ->
+        Guardian.Plug.resolve_secret(ctx.conn, secret: fn _conn, _opts -> "nope" end)
+      end
+    end
+
+    test "lets an exception from the resolver through", ctx do
+      assert_raise KeyError, fn ->
+        Guardian.Plug.resolve_secret(ctx.conn, secret: & &1.assigns.missing)
+      end
+    end
+  end
+
   describe "#keys" do
     alias Guardian.Plug.Keys
 

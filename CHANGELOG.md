@@ -13,7 +13,8 @@
 
   Supported by `Guardian.Plug.VerifyHeader`, `Guardian.Plug.VerifySession` and
   `Guardian.Plug.VerifyCookie`, and exposed as `Guardian.Plug.resolve_secret/2`
-  for custom plugs.
+  for custom plugs. A `:secret` function of any other arity raises an
+  `ArgumentError` instead of reaching the token module.
 
 ### Changed
 
