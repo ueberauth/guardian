@@ -9,8 +9,9 @@ on:
 jobs:
   Test:
     runs-on: ubuntu-latest
-    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    name: OTP ${{matrix.versions.otp}} / Elixir ${{matrix.versions.elixir}}
     strategy:
+      fail-fast: false
       matrix:
         versions:
           - elixir: "1.16"
@@ -38,9 +39,9 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.os }}-otp-${{ matrix.versions.otp }}-elixir-${{ matrix.versions.elixir }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mix-
+            ${{ runner.os }}-otp-${{ matrix.versions.otp }}-elixir-${{ matrix.versions.elixir }}-mix-
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
@@ -57,7 +58,7 @@ jobs:
 
   Linting:
     runs-on: ubuntu-latest
-    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}} Linting
+    name: Linting
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
