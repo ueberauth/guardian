@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.5.0
 
 ### Added
 
@@ -17,6 +17,13 @@
   `ArgumentError` instead of reaching the token module.
 
 ### Changed
+
+* **Behaviour change.** `Guardian.Token.Jwt.Verify` rejects `exp`, `nbf` and
+  `auth_time` claims that are not numbers, and
+  `Guardian.Token.Verify.time_within_drift?/2` returns `false` instead of
+  `true` for a non-numeric time. Previously a token carrying a string or
+  boolean in a time claim passed the drift check and was accepted as valid
+  ([#745](https://github.com/ueberauth/guardian/pull/745)).
 
 * **Behaviour change.** `Guardian.Token.Jwt` no longer falls back to the
   implementation module's `:secret_key` when an explicitly provided `:secret`
