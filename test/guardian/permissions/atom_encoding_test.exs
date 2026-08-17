@@ -71,11 +71,13 @@ defmodule Guardian.Permissions.AtomEncodingTest do
     test "it does not create atoms for attacker-supplied binaries" do
       attacker = for i <- 1..5_000, do: "attacker_perm_#{i}"
 
-      before = :erlang.system_info(:atom_count)
       assert AtomEncoding.encode(attacker, "default", @perm_set) == []
-      after_count = :erlang.system_info(:atom_count)
 
-      assert after_count - before == 0
+      for permission <- attacker do
+        assert_raise ArgumentError, ~r/not an already existing atom/, fn ->
+          String.to_existing_atom(permission)
+        end
+      end
     end
   end
 
