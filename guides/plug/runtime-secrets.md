@@ -12,28 +12,22 @@ module's `:secret_key` configuration:
 plug Guardian.Plug.VerifyHeader, secret: "a-secret-for-this-endpoint"
 ```
 
-That is enough when the secret is static. It is not enough for multitenancy, because plug options
-are built once by `init/1` at compile time and cannot see the connection.
+That is enough when the secret is static. Plug options are built once by `init/1` at compile time,
+so a literal value cannot depend on the request.
 
 ## Selecting a secret per request
 
-Plugs compose, so wrap the Guardian plug and merge the secret into its options at call time:
+Give `:secret` a one argument function. The verify plugs call it with the connection and use what
+it returns:
 
 ```elixir
-defmodule MyAppWeb.VerifyHeader do
-  @behaviour Plug
+plug MyAppWeb.LoadTenant
+plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
+```
 
-  alias Guardian.Plug.VerifyHeader
-
-  @impl Plug
-  def init(opts), do: VerifyHeader.init(opts)
-
-  @impl Plug
-  def call(conn, opts) do
-    VerifyHeader.call(conn, Keyword.put(opts, :secret, verifying_secret(conn)))
-  end
-
-  defp verifying_secret(conn) do
+```elixir
+defmodule MyApp.Secrets do
+  def for_conn(conn) do
     case JOSE.JWK.from_pem(conn.assigns.current_tenant.public_key) do
       %JOSE.JWK{} = jwk -> jwk
       _ -> nil
@@ -42,57 +36,50 @@ defmodule MyAppWeb.VerifyHeader do
 end
 ```
 
-Call `VerifyHeader.init/1` from your own `init/1`. It compiles the `:scheme` option into the
-regular expression the plug uses to strip the `Bearer` prefix, and skipping it changes how tokens
-are matched.
+Use a remote capture such as `&MyApp.Secrets.for_conn/1`. `Plug.Builder` and Phoenix router
+pipelines call `init/1` at compile time and inline the result, and an anonymous function cannot be
+inlined. Writing `secret: fn conn -> ... end` or `secret: & &1.assigns.tenant.key` in a `plug`
+line fails to compile with `cannot escape #Function<...>`. Both forms are fine when you call
+`VerifyHeader.call/2` yourself, or under `use Plug.Builder, init_mode: :runtime`.
 
-Use your plug wherever you would have used the Guardian one, downstream of whatever assigns the
-tenant:
+This works on `Guardian.Plug.VerifyHeader`, `Guardian.Plug.VerifySession` and
+`Guardian.Plug.VerifyCookie`. Place it downstream of whatever resolves the tenant:
 
 ```elixir
 pipeline :api_auth do
   plug MyAppWeb.LoadTenant
-  plug MyAppWeb.VerifyHeader
+  plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
   plug Guardian.Plug.EnsureAuthenticated
 end
 ```
 
-## Do not let the secret be nil
+### A nil secret fails closed
 
-A `nil` secret is not treated as an error. `Guardian.Token.Jwt` falls back to the implementation
-module's `:secret_key` configuration whenever the resolved `:secret` is `nil`, so a tenant lookup
-that quietly fails will verify tokens against your application-wide secret instead of the tenant's
-key. If both an application-wide secret and third-party tenant keys are in play, that is a tenant
-isolation failure rather than a rejected request.
+Returning `nil` rejects the request with `{:invalid_token, :secret_not_found}`. It does **not**
+fall back to the implementation module's `:secret_key`, so a tenant lookup that quietly fails
+cannot end up verifying tokens against your application wide secret.
 
-Fail closed instead of passing `nil` down:
+Guardian versions before this behaviour change did fall back. If you were selecting secrets at
+runtime with a wrapper plug, check whether your code relied on that fallback for requests with no
+tenant.
 
-```elixir
-import Plug.Conn
+## Other option forms
 
-@impl Plug
-def call(conn, opts) do
-  case verifying_secret(conn) do
-    nil -> conn |> resp(401, "") |> halt()
-    secret -> VerifyHeader.call(conn, Keyword.put(opts, :secret, secret))
-  end
-end
-```
-
-Routing the rejection through the pipeline's error handler works too:
+`:secret` also accepts a `{module, function, args}` tuple, resolved by
+`Guardian.Config.resolve_value/1`:
 
 ```elixir
-nil ->
-  conn
-  |> Guardian.Plug.Pipeline.fetch_error_handler!(opts)
-  |> apply(:auth_error, [conn, {:invalid_token, :secret_not_found}, opts])
-  |> halt()
+plug Guardian.Plug.VerifyHeader, secret: {MyApp.Vault, :fetch, ["api-signing-key"]}
 ```
+
+The arguments are fixed at compile time and the connection is not passed, so this suits a secret
+read from a vault or environment rather than one that varies per request. Use the one argument
+function form when the choice depends on the connection.
 
 ## Choosing a secret from the token headers
 
 If the secret depends on the token rather than on the connection (a `kid` header pointing into a
-JWKS, for example), you do not need a plug at all. Implement a
+JWKS, for example), you do not need a plug option at all. Implement a
 `Guardian.Token.Jwt.SecretFetcher` and configure it on your implementation module:
 
 ```elixir
@@ -114,12 +101,27 @@ end
 config :my_app, MyApp.Guardian, secret_fetcher: MyApp.SecretFetcher
 ```
 
-The two approaches compose. A secret fetcher receives the options the plug was called with, so a
-wrapper plug can pass tenant information through to it:
+Unlike the plug option, a secret fetcher also covers token creation and applies everywhere the
+implementation module is used, not only behind a plug.
+
+## Combining the two
+
+A secret fetcher receives the options the plug was called with, so the plug can pass connection
+derived context through to it. Any option accepts this, not just `:secret`:
 
 ```elixir
-def call(conn, opts) do
-  VerifyHeader.call(conn, Keyword.put(opts, :tenant, conn.assigns.current_tenant))
+defmodule MyAppWeb.VerifyTenantToken do
+  @behaviour Plug
+
+  alias Guardian.Plug.VerifyHeader
+
+  @impl Plug
+  def init(opts), do: VerifyHeader.init(opts)
+
+  @impl Plug
+  def call(conn, opts) do
+    VerifyHeader.call(conn, Keyword.put(opts, :tenant, conn.assigns.current_tenant))
+  end
 end
 ```
 
@@ -130,3 +132,8 @@ def fetch_verifying_secret(_mod, %{"kid" => kid}, opts) do
   |> MyApp.JWKS.fetch(kid)
 end
 ```
+
+Wrapping a verify plug like this is also the escape hatch for anything other than `:secret` that
+has to vary per request. Call the wrapped plug's `init/1` from your own: `VerifyHeader.init/1`
+compiles the `:scheme` option into the regular expression used to strip the `Bearer` prefix, and
+skipping it changes how tokens are matched.

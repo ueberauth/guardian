@@ -124,6 +124,36 @@ if Code.ensure_loaded?(Plug) do
     @spec default_key() :: String.t()
     def default_key, do: @default_key
 
+    @doc """
+    Resolves a connection aware `:secret` option to a concrete value.
+
+    Plug options are built once by `init/1`, so a static `:secret` cannot depend on the request.
+    Giving `:secret` a one argument function defers the decision to call time: the function
+    receives the connection and returns the secret to use.
+
+        plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
+
+    Use a remote capture. `Plug.Builder` inlines the result of a compile time `init/1`, and an
+    anonymous function cannot be inlined, so `secret: & &1.assigns.tenant.key` in a `plug` line
+    fails to compile.
+
+    Every other value is left untouched, including `{module, function, args}` tuples, which are
+    resolved later by `Guardian.Config.resolve_value/1` without access to the connection.
+
+    Returning `nil` is an error rather than a fallback to the implementation module's
+    `:secret_key`. See `Guardian.Token.Jwt`.
+
+    The verify plugs call this on your behalf. It is public so that custom plugs can offer the
+    same option.
+    """
+    @spec resolve_secret(Plug.Conn.t(), Guardian.options()) :: Guardian.options()
+    def resolve_secret(conn, opts) do
+      case Keyword.fetch(opts, :secret) do
+        {:ok, fun} when is_function(fun, 1) -> Keyword.put(opts, :secret, fun.(conn))
+        _ -> opts
+      end
+    end
+
     @spec current_claims(Plug.Conn.t(), Guardian.options()) :: Guardian.Token.claims() | nil
     def current_claims(conn, opts \\ []) do
       key =

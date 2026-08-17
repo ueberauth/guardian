@@ -385,5 +385,26 @@ defmodule Guardian.Plug.VerifySessionTest do
       assert conn.status == 401
       assert Guardian.Plug.current_token(conn, []) == nil
     end
+
+    test "the :secret option accepts a function of the connection", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> init_test_session(%{guardian_default_token: ctx.token})
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifySession.call(secret: & &1.assigns.tenant_secret)
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.claims
+    end
+
+    test "a connection aware :secret returning nil fails closed", ctx do
+      conn = call_with(ctx, secret: & &1.assigns[:tenant_secret])
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+    end
   end
 end

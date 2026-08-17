@@ -372,7 +372,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
     end
 
-    defmodule TenantVerifyHeader do
+    defmodule VerifyTenantToken do
       @moduledoc false
 
       @behaviour Plug
@@ -446,7 +446,7 @@ defmodule Guardian.Plug.VerifyHeaderTest do
     end
 
     test "a wrapping plug can derive the secret from the connection", ctx do
-      opts = TenantVerifyHeader.init([])
+      opts = VerifyTenantToken.init([])
 
       conn =
         :get
@@ -455,21 +455,72 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
         |> Pipeline.put_module(ctx.impl)
         |> Pipeline.put_error_handler(ctx.handler)
-        |> TenantVerifyHeader.call(opts)
+        |> VerifyTenantToken.call(opts)
 
       refute conn.halted
       assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
     end
 
-    test "a nil :secret falls back to the implementation module secret", ctx do
+    test "a nil :secret fails closed instead of falling back to the module secret", ctx do
       conn = call_with(ctx, ctx.configured_token, secret: nil)
 
-      refute conn.halted
-      assert Guardian.Plug.current_token(conn, []) == ctx.configured_token
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+      assert Guardian.Plug.current_token(conn, []) == nil
     end
 
-    test "a wrapping plug that finds no secret does not verify the tenant token", ctx do
-      opts = TenantVerifyHeader.init([])
+    test "the :secret option accepts a function of the connection", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: & &1.assigns.tenant_secret))
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "a connection aware :secret returning nil fails closed", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: & &1.assigns[:tenant_secret]))
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+    end
+
+    test "a connection aware :secret survives a compiled plug pipeline", ctx do
+      defmodule TenantPipeline do
+        @moduledoc false
+        use Plug.Builder
+
+        plug(Guardian.Plug.VerifyHeader, secret: &__MODULE__.tenant_secret/1)
+
+        def tenant_secret(conn), do: conn.assigns[:tenant_secret]
+      end
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> TenantPipeline.call(TenantPipeline.init([]))
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "a wrapping plug can still derive the secret from the connection", ctx do
+      opts = VerifyTenantToken.init([])
 
       conn =
         :get
@@ -477,10 +528,10 @@ defmodule Guardian.Plug.VerifyHeaderTest do
         |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
         |> Pipeline.put_module(ctx.impl)
         |> Pipeline.put_error_handler(ctx.handler)
-        |> TenantVerifyHeader.call(opts)
+        |> VerifyTenantToken.call(opts)
 
       assert conn.status == 401
-      assert conn.resp_body == inspect({:invalid_token, :invalid_token})
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
     end
   end
 end

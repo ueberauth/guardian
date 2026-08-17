@@ -2,14 +2,41 @@
 
 ## Unreleased
 
+### Added
+
+* The verify plugs accept a one argument function for `:secret`, called with the
+  connection to select a verifying secret per request. This covers multitenant
+  setups where each tenant has its own key
+  ([#690](https://github.com/ueberauth/guardian/issues/690)).
+
+      plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
+
+  Supported by `Guardian.Plug.VerifyHeader`, `Guardian.Plug.VerifySession` and
+  `Guardian.Plug.VerifyCookie`, and exposed as `Guardian.Plug.resolve_secret/2`
+  for custom plugs.
+
+### Changed
+
+* **Behaviour change.** `Guardian.Token.Jwt` no longer falls back to the
+  implementation module's `:secret_key` when an explicitly provided `:secret`
+  is `nil`, or when a `{module, function, args}` secret resolves to `nil`. Both
+  now fail with `{:error, :secret_not_found}`. Previously a runtime secret
+  lookup that returned `nil` would silently sign or verify with the application
+  wide secret, which defeats tenant isolation when third party issued tokens
+  and application issued tokens share an implementation module. Omitting
+  `:secret` entirely still uses `:secret_key` as before.
+
+* `Guardian.Token.Jwt.decode_token/3` propagates `{:error, :secret_not_found}`
+  instead of reporting it as `{:error, :invalid_token}`, so a missing runtime
+  secret is distinguishable from a bad signature. Error handlers matching on
+  `{:invalid_token, :invalid_token}` for this case should also match
+  `{:invalid_token, :secret_not_found}`.
+
 ### Documentation
 
 * Document that the verify plugs forward unrecognized options to
   `Guardian.decode_and_verify/4`, including `Guardian.Token.Jwt`'s `:secret`,
-  and add a "Runtime secrets" guide covering per-tenant verifying secrets. Note
-  that a `nil` `:secret` falls back to the implementation module's
-  `:secret_key` rather than failing, so runtime lookups must fail closed
-  ([#690](https://github.com/ueberauth/guardian/issues/690)).
+  and add a "Runtime secrets" guide covering per-tenant verifying secrets.
 
 ## v2.4.1
 

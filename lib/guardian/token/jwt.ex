@@ -40,6 +40,11 @@ defmodule Guardian.Token.Jwt do
   * `token_type` - Override the default token type. The default is "access"
   * `ttl` - The time to live. See `Guardian.Token.ttl` type
 
+  The `secret_key` configuration is only consulted when the `:secret` option is absent. Providing
+  `:secret` explicitly always wins, and a `:secret` that is (or resolves to) `nil` fails with
+  `{:error, :secret_not_found}` rather than falling back to `secret_key`. This keeps a failed
+  runtime lookup from silently verifying or signing with the application wide secret.
+
   #### Example
 
   ```elixir
@@ -210,22 +215,23 @@ defmodule Guardian.Token.Jwt do
     use Guardian.Token.Jwt.SecretFetcher
 
     def fetch_signing_secret(mod, opts) do
-      secret = Keyword.get(opts, :secret)
-      secret = Config.resolve_value(secret) || apply(mod, :config, [:secret_key])
-
-      case secret do
+      case fetch_secret(mod, opts) do
         nil -> {:error, :secret_not_found}
         val -> {:ok, val}
       end
     end
 
     def fetch_verifying_secret(mod, _token_headers, opts) do
-      secret = Keyword.get(opts, :secret)
-      secret = Config.resolve_value(secret) || mod.config(:secret_key)
-
-      case secret do
+      case fetch_secret(mod, opts) do
         nil -> {:error, :secret_not_found}
         val -> {:ok, val}
+      end
+    end
+
+    defp fetch_secret(mod, opts) do
+      case Keyword.fetch(opts, :secret) do
+        {:ok, secret} -> Config.resolve_value(secret)
+        :error -> mod.config(:secret_key)
       end
     end
   end
@@ -332,6 +338,7 @@ defmodule Guardian.Token.Jwt do
         {false, _, _} -> {:error, :invalid_token}
       end
     else
+      {:error, :secret_not_found} = error -> error
       _ -> {:error, :invalid_token}
     end
   end

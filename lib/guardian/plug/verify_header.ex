@@ -43,11 +43,9 @@ if Code.ensure_loaded?(Plug) do
 
     * `secret` - The secret used to verify the token, overriding the implementation module's
       `:secret_key` configuration. Accepts any value resolvable by `Guardian.Config`, including
-      a `{module, function, args}` tuple.
-
-    Because plug options are built once at compile time, a static `:secret` cannot depend on the
-    request. To select a secret per request (per tenant, per issuer), see
-    [Runtime secrets](plug-runtime-secrets.html).
+      a `{module, function, args}` tuple, or a one argument function that receives the connection
+      and returns the secret. See `Guardian.Plug.resolve_secret/2` and
+      [Runtime secrets](plug-runtime-secrets.html).
 
     Refresh from cookie option
 
@@ -100,7 +98,8 @@ if Code.ensure_loaded?(Plug) do
            module <- Pipeline.fetch_module!(conn, opts),
            claims_to_check <- Keyword.get(opts, :claims, %{}),
            key <- storage_key(conn, opts),
-           {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, opts) do
+           verify_opts <- Guardian.Plug.resolve_secret(conn, opts),
+           {:ok, claims} <- Guardian.decode_and_verify(module, token, claims_to_check, verify_opts) do
         conn
         |> Guardian.Plug.put_current_token(token, key: key)
         |> Guardian.Plug.put_current_claims(claims, key: key)
