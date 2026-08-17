@@ -374,6 +374,19 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
     def tenant_secret, do: @tenant_secret
 
+    def counted_secret(conn) do
+      send(self(), :secret_resolved)
+      conn.assigns[:tenant_secret]
+    end
+
+    defp resolve_count(n \\ 0) do
+      receive do
+        :secret_resolved -> resolve_count(n + 1)
+      after
+        0 -> n
+      end
+    end
+
     setup do
       impl = __MODULE__.SecretImpl
       handler = __MODULE__.Handler
@@ -464,6 +477,28 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
       assert conn.status == 401
       assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+    end
+
+    test "a connection aware :secret is resolved once per request", ctx do
+      :get
+      |> conn("/")
+      |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+      |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1))
+
+      assert resolve_count() == 1
+    end
+
+    test "a connection aware :secret is not resolved when no token is present", ctx do
+      :get
+      |> conn("/")
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1))
+
+      assert resolve_count() == 0
     end
 
     test "a connection aware :secret survives a compiled plug pipeline", ctx do

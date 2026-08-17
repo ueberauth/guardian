@@ -27,14 +27,39 @@ plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
 
 ```elixir
 defmodule MyApp.Secrets do
-  def for_conn(conn) do
-    case JOSE.JWK.from_pem(conn.assigns.current_tenant.public_key) do
-      %JOSE.JWK{} = jwk -> jwk
-      _ -> nil
+  def for_conn(conn), do: conn.assigns[:tenant_jwk]
+end
+```
+
+Keep the function a cheap read off the connection. Do the loading and parsing once, upstream,
+where the result can be assigned and reused:
+
+```elixir
+defmodule MyAppWeb.LoadTenant do
+  @behaviour Plug
+
+  import Plug.Conn
+
+  @impl Plug
+  def init(opts), do: opts
+
+  @impl Plug
+  def call(conn, _opts) do
+    tenant = MyApp.Tenants.from_slug!(conn.params["tenant_slug"])
+
+    case JOSE.JWK.from_pem(tenant.public_key) do
+      %JOSE.JWK{} = jwk -> conn |> assign(:current_tenant, tenant) |> assign(:tenant_jwk, jwk)
+      _ -> assign(conn, :current_tenant, tenant)
     end
   end
 end
 ```
+
+Parsing a PEM is not free, and neither is a database or JWKS round trip. A verify plug resolves
+`:secret` once per request, and only after it has found a token, so a request carrying no token
+never calls the function at all. It can run a second time if you configure `:secret` on both a
+verify plug and its `:refresh_from_cookie` options, since the refresh is a separate exchange.
+Treat the function as something that may run more than once and should not perform I/O.
 
 Use a remote capture such as `&MyApp.Secrets.for_conn/1`. `Plug.Builder` and Phoenix router
 pipelines call `init/1` at compile time and inline the result, and an anonymous function cannot be
@@ -51,6 +76,18 @@ pipeline :api_auth do
   plug Guardian.Plug.VerifyHeader, secret: &MyApp.Secrets.for_conn/1
   plug Guardian.Plug.EnsureAuthenticated
 end
+```
+
+### Refreshing from a cookie
+
+`:refresh_from_cookie` is configured with its own options, and they are not inherited from the
+plug that triggered the refresh. A `:secret` on the verify plug therefore does not reach the token
+exchange, which falls back to the implementation module's `:secret_key`. Set it in both places:
+
+```elixir
+plug Guardian.Plug.VerifyHeader,
+  secret: &MyApp.Secrets.for_conn/1,
+  refresh_from_cookie: [secret: &MyApp.Secrets.for_conn/1]
 ```
 
 ### A nil secret fails closed

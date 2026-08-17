@@ -143,6 +143,11 @@ if Code.ensure_loaded?(Plug) do
     Returning `nil` is an error rather than a fallback to the implementation module's
     `:secret_key`. See `Guardian.Token.Jwt`.
 
+    A verify plug resolves the secret once per request, after it has found a token, so a request
+    carrying no token never calls the function. It can run more than once when `:secret` is also
+    configured on `:refresh_from_cookie`. Keep it a cheap read off the connection and do any
+    loading or parsing in an upstream plug.
+
     The verify plugs call this on your behalf. It is public so that custom plugs can offer the
     same option.
     """
