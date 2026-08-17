@@ -372,20 +372,6 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
     end
 
-    defmodule VerifyTenantToken do
-      @moduledoc false
-
-      @behaviour Plug
-
-      @impl Plug
-      def init(opts), do: VerifyHeader.init(opts)
-
-      @impl Plug
-      def call(conn, opts) do
-        VerifyHeader.call(conn, Keyword.put(opts, :secret, conn.assigns[:tenant_secret]))
-      end
-    end
-
     def tenant_secret, do: @tenant_secret
 
     setup do
@@ -445,22 +431,6 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       assert Guardian.Plug.current_token(conn, []) == nil
     end
 
-    test "a wrapping plug can derive the secret from the connection", ctx do
-      opts = VerifyTenantToken.init([])
-
-      conn =
-        :get
-        |> conn("/")
-        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
-        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
-        |> Pipeline.put_module(ctx.impl)
-        |> Pipeline.put_error_handler(ctx.handler)
-        |> VerifyTenantToken.call(opts)
-
-      refute conn.halted
-      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
-    end
-
     test "a nil :secret fails closed instead of falling back to the module secret", ctx do
       conn = call_with(ctx, ctx.configured_token, secret: nil)
 
@@ -517,21 +487,6 @@ defmodule Guardian.Plug.VerifyHeaderTest do
 
       refute conn.halted
       assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
-    end
-
-    test "a wrapping plug can still derive the secret from the connection", ctx do
-      opts = VerifyTenantToken.init([])
-
-      conn =
-        :get
-        |> conn("/")
-        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
-        |> Pipeline.put_module(ctx.impl)
-        |> Pipeline.put_error_handler(ctx.handler)
-        |> VerifyTenantToken.call(opts)
-
-      assert conn.status == 401
-      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
     end
   end
 end

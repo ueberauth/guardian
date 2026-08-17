@@ -104,36 +104,16 @@ config :my_app, MyApp.Guardian, secret_fetcher: MyApp.SecretFetcher
 Unlike the plug option, a secret fetcher also covers token creation and applies everywhere the
 implementation module is used, not only behind a plug.
 
-## Combining the two
+## Which one to reach for
 
-A secret fetcher receives the options the plug was called with, so the plug can pass connection
-derived context through to it. Any option accepts this, not just `:secret`:
+The plug option sees the connection. The secret fetcher sees the token headers. Pick whichever
+holds the information your lookup needs, and prefer the plug option when either would work, since
+it keeps the choice visible at the pipeline.
 
-```elixir
-defmodule MyAppWeb.VerifyTenantToken do
-  @behaviour Plug
+If a lookup genuinely needs both, note that a secret fetcher also receives the options the plug was
+called with, so connection derived context can be handed to it through any option name.
 
-  alias Guardian.Plug.VerifyHeader
-
-  @impl Plug
-  def init(opts), do: VerifyHeader.init(opts)
-
-  @impl Plug
-  def call(conn, opts) do
-    VerifyHeader.call(conn, Keyword.put(opts, :tenant, conn.assigns.current_tenant))
-  end
-end
-```
-
-```elixir
-def fetch_verifying_secret(_mod, %{"kid" => kid}, opts) do
-  opts
-  |> Keyword.fetch!(:tenant)
-  |> MyApp.JWKS.fetch(kid)
-end
-```
-
-Wrapping a verify plug like this is also the escape hatch for anything other than `:secret` that
-has to vary per request. Call the wrapped plug's `init/1` from your own: `VerifyHeader.init/1`
-compiles the `:scheme` option into the regular expression used to strip the `Bearer` prefix, and
-skipping it changes how tokens are matched.
+Options other than `:secret` still have no connection aware form. Varying those per request means
+wrapping the verify plug in your own, in which case delegate to the wrapped plug's `init/1`:
+`VerifyHeader.init/1` compiles the `:scheme` option into the regular expression used to strip the
+`Bearer` prefix, and skipping it changes how tokens are matched.
