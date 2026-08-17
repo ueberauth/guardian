@@ -140,6 +140,67 @@ defmodule Guardian.Plug.VerifyCookieTest do
     end
   end
 
+  describe "with a runtime secret" do
+    @tenant_secret "tenant-secret-key"
+
+    defmodule SecretImpl do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        secret_key: "configured-secret-key",
+        allowed_algos: ["HS512"]
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+      def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    end
+
+    setup do
+      impl = __MODULE__.SecretImpl
+      handler = __MODULE__.Handler
+
+      {:ok, token, _claims} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, token_type: "refresh", secret: @tenant_secret)
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", token)
+        |> fetch_cookies()
+        |> assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(impl)
+        |> Pipeline.put_error_handler(handler)
+
+      {:ok, %{conn: conn, token: token}}
+    end
+
+    test "the exchange uses a connection aware :secret", ctx do
+      conn = VerifyCookie.call(ctx.conn, secret: & &1.assigns.tenant_secret)
+
+      refute conn.halted
+      assert new_token = Guardian.Plug.current_token(conn, [])
+      refute new_token == ctx.token
+      assert Guardian.Plug.current_claims(conn, [])["typ"] == "access"
+
+      assert {:ok, _claims} = SecretImpl.decode_and_verify(new_token, %{}, secret: @tenant_secret)
+    end
+
+    test "without the :secret option the exchange fails", ctx do
+      conn = VerifyCookie.call(ctx.conn, [])
+
+      assert conn.halted
+      assert {401, _, "{:invalid_token, :invalid_token}"} = sent_resp(conn)
+    end
+
+    test "a connection aware :secret returning nil fails closed", ctx do
+      conn = VerifyCookie.call(ctx.conn, secret: & &1.assigns[:missing_secret])
+
+      assert conn.halted
+      assert {401, _, "{:invalid_token, :secret_not_found}"} = sent_resp(conn)
+    end
+  end
+
   describe "with verify session" do
     setup %{conn: conn, impl: impl, handler: handler} do
       conn =

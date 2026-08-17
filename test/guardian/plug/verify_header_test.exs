@@ -354,4 +354,218 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
   end
+
+  describe "with a runtime secret" do
+    @configured_secret "configured-secret-key"
+    @tenant_secret "tenant-secret-key"
+
+    defmodule SecretImpl do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        secret_key: "configured-secret-key",
+        allowed_algos: ["HS512"]
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+      def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    end
+
+    def tenant_secret, do: @tenant_secret
+
+    def counted_secret(conn) do
+      send(self(), :secret_resolved)
+      conn.assigns[:tenant_secret]
+    end
+
+    defp resolve_count(n \\ 0) do
+      receive do
+        :secret_resolved -> resolve_count(n + 1)
+      after
+        0 -> n
+      end
+    end
+
+    setup do
+      impl = __MODULE__.SecretImpl
+      handler = __MODULE__.Handler
+
+      {:ok, tenant_token, tenant_claims} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, secret: @tenant_secret)
+
+      {:ok, configured_token, _} = __MODULE__.SecretImpl.encode_and_sign(@resource)
+
+      {:ok,
+       %{
+         impl: impl,
+         handler: handler,
+         tenant_token: tenant_token,
+         tenant_claims: tenant_claims,
+         configured_token: configured_token
+       }}
+    end
+
+    defp call_with(ctx, token, opts) do
+      :get
+      |> conn("/")
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(opts))
+    end
+
+    test "the :secret option overrides the implementation module secret", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: @tenant_secret)
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.tenant_token
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "the :secret option is resolved from an {m, f, a} tuple", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: {__MODULE__, :tenant_secret, []})
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "without the :secret option the implementation module secret is used", ctx do
+      conn = call_with(ctx, ctx.configured_token, [])
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.configured_token
+    end
+
+    test "a token signed with another secret is rejected", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: @configured_secret)
+
+      assert conn.status == 401
+      assert Guardian.Plug.current_token(conn, []) == nil
+    end
+
+    test "a nil :secret fails closed instead of falling back to the module secret", ctx do
+      conn = call_with(ctx, ctx.configured_token, secret: nil)
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+      assert Guardian.Plug.current_token(conn, []) == nil
+    end
+
+    test "the :secret option accepts a function of the connection", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: & &1.assigns.tenant_secret))
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "a connection aware :secret returning nil fails closed", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: & &1.assigns[:tenant_secret]))
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+    end
+
+    test "a connection aware :secret is resolved once per request", ctx do
+      :get
+      |> conn("/")
+      |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+      |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1))
+
+      assert resolve_count() == 1
+    end
+
+    test "a connection aware :secret is not resolved when no token is present", ctx do
+      :get
+      |> conn("/")
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1))
+
+      assert resolve_count() == 0
+    end
+
+    test "a :secret on the plug is not inherited by :refresh_from_cookie", ctx do
+      {:ok, refresh_token, _} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, token_type: "refresh", secret: @tenant_secret)
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> fetch_cookies()
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(VerifyHeader.init(secret: &__MODULE__.counted_secret/1, refresh_from_cookie: []))
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :invalid_token})
+      assert resolve_count() == 0
+    end
+
+    test "a :secret set on both the plug and :refresh_from_cookie is resolved for each", ctx do
+      {:ok, refresh_token, _} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, token_type: "refresh", secret: @tenant_secret)
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.configured_token}")
+        |> put_req_cookie("guardian_default_token", refresh_token)
+        |> fetch_cookies()
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifyHeader.call(
+          VerifyHeader.init(
+            secret: &__MODULE__.counted_secret/1,
+            refresh_from_cookie: [secret: &__MODULE__.counted_secret/1]
+          )
+        )
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, [])["typ"] == "access"
+      assert resolve_count() == 2
+    end
+
+    test "a connection aware :secret survives a compiled plug pipeline", ctx do
+      defmodule TenantPipeline do
+        @moduledoc false
+        use Plug.Builder
+
+        plug(Guardian.Plug.VerifyHeader, secret: &__MODULE__.tenant_secret/1)
+
+        def tenant_secret(conn), do: conn.assigns[:tenant_secret]
+      end
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> TenantPipeline.call(TenantPipeline.init([]))
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+  end
 end

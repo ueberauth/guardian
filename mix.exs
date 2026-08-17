@@ -107,6 +107,10 @@ defmodule Guardian.Mixfile do
         filename: "plug-pipelines",
         title: "Pipelines"
       ],
+      "guides/plug/runtime-secrets.md": [
+        filename: "plug-runtime-secrets",
+        title: "Runtime secrets"
+      ],
       "guides/phoenix/start-phoenix.md": [
         filename: "phoenix-start",
         title: "Start"

@@ -336,4 +336,75 @@ defmodule Guardian.Plug.VerifySessionTest do
       assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
   end
+
+  describe "with a runtime secret" do
+    @tenant_secret "tenant-secret-key"
+
+    defmodule SecretImpl do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        secret_key: "configured-secret-key",
+        allowed_algos: ["HS512"]
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+      def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    end
+
+    setup do
+      impl = __MODULE__.SecretImpl
+      handler = __MODULE__.Handler
+
+      {:ok, token, claims} = __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, secret: @tenant_secret)
+
+      {:ok, %{impl: impl, handler: handler, token: token, claims: claims}}
+    end
+
+    defp call_with(ctx, opts) do
+      :get
+      |> conn("/")
+      |> init_test_session(%{guardian_default_token: ctx.token})
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifySession.call(opts)
+    end
+
+    test "the :secret option overrides the implementation module secret", ctx do
+      conn = call_with(ctx, secret: @tenant_secret)
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.token
+      assert Guardian.Plug.current_claims(conn, []) == ctx.claims
+    end
+
+    test "without the :secret option the token is rejected", ctx do
+      conn = call_with(ctx, [])
+
+      assert conn.status == 401
+      assert Guardian.Plug.current_token(conn, []) == nil
+    end
+
+    test "the :secret option accepts a function of the connection", ctx do
+      conn =
+        :get
+        |> conn("/")
+        |> init_test_session(%{guardian_default_token: ctx.token})
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> VerifySession.call(secret: & &1.assigns.tenant_secret)
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.claims
+    end
+
+    test "a connection aware :secret returning nil fails closed", ctx do
+      conn = call_with(ctx, secret: & &1.assigns[:tenant_secret])
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :secret_not_found})
+    end
+  end
 end
