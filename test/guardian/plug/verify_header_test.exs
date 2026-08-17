@@ -354,4 +354,133 @@ defmodule Guardian.Plug.VerifyHeaderTest do
       assert %{"sub" => "User:jane", "typ" => "access"} = Guardian.Plug.current_claims(conn)
     end
   end
+
+  describe "with a runtime secret" do
+    @configured_secret "configured-secret-key"
+    @tenant_secret "tenant-secret-key"
+
+    defmodule SecretImpl do
+      @moduledoc false
+
+      use Guardian,
+        otp_app: :guardian,
+        token_module: Guardian.Token.Jwt,
+        secret_key: "configured-secret-key",
+        allowed_algos: ["HS512"]
+
+      def subject_for_token(%{id: id}, _claims), do: {:ok, id}
+      def resource_from_claims(%{"sub" => id}), do: {:ok, %{id: id}}
+    end
+
+    defmodule TenantVerifyHeader do
+      @moduledoc false
+
+      @behaviour Plug
+
+      @impl Plug
+      def init(opts), do: VerifyHeader.init(opts)
+
+      @impl Plug
+      def call(conn, opts) do
+        VerifyHeader.call(conn, Keyword.put(opts, :secret, conn.assigns[:tenant_secret]))
+      end
+    end
+
+    def tenant_secret, do: @tenant_secret
+
+    setup do
+      impl = __MODULE__.SecretImpl
+      handler = __MODULE__.Handler
+
+      {:ok, tenant_token, tenant_claims} =
+        __MODULE__.SecretImpl.encode_and_sign(@resource, %{}, secret: @tenant_secret)
+
+      {:ok, configured_token, _} = __MODULE__.SecretImpl.encode_and_sign(@resource)
+
+      {:ok,
+       %{
+         impl: impl,
+         handler: handler,
+         tenant_token: tenant_token,
+         tenant_claims: tenant_claims,
+         configured_token: configured_token
+       }}
+    end
+
+    defp call_with(ctx, token, opts) do
+      :get
+      |> conn("/")
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> Pipeline.put_module(ctx.impl)
+      |> Pipeline.put_error_handler(ctx.handler)
+      |> VerifyHeader.call(VerifyHeader.init(opts))
+    end
+
+    test "the :secret option overrides the implementation module secret", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: @tenant_secret)
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.tenant_token
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "the :secret option is resolved from an {m, f, a} tuple", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: {__MODULE__, :tenant_secret, []})
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "without the :secret option the implementation module secret is used", ctx do
+      conn = call_with(ctx, ctx.configured_token, [])
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.configured_token
+    end
+
+    test "a token signed with another secret is rejected", ctx do
+      conn = call_with(ctx, ctx.tenant_token, secret: @configured_secret)
+
+      assert conn.status == 401
+      assert Guardian.Plug.current_token(conn, []) == nil
+    end
+
+    test "a wrapping plug can derive the secret from the connection", ctx do
+      opts = TenantVerifyHeader.init([])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Plug.Conn.assign(:tenant_secret, @tenant_secret)
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> TenantVerifyHeader.call(opts)
+
+      refute conn.halted
+      assert Guardian.Plug.current_claims(conn, []) == ctx.tenant_claims
+    end
+
+    test "a nil :secret falls back to the implementation module secret", ctx do
+      conn = call_with(ctx, ctx.configured_token, secret: nil)
+
+      refute conn.halted
+      assert Guardian.Plug.current_token(conn, []) == ctx.configured_token
+    end
+
+    test "a wrapping plug that finds no secret does not verify the tenant token", ctx do
+      opts = TenantVerifyHeader.init([])
+
+      conn =
+        :get
+        |> conn("/")
+        |> put_req_header("authorization", "Bearer #{ctx.tenant_token}")
+        |> Pipeline.put_module(ctx.impl)
+        |> Pipeline.put_error_handler(ctx.handler)
+        |> TenantVerifyHeader.call(opts)
+
+      assert conn.status == 401
+      assert conn.resp_body == inspect({:invalid_token, :invalid_token})
+    end
+  end
 end

@@ -32,6 +32,17 @@ if Code.ensure_loaded?(Plug) do
 
     * `:refresh_from_cookie` - Looks for and validates a token found in the request cookies. (default `false`)
 
+    Any other option is forwarded to `Guardian.decode_and_verify/4`, and from there to the token
+    module. For `Guardian.Token.Jwt` this includes:
+
+    * `secret` - The secret used to verify the token, overriding the implementation module's
+      `:secret_key` configuration. Accepts any value resolvable by `Guardian.Config`, including
+      a `{module, function, args}` tuple.
+
+    Because plug options are built once at compile time, a static `:secret` cannot depend on the
+    request. To select a secret per request (per tenant, per issuer), see
+    [Runtime secrets](plug-runtime-secrets.html).
+
     Refresh from cookie option
 
     * `:key` - The location of the token (default `:default`)

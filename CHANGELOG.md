@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Documentation
+
+* Document that the verify plugs forward unrecognized options to
+  `Guardian.decode_and_verify/4`, including `Guardian.Token.Jwt`'s `:secret`,
+  and add a "Runtime secrets" guide covering per-tenant verifying secrets. Note
+  that a `nil` `:secret` falls back to the implementation module's
+  `:secret_key` rather than failing, so runtime lookups must fail closed
+  ([#690](https://github.com/ueberauth/guardian/issues/690)).
+
 ## v2.4.1
 
 ### Security
