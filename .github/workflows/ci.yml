@@ -39,9 +39,9 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.os }}-otp-${{ matrix.versions.otp }}-elixir-${{ matrix.versions.elixir }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mix-
+            ${{ runner.os }}-otp-${{ matrix.versions.otp }}-elixir-${{ matrix.versions.elixir }}-mix-
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
